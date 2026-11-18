@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.buildozer/
+bin/
+data/state.json
+*.jks
+*.keystore
+KEYSTORE_BASE64.txt
