@@ -1,0 +1,157 @@
+name: Build APK
+
+# Setiap push ke main/master: tes -> build APK bertanda tangan -> Release baru (v1.0.0, v1.0.1, dst).
+on:
+  push:
+    branches: [main, master]
+    paths-ignore: ["**.md", "tests/**", ".gitignore"]
+  workflow_dispatch:
+
+concurrency:
+  group: build-apk
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: pip install xlsxwriter pillow openpyxl
+      - run: python -m unittest -v
+
+  build:
+    needs: test
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    env:
+      KEYSTORE_ALIAS: jadwal
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # Diperiksa SEBELUM build panjang (30-40 menit): kalau kunci salah, gagal di sini dengan pesan yang jelas.
+      - name: Cek kunci tanda tangan (Secrets)
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::error::Secret KEYSTORE_BASE64 dan/atau KEYSTORE_PASSWORD belum dibuat. Settings > Secrets and variables > Actions > New repository secret."
+            exit 1
+          fi
+          JKS="$RUNNER_TEMP/release.jks"
+          # buang spasi/enter yang ikut tertempel, lalu ubah kembali menjadi file keystore
+          if ! printf '%s' "$KEYSTORE_BASE64" | tr -d ' \t\r\n' | base64 -d > "$JKS" 2>/dev/null; then
+            echo "::error::KEYSTORE_BASE64 bukan teks base64 yang valid. Salin ulang SELURUH isi KEYSTORE_BASE64.txt ke secret."
+            exit 1
+          fi
+          PASS="$(printf '%s' "$KEYSTORE_PASSWORD" | tr -d '\r\n')"
+          if ! keytool -list -keystore "$JKS" -storepass "$PASS" -alias "$KEYSTORE_ALIAS" > "$RUNNER_TEMP/keytool.log" 2>&1; then
+            echo "::error::Keystore tidak bisa dibuka atau alias key '$KEYSTORE_ALIAS' tidak ada. Periksa secret KEYSTORE_PASSWORD (harus sama dengan password key) dan alias key."
+            sed 's/^/keytool: /' "$RUNNER_TEMP/keytool.log"
+            exit 1
+          fi
+          echo "Keystore valid, alias '$KEYSTORE_ALIAS' ditemukan."
+          echo "KEYSTORE_FILE=$JKS" >> "$GITHUB_ENV"
+
+      - name: Pasang alat build
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y git zip unzip autoconf libtool pkg-config zlib1g-dev \
+            libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
+          python -m pip install --upgrade pip
+          pip install buildozer "cython<3" virtualenv
+
+      - name: Cache Buildozer (SDK, NDK, python-for-android)
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.buildozer
+            .buildozer
+          key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+          restore-keys: buildozer-${{ runner.os }}-
+
+      - name: Tentukan nomor versi berikutnya
+        id: ver
+        run: |
+          git fetch --tags --force
+          LAST=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1)
+          read -r VERSION CODE <<< "$(bash .github/next_version.sh "$LAST")"
+          sed -i "s/^version = .*/version = $VERSION/" buildozer.spec
+          sed -i "s/^android.numeric_version = .*/android.numeric_version = $CODE/" buildozer.spec
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Versi baru: v$VERSION (kode $CODE), sebelumnya: ${LAST:-belum ada}"
+
+      - name: Build APK (release, bertanda tangan)
+        shell: bash
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          PASS="$(printf '%s' "$KEYSTORE_PASSWORD" | tr -d '\r\n')"
+          export P4A_RELEASE_KEYSTORE="$KEYSTORE_FILE"
+          export P4A_RELEASE_KEYALIAS="$KEYSTORE_ALIAS"
+          export P4A_RELEASE_KEYSTORE_PASSWD="$PASS"
+          export P4A_RELEASE_KEYALIAS_PASSWD="$PASS"
+          # log disimpan supaya galatnya bisa diringkas kalau build gagal (pipefail: gagal tetap terdeteksi)
+          buildozer -v android release 2>&1 | tee "$RUNNER_TEMP/buildozer.log"
+
+      - name: Ringkasan galat build
+        if: failure()
+        shell: bash
+        run: |
+          RAW="$RUNNER_TEMP/buildozer.log"
+          [ -f "$RAW" ] || exit 0
+          LOG="$RUNNER_TEMP/buildozer.clean.log"
+          # buang kode warna dan dump variabel lingkungan (baris "#     NAMA = '...'") supaya galat asli terlihat
+          sed 's/\x1b\[[0-9;]*m//g' "$RAW" | grep -v -E "^[0-9TZ:.-]* ?#     [A-Za-z_0-9]+ = " > "$LOG" || true
+          {
+            echo "### Baris galat (ringkas)"
+            echo '```'
+            grep -n -E "ImportError|Traceback|BUILD FAILED|What went wrong|Command failed|\[ERROR\]|FAILURE:" "$LOG" | cut -c1-300 | tail -n 20 || true
+            echo '```'
+            echo "### 60 baris terakhir log"
+            echo '```'
+            tail -n 60 "$LOG" | cut -c1-300
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "===== 40 baris terakhir log buildozer ====="
+          tail -n 40 "$LOG" | cut -c1-300
+
+      - name: Hapus keystore sementara
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.jks"
+
+      - name: Siapkan file APK
+        id: apk
+        run: |
+          ls -la bin/
+          SRC=$(ls bin/*.apk | head -n1)
+          OUT="California-v${{ steps.ver.outputs.version }}.apk"
+          mv "$SRC" "bin/$OUT"
+          echo "path=bin/$OUT" >> "$GITHUB_OUTPUT"
+
+      - name: Buat Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: v${{ steps.ver.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          name: California v${{ steps.ver.outputs.version }}
+          generate_release_notes: true
+          files: ${{ steps.apk.outputs.path }}

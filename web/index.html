@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jadwal Kerja</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+/* CATATAN: semua font-size ditulis calc(Npx*var(--u)). Nilai --u dihitung JS (fungsi lock) supaya
+   ukuran teks SAMA di Chrome, WebView/Acode, dll. walau masing-masing menskalakan teks berbeda.
+   Ukuran teks akhir = TS (di JS) x angka px di CSS. Tulis font-size baru dengan pola yang sama. */
+:root{--bg:#f6f8fc;--ink:#0f1b4c;--mute:#5b6785;--line:#dfe6f5;--pri:#2f66f2;--soft:#eaf0fe;
+--P:#bdd7ee;--Pt:#1f4e79;--S:#ffe699;--St:#7f6000;--R:#f6b26b;--Rt:#7f3f00;--L:#ededed;--Lt:#7f7f7f;
+--dP:#5b9bd5;--dS:#e6b800;--dR:#ed7d31;--dL:#a6a6a6;--tn:1px;--md:2px;--u:.8;--ub:.8}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+*{box-sizing:border-box;margin:0}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:calc(13px*var(--u));line-height:1.45;font-feature-settings:"tnum";-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--ink);padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+#app{max-width:480px;margin:auto;padding:0 14px}
+header{margin:0 -14px 10px;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;background:#fff;box-shadow:0 1px 6px #0b16460f;display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:5}
+.logo{width:32px;height:32px;display:grid;place-items:center;flex:none}
+header b{font-size:calc(16.5px*var(--u));font-weight:700;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.badge{font-size:calc(10px*var(--u));font-weight:700;color:var(--pri);background:var(--soft);padding:2px 8px;border-radius:99px;letter-spacing:.3px}
+.mn{margin-left:auto;border:0;background:none;color:var(--ink);min-height:40px;min-width:40px;display:grid;place-items:center}
+h1{font-size:calc(20px*var(--u));font-weight:700;letter-spacing:-.3px;line-height:1.2;margin:10px 0 3px}
+h2{font-size:calc(15px*var(--u));font-weight:700;margin:16px 0 2px}
+.sub{color:var(--mute);font-size:calc(12.5px*var(--u));margin-bottom:12px}
+button,input,select{font:inherit;color:inherit}svg{flex:none}
+.lb{display:flex;align-items:center;gap:6px;color:var(--mute);font-weight:600;font-size:calc(10.5px*var(--u));letter-spacing:.4px;text-transform:uppercase}
+.ok{display:inline-flex;align-items:center;gap:5px;background:#d9f5e3;color:#13803f;font-weight:600;font-size:calc(11px*var(--u));padding:3px 9px;border-radius:99px}.ok.no{background:#fde1e4;color:#b4232f}
+.btn{border:0;background:var(--pri);color:#fff;font-weight:600;font-size:calc(12.5px*var(--u));border-radius:9px;padding:0 12px;min-height:38px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.w{width:100%}.btn.sm{min-height:30px;padding:0 10px;font-size:calc(11.5px*var(--u));border-radius:8px;gap:4px;margin-top:2px}.btn.dg{background:#fde8ea;color:#b4232f}.btn.gn{background:#15803d}.btn.gy{background:#e5e7eb;color:#374151}
+.tb{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:4px}
+.tb button{width:100%;min-width:0;border:0;background:none;min-height:42px;padding:0;font-weight:600;color:var(--mute);display:flex;align-items:center;justify-content:center;gap:5px;position:relative;font-size:calc(clamp(11px,3.3vw,12px)*var(--u));line-height:1;white-space:nowrap}
+.tb svg{display:block;flex:none}.tb span{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.tb button.on{color:var(--pri)}.tb button.on::after{content:"";position:absolute;left:18%;right:18%;bottom:0;height:2px;border-radius:2px;background:var(--pri)}
+/* Kelola Divisi: header (judul + ringkasan + garis pembatas) dan kartu divisi dengan avatar inisial staff */
+.hda{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:18px 0 14px;padding-bottom:14px;border-bottom:1px solid #cfd8ec}
+.hda h2{margin:0;font-size:calc(19px*var(--u));font-weight:700;letter-spacing:-.02em;line-height:1.2;color:#1f2a44}
+.hda span{background:#e3f4f2;color:#14625d;font-size:calc(10.5px*var(--u));font-weight:700;letter-spacing:.5px;text-transform:uppercase;border-radius:99px;padding:4px 10px;white-space:nowrap}
+.dvs{display:flex;flex-direction:column;gap:12px;margin:0 0 10px}
+.dv{display:flex;align-items:center;gap:14px;width:100%;min-height:84px;padding:14px;border:1px solid #e6ebf6;border-radius:18px;background:linear-gradient(135deg,var(--t),#fff 72%);box-shadow:0 1px 2px #0f1b4c0f,0 10px 24px -14px #0f1b4c40;text-align:left;color:var(--ink)}
+.dv.FLOOR{--k:#0f7a58}.dv.KITCHEN{--k:#b45309}
+.dv i{width:52px;height:52px;border-radius:15px;background:#fff;color:var(--k);display:grid;place-items:center;flex:none;box-shadow:inset 0 0 0 1px var(--c),0 6px 12px -6px var(--k)}
+.dv .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}.dv b{font-size:calc(16px*var(--u));font-weight:700;letter-spacing:-.01em}
+.dv .av{display:flex;align-items:center}.dv .av em{font-style:normal;font-size:calc(12px*var(--u));color:var(--mute);margin-left:10px}
+.dv .a{width:26px;height:26px;border-radius:50%;background:var(--c);color:var(--k);border:2px solid #fff;display:grid;place-items:center;font-size:calc(10px*var(--u));font-weight:700;margin-left:-8px}.dv .a:first-child{margin-left:0}.dv .a.p{background:#eef1f8;color:#4a5673}
+.dv .go{width:32px;height:32px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 1px #e6ebf6;display:grid;place-items:center;color:var(--k);flex:none}
+.BAR{--t:#eef4ff;--b:#cfe0fb;--c:#d5e5fc;--k:#1f5fd0}.FLOOR{--t:#edf9f3;--b:#c9ebdc;--c:#d1f0e1;--k:#119468}
+.CASHIER{--t:#f6f0fe;--b:#e0d5f7;--c:#e6dcf9;--k:#6b3fc8}.KITCHEN{--t:#fff6ec;--b:#f8e1c6;--c:#fde6cc;--k:#dd7710}
+.lg{display:flex;gap:4px;justify-content:space-between;background:#f0f4fc;border:1px solid var(--line);border-radius:10px;padding:8px 6px}
+.chip{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid var(--line);border-radius:99px;padding:4px 9px;font-size:calc(11px*var(--u));font-weight:600}
+.dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--dP)}.dot.sS{background:var(--dS)}.dot.sR{background:var(--dR)}.dot.sL{background:var(--dL)}
+.crumb{display:flex;align-items:center;gap:8px;color:var(--pri);font-weight:600;font-size:calc(12px*var(--u));line-height:1;margin:2px 0 12px}
+.crumb a{color:var(--pri);text-decoration:none;display:flex;align-items:center;min-height:24px}.crumb svg{display:block}.crumb i{font-style:normal;color:var(--mute)}.crumb span{color:var(--ink)}.crumb em{width:1px;height:13px;background:var(--line)}
+.seg{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;padding:3px;margin-bottom:12px}
+.seg button{flex:1;min-width:0;padding:0 2px;border:0;background:none;min-height:34px;border-radius:8px;font-weight:600;color:var(--mute);font-size:calc(11px*var(--u));letter-spacing:.3px;text-transform:uppercase}
+.seg button.on{background:var(--pri);color:#fff}
+.kh{display:flex;align-items:center;gap:8px;font-size:calc(15px*var(--u));font-weight:700}.kh em{margin-left:auto;font-style:normal;color:var(--mute);font-size:calc(12.5px*var(--u));font-weight:500}
+.ab{display:flex;gap:8px;margin-top:10px}.ab .btn{flex:1}
+.ab.cp{justify-content:center;margin-top:16px}.ab.cp .btn{flex:1 1 0;min-width:0;min-height:32px;padding:0 4px;font-size:calc(10px*var(--u));letter-spacing:.3px;border-radius:8px;gap:4px;white-space:nowrap}.ab.cp .btn svg{width:12px;height:12px;flex:none}
+.wk{display:flex;gap:6px;margin:10px 0}
+.wk button{flex:1;min-height:36px;border-radius:99px;border:1px solid var(--line);background:#fff;color:var(--mute);font-weight:600;font-size:calc(11px*var(--u));display:flex;align-items:center;justify-content:center;gap:5px}
+.wk button.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.sr{display:grid;grid-template-columns:minmax(58px,1.5fr) repeat(7,minmax(0,1fr));background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:7px;overflow:hidden}
+.sr>*{border-left:1px solid var(--line)}.sr>:first-child{border:0}
+.nm{padding:6px 4px 6px 9px;display:flex;align-items:center;flex-wrap:wrap;gap:0 2px;align-content:center;font-weight:700;font-size:calc(12.5px*var(--u))}
+.nm button{border:0;background:none;color:#6b7a9c;min-height:30px;min-width:28px;display:grid;place-items:center}
+.cl{border:0;background:none;padding:7px 0;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:calc(10px*var(--u));font-weight:500;color:var(--ink)}
+.cl b{font-size:calc(12px*var(--u));font-weight:600;margin-bottom:4px}
+.pill{border-radius:99px;font-size:calc(9.5px*var(--u));font-weight:700;padding:3px 0;width:calc(100% - 4px);text-align:center}
+.sP{background:var(--P);color:var(--Pt)}.sS{background:var(--S);color:var(--St)}.sR{background:var(--R);color:var(--Rt)}.sL{background:var(--L);color:var(--Lt)}
+.we,.we b{color:#c00000}
+.lh{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:#f0f4fc;border:1px solid var(--line);border-radius:10px;padding:8px 6px;margin-top:4px}
+.lh div{display:flex;gap:5px;font-size:calc(11px*var(--u));line-height:1.25}.lh div span{color:var(--mute);font-size:calc(9.5px*var(--u));display:block}.lh .dot{margin-top:3px}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:calc(12px*var(--u));text-align:center}
+td,th{padding:6px 2px;border-bottom:1px solid var(--line)}th{color:var(--mute);font-weight:600}
+td.lb2{text-align:left;font-weight:600;padding-left:8px}td.z{background:#fde1e4;color:#b4232f;font-weight:700}
+.cd{background:#fff;border:1px solid var(--line);border-radius:10px;padding:4px;margin:8px 0}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:10;background:#fff;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav div{max-width:480px;margin:auto;display:flex}
+nav button{flex:1;border:0;background:none;color:var(--mute);font-size:calc(11px*var(--u));font-weight:500;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative}
+nav button.on{color:var(--pri);font-weight:600}nav button.on::after{content:"";position:absolute;left:18%;right:18%;bottom:3px;height:2px;border-radius:2px;background:var(--pri)}
+.cfg{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 0;margin-top:8px}
+.cfg label,.cfg .ro{padding:0 8px;text-align:center;font-size:calc(10.5px*var(--u));color:var(--mute);font-weight:600;display:flex;flex-direction:column;gap:4px;text-transform:uppercase;letter-spacing:.3px}
+.cfg input,.cfg select{width:100%;min-width:0;min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 18px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235b6785' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center;-webkit-appearance:none;appearance:none;text-align:center;text-align-last:center;color:var(--ink);font-size:calc(13px*var(--u));text-transform:none;letter-spacing:0;font-weight:500}
+.cfg .ro b{font-size:calc(13px*var(--u));color:var(--ink);text-transform:none;letter-spacing:0;min-height:22px}.cfg .ro:last-child{grid-column:span 2}
+#shade{position:fixed;inset:0;background:#0b164688;display:none;z-index:20}
+#sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:#fff;border-radius:16px 16px 0 0;padding:16px 14px calc(16px + env(safe-area-inset-bottom));max-width:480px;margin:auto;transform:translateY(110%);transition:transform .2s;max-height:80vh;overflow:auto}
+#sheet.open{transform:none}#sheet h3{font-size:calc(15px*var(--u));font-weight:700;margin-bottom:10px}
+#sheet .o{display:grid;grid-template-columns:1fr 1fr;gap:8px}#sheet .o .pill{padding:10px 0;width:100%;font-size:calc(13px*var(--u));border:0}#sheet .o small{display:block;font-weight:500;font-size:calc(11px*var(--u))}
+#sheet input{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:0 10px;min-height:40px;margin-bottom:10px}
+.dl{display:grid;gap:6px}
+:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){#sheet{transition:none}}
+.cfg2{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px}
+.tl{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:0;display:flex;flex-direction:column;align-items:stretch;overflow:hidden}
+.tl small{font-size:calc(10.5px*var(--u));color:var(--mute);font-weight:600;text-transform:uppercase;letter-spacing:.3px;text-align:center;padding:8px 6px;background:#fff;border-bottom:1px solid var(--line)}.tl b,.tl .ok{margin:10px auto;text-align:center}.tl b{font-size:calc(17px*var(--u));font-weight:700;min-height:24px}
+/* tabel ala Excel (preview Print Jadwal & tab Jadwal Global) */
+.xs{overflow:auto;-webkit-overflow-scrolling:touch;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+.xw{width:max-content}
+.g{margin:0 -14px;--ox:0px}.g .xw{padding:0 14px 6px}
+.pv{background:#fff;border:1px solid var(--line);border-radius:10px;max-height:72vh;margin-bottom:10px;--ox:0px}.pv .xw{padding:8px}
+table.xt{border-collapse:separate;border-spacing:0;table-layout:fixed;width:auto;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:calc(10.5px*var(--u));line-height:1.1;color:#000;margin:0}
+.xt td{padding:0 3px;border:0;white-space:nowrap;overflow:hidden;text-overflow:clip;vertical-align:middle;box-sizing:border-box}
+.xt td.e{background:transparent}
+.xt td.fz{position:sticky;z-index:2}
+.xt td.sp{overflow:visible}
+.xt td.bx .bl{position:absolute;left:0;top:0;bottom:0;display:flex;align-items:center;padding-left:7px;background:inherit;white-space:nowrap}
+
+.xt .sk{position:sticky;left:calc(var(--ox) + 10px);display:inline-block;padding-left:10px}
+.xt td.ed{position:relative;cursor:pointer}.xt td.fz.ed{position:sticky}
+.xt .ds{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;cursor:pointer;font-size:calc(16px*var(--u))}
+/* Banner periode: tanggal awal & akhir dihubungkan garis berisi durasi; kolom kiri & kanan sama lebar agar tag tepat di tengah; ikon kalender (kiri atas) & terminal >_ (kanan atas) berwarna sama dengan judul; tahun di tengah bawah, satu sumbu dengan judul */
+.pk{margin:-10px -14px 14px;padding:12px 14px 16px;background:#1f2a44;color:#fff;border-bottom:3px solid #1b7f79}
+.pk-t{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;color:#aeb9d6;font-size:calc(11px*var(--u));font-weight:600;letter-spacing:.6px}
+.pk-t span{text-transform:uppercase;white-space:nowrap}.pk-t i{display:grid;place-items:center;line-height:0}.pk-t i:first-child{justify-self:start}.pk-t i:last-child{justify-self:end}
+.pk-y{font-size:calc(11px*var(--u));font-weight:600;letter-spacing:.6px;color:#aeb9d6;white-space:nowrap}
+.pk-d{display:grid;grid-template-columns:56px 1fr 56px;column-gap:10px;row-gap:1px;justify-items:center;align-items:center;margin-top:12px}
+.pk-d small{font-size:calc(11.5px*var(--u));font-weight:500;color:#aeb9d6;line-height:1.3}.pk-d small.w{color:#ff9b9b}
+.pk-d strong{font-size:calc(27px*var(--u));font-weight:700;letter-spacing:-.5px;line-height:1.15;white-space:nowrap}
+.pk-mo{font-size:calc(13px*var(--u));font-weight:600;color:#dbe3f5;line-height:1.3}
+.pk-l{justify-self:stretch;position:relative;display:flex;justify-content:center;align-items:center;min-height:24px;
+background:radial-gradient(circle at 3px 50%,#4fd1c5 3px,#0000 3.5px),radial-gradient(circle at calc(100% - 3px) 50%,#4fd1c5 3px,#0000 3.5px),linear-gradient(#ffffff3d,#ffffff3d) 0 50%/100% 1px no-repeat}
+.pk-l em{font-style:normal;font-size:calc(10.5px*var(--u));font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:#1f2a44;border:1px solid #ffffff3d;border-radius:99px;padding:3px 10px;white-space:nowrap}
+/* Ringkasan */
+.rd{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;box-shadow:0 1px 3px #0b16460a}
+.rd-h{padding:12px 14px 10px;font-size:calc(15px*var(--u));font-weight:700;letter-spacing:-.2px}
+.rd-s{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}.rd-s::-webkit-scrollbar{display:none}
+.rd-g{flex:0 0 100%;display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:2px 14px 14px;scroll-snap-align:start;scroll-snap-stop:always}
+.rd-s button{min-width:0;width:100%;min-height:54px;border:1px solid var(--line);background:#fff;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--mute);font-size:calc(11px*var(--u));font-weight:500}
+.rd-s button b{font-size:calc(15px*var(--u));color:var(--ink);font-weight:700}
+.rd-s button.on{background:var(--pri);border-color:var(--pri);color:#fff}.rd-s button.on b{color:#fff}
+.rd-s button.we:not(.on),.rd-s button.we:not(.on) b{color:#c00000}
+.dc{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 3px #0b16460a}
+.dc-h{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--t);border-bottom:1px solid var(--b)}
+.dc-h i{width:28px;height:28px;border-radius:50%;background:var(--c);color:var(--k);display:grid;place-items:center;flex:none}
+.dc-h b{font-size:calc(14px*var(--u));font-weight:700;letter-spacing:.2px}.dc-h span{margin-left:auto;color:var(--mute);font-size:calc(11px*var(--u));font-weight:500;text-transform:uppercase;letter-spacing:.4px}
+.dc-r{display:grid;grid-template-columns:108px 1fr 40px;align-items:stretch}.dc-r+.dc-r{border-top:1px solid var(--line)}
+.dc-s{display:flex;align-items:center;gap:7px;padding:9px 8px 9px 12px;background:#fafbfe;border-right:1px solid var(--line)}.dc-s b{display:block;font-size:calc(12.5px*var(--u));font-weight:600;line-height:1.2}.dc-s small{display:block;color:var(--mute);font-size:calc(10.5px*var(--u))}
+.dc-n{display:flex;align-items:center;padding:9px 8px 9px 10px;font-size:calc(12.5px*var(--u));line-height:1.4}.dc-n.no{color:#b4232f;font-weight:600}
+.dc-c{align-self:center;justify-self:center;font-style:normal;min-width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:var(--soft);color:var(--pri);font-size:calc(12px*var(--u));font-weight:700}.dc-c.no{background:#fde1e4;color:#b4232f}
+/* judul seksi */
+.sh{display:flex;align-items:center;gap:12px;margin:14px 0 12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.sh i{width:40px;height:40px;border-radius:12px;background:var(--soft);color:var(--pri);display:grid;place-items:center;flex:none}
+.sh b{display:block;font-size:calc(16px*var(--u));font-weight:700;letter-spacing:-.2px;line-height:1.25}.sh span{display:block;color:var(--mute);font-size:calc(12px*var(--u));line-height:1.4;margin-top:2px}
+#toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translate(-50%,10px);max-width:86vw;padding:9px 16px;border-radius:99px;background:#0f1b4ce6;color:#fff;font-size:calc(12.5px*var(--u));font-weight:600;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:30}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<div id="app"><header><div class="logo" id="lg"></div><b>California Pool &amp; Cafe</b><span class="badge">ADMIN</span><button class="mn" id="mn" aria-label="Menu"></button></header><main id="main"></main></div>
+<nav><div id="nav"></div></nav>
+<div id="shade"></div><div id="sheet" role="dialog" aria-modal="true"></div><div id="toast" role="status"></div>
+<script>
+const I={cal:'<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/>',term:'<rect x="3" y="4.5" width="18" height="15" rx="3"/><path d="m7.5 10 3 2.5-3 2.5M13 15h3.5"/>',
+chk:'<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17M9 15l2 2 4-4"/>',
+gear:'<path d="M19.08 10.23 L21.68 10.47 L21.68 13.53 L19.08 13.77 L18.26 15.76 L19.93 17.76 L17.76 19.93 L15.76 18.26 L13.77 19.08 L13.53 21.68 L10.47 21.68 L10.23 19.08 L8.24 18.26 L6.24 19.93 L4.07 17.76 L5.74 15.76 L4.92 13.77 L2.32 13.53 L2.32 10.47 L4.92 10.23 L5.74 8.24 L4.07 6.24 L6.24 4.07 L8.24 5.74 L10.23 4.92 L10.47 2.32 L13.53 2.32 L13.77 4.92 L15.76 5.74 L17.76 4.07 L19.93 6.24 L18.26 8.24Z"/><circle cx="12" cy="12" r="3"/>',
+usr:'<circle cx="9" cy="8" r="3.2"/><path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.4"/><path d="M17 13.8c2.4 0 4 1.7 4 4.2"/>',
+home:'<path d="M4 11 12 4l8 7v8.5a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z"/>',sum:'<rect x="5" y="4.5" width="14" height="16.5" rx="2.5"/><rect x="9" y="2.5" width="6" height="4" rx="1.2"/><path d="M9 11.5h6M9 15.5h4"/>',
+pen:'<path d="M4 20l1-4L16.5 4.5a2 2 0 0 1 3 3L8 19z"/>',rst:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',chev:'<path d="m9 6 6 6-6 6"/>',plus:'<path d="M12 5v14M5 12h14"/>',
+ok:'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',minus:'<path d="M5 12h14"/>',prn:'<path d="M7 9V4h10v5M7 17H5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2M7 14h10v6H7z"/>',dl:'<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',img:'<rect x="4" y="5" width="16" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m5 17 5-5 4 4 2-2 3 3"/>',menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+BAR:'<path d="M4 5h16l-8 9zM12 14v6M8 20h8"/>',FLOOR:'<path d="M4 9h16M6 9v10M18 9v10M4 5v4M20 5v4M9 13h6"/>',
+CASHIER:'<rect x="5" y="4" width="14" height="6" rx="1.5"/><path d="M3.5 10h17v9a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1zM8 14h8"/>',
+KITCHEN:'<path d="M7 20v-5a4 4 0 0 1-1-7.7A4 4 0 0 1 12 5a4 4 0 0 1 6 2.3A4 4 0 0 1 17 15v5zM7 17h10"/>'};
+const ico=(n,s=20)=>`<svg width="${Math.round(s*.7)}" height="${Math.round(s*.7)}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
+const BALL='<svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14.5" fill="#111827"/><ellipse cx="10.5" cy="9.5" rx="5.2" ry="3" transform="rotate(-35 10.5 9.5)" fill="#fff" opacity=".2"/><circle cx="16" cy="16" r="6.6" fill="#fff"/><text x="16" y="19.6" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="9.5" fill="#111827">8</text></svg>';
+const SH={P:['Pagi','09.00–17.00'],S:['Siang','11.30–19.30'],R:['Malam','16.30–00.30'],L:['Libur','Tidak bertugas'],'-':['','Kosong']};
+const MON=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sept','Okt','Nov','Des'],MONL=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'],DAY=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+const rows=s=>s.split(',').map(n=>({n,s:Array(14).fill('-')}));  /* semua sel shift awalnya kosong ('-') */
+const D={BAR:{t:'Bar',st:rows('Sadewa,Ana,Cecel,Iman,Rifky')},
+FLOOR:{t:'Floor',st:rows('Apen,Rosi,Silvi,Nindya,Dinar,Carmel')},
+CASHIER:{t:'Cashier',st:rows('Leli,Ririn,Ike')},
+KITCHEN:{t:'Kitchen',st:rows('Kitchen 1,Kitchen 2,Kitchen 3,Kitchen 4,Kitchen 5,Kitchen 6,Kitchen 7')}};
+const S={pr:'adm',view:'config',tab:'admin',div:'FLOOR',wk:0,sel:0,start:'2026-11-20'};
+Object.values(D).forEach(d=>d.h={P:'',S:'',R:'',L:'Tidak bertugas'});
+const $=s=>document.querySelector(s),esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const days=()=>{const b=new Date(S.start+'T00:00');return[...Array(14)].map((_,i)=>{const d=new Date(b);d.setDate(b.getDate()+i);return{d,n:DAY[d.getDay()],x:d.getDate(),we:d.getDay()%6==0}})};
+const f=d=>d.getDate()+' '+MON[d.getMonth()],rng=(a,b)=>a.getMonth()==b.getMonth()?a.getDate()+'–'+f(b):f(a)+'–'+f(b);
+const cnt=(k,i)=>{const c={P:0,S:0,R:0,L:0};D[k].st.forEach(p=>{const x=p.s[i];if(x in c)c[x]++});return c};
+const KS=[...'PSRL'];
+function close(){$('#sheet').classList.remove('open');$('#shade').style.display='none'}
+function open(h){$('#sheet').innerHTML=h;$('#sheet').classList.add('open');$('#shade').style.display='block'}
+$('#shade').onclick=close;$('#lg').innerHTML=BALL;$('#mn').innerHTML=ico('menu',26);
+/* ===== Tombol kembali / gestur geser kembali =====
+   BK = tumpukan halaman sebelumnya. Pindah ke halaman lain (go) menaruh halaman sekarang di BK; pindah ke Home mengosongkannya.
+   Kembali: tutup popup dulu -> halaman sebelumnya -> kalau sudah di Home, 2x kembali dalam 2 detik = keluar aplikasi.
+   Di Android, pendengar tombol kembali (jadwal/droid.py) memanggil window.__back; di browser dipakai riwayat (popstate). */
+const pageKey=()=>S.view=='config'?'config:'+S.tab:S.view,HOME='config:admin';
+const snap=()=>({view:S.view,tab:S.tab,pr:S.pr,div:S.div,wk:S.wk,sel:S.sel});
+const BK=[];
+function go(v,o={}){const from=snap(),k0=pageKey();close();Object.assign(S,{view:v},o);const k1=pageKey();
+if(k1!=k0){if(k1==HOME)BK.length=0;else BK.push(from)}draw();scrollTo(0,0)}
+let _tt;function toast(m,ms=2000){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('on'),ms)}
+async function exitApp(){try{const j=await(await fetch('/api/exit',{method:'POST'})).json();if(j.ok)return}catch(e){}history.go(-2)}
+let _bt=0,_bl=0;
+function onBack(){
+const now=Date.now();if(now-_bl<200)return;_bl=now;   /* satu tekan kembali kadang sampai 2x: yang kedua diabaikan */
+if($('#sheet').classList.contains('open')){close();return}
+if(BK.length){Object.assign(S,BK.pop());draw();scrollTo(0,0);return}
+if(pageKey()!=HOME){Object.assign(S,{view:'config',tab:'admin'});draw();scrollTo(0,0);return}
+const n=Date.now();if(n-_bt<2000){exitApp();return}
+_bt=n;toast('Tekan sekali lagi untuk keluar')}
+window.__back=onBack;
+/* Jebakan riwayat hanya untuk browser. Di Android WebView ("; wv)" di user agent) tombol kembali sudah ditangani droid.py -> window.__back,
+   dan riwayat WebView dibersihkan di sana; jebakan di sini malah bisa memicu onBack kedua kali. */
+if(!/; wv\)/.test(navigator.userAgent)){history.replaceState({jd:0},'');history.pushState({jd:1},'');
+addEventListener('popstate',e=>{if(e.state&&e.state.jd===0){onBack();history.pushState({jd:1},'')}})}
+$('#mn').onclick=()=>open(`<h3>Menu</h3><div style="display:grid;gap:8px"><button class="btn w" onclick="go('home')">Ringkasan</button><button class="btn w" onclick="go('config')">Home</button><button class="btn w" onclick="go('global')">Jadwal Global</button></div>`);
+function pick(i,j){const p=D[S.div].st[i],d=days()[j];open(`<h3>${esc(p.n)} · ${d.n} ${d.x} ${MON[d.d.getMonth()]}</h3><div class="o">${KS.map(c=>`<button class="pill s${c}" onclick="setS(${i},${j},'${c}')">${SH[c][0]}<small>${D[S.div].h[c]}</small></button>`).join('')}</div>`)}
+function rx(){persist();close();const o=$('.xs'),l=o?o.scrollLeft:0,t=o?o.scrollTop:0,y=scrollY;draw();const n=$('.xs');if(n){n.scrollLeft=l;n.scrollTop=t}scrollTo(0,y)}
+function setS(i,j,c){D[S.div].st[i].s[j]=c;rx()}
+function hrs(q){const v=D[S.div].h[q],m=v.match(/(\d{1,2})[.:](\d{2})\s*[–-]\s*(\d{1,2})[.:](\d{2})/),p=n=>String(n).padStart(2,'0');
+open(`<h3>Jam kerja ${SH[q][0]}</h3>`+(q=='L'?`<input type="text" id="h1" value="${esc(v)}">`:`<div style="display:flex;gap:8px"><input type="time" id="h1" value="${m?p(m[1])+':'+m[2]:'09:00'}"><input type="time" id="h2" value="${m?p(m[3])+':'+m[4]:'17:00'}"></div>`)+`<div style="display:flex;gap:8px;margin-top:10px"><button class="btn" style="flex:1" onclick="saveH('${q}')">Simpan</button><button class="btn dg" onclick="clrH('${q}')">Kosongkan</button></div>`)}
+function clrH(q){D[S.div].h[q]='';rx()}
+function saveH(q){const a=$('#h1').value,b=$('#h2')?$('#h2').value:'';if(!a||(q!='L'&&!b))return;D[S.div].h[q]=q=='L'?a.trim():a.replace(':','.')+'–'+b.replace(':','.');rx()}
+function staff(i){const p=i<0?{n:''}:D[S.div].st[i];open(`<h3>${i<0?'Tambah staff':'Ubah staff'}</h3><input type="text" id="nm" value="${esc(p.n)}" placeholder="Nama staff" autocomplete="off"><div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="saveS(${i})">Simpan</button>${i<0?'':`<button class="btn dg" onclick="delS(${i})">Hapus</button>`}</div>`);$('#nm').focus()}
+function saveS(i){const n=$('#nm').value.trim();if(!n)return;if(i<0)D[S.div].st.push({n,s:Array(14).fill('-')});else D[S.div].st[i].n=n;rx()}
+function delS(i){D[S.div].st.splice(i,1);rx()}
+/* Reset jadwal divisi: kosongkan semua sel shift staff + jam kerja Pagi/Siang/Malam (Libur kembali ke teks bawaan); nama staff tetap */
+function rstAsk(){open(`<h3>Reset jadwal ${esc(D[S.div].t)}?</h3><p class="sub">Semua shift dan jam kerja divisi ini dikosongkan.</p><div style="display:flex;gap:8px"><button class="btn dg" style="flex:1" onclick="rstDiv()">Reset</button><button class="btn" style="flex:1" onclick="close()">Batal</button></div>`)}
+function rstDiv(){const d=D[S.div];d.st.forEach(p=>{p.s=Array(14).fill('-')});d.h={P:'',S:'',R:'',L:'Tidak bertugas'};rx()}
+function delList(){const l=D[S.div].st;open(`<h3>Hapus staff</h3>${l.length?`<div class="dl">${l.map((p,i)=>`<button class="btn dg w" onclick="delAsk(${i})">${esc(p.n)}</button>`).join('')}</div>`:'<p class="sub">Belum ada staff.</p>'}`)}
+function delAsk(i){open(`<h3>Hapus ${esc(D[S.div].st[i].n)}?</h3><p class="sub">Jadwal staff ini ikut terhapus.</p><div style="display:flex;gap:8px"><button class="btn dg" style="flex:1" onclick="delS(${i})">Ya, hapus</button><button class="btn" style="flex:1" onclick="close()">Batal</button></div>`)}
+function per(){open(`<h3>Ubah periode</h3><label for="sd" class="mut" style="font-size:calc(13px*var(--u));color:var(--mute)">Tanggal mulai (14 hari)</label><input type="date" id="sd" value="${S.start}" style="margin-top:6px"><button class="btn w" onclick="S.start=$('#sd').value||S.start;S.sel=todayIdx();close();draw()">Simpan periode</button>`)}
+const chips=()=>`<div class="lg">${KS.map(c=>`<span class="chip"><i class="dot s${c}"></i>${SH[c][0]}</span>`).join('')}</div>`;
+const hours=k=>`<div class="lh">${KS.map(c=>`<div><i class="dot s${c}"></i><b style="font-weight:600">${SH[c][0]}<span>${D[k].h[c]?'('+D[k].h[c]+')':''}</span></b></div>`).join('')}</div>`;
+/* Banner periode: baris atas = teks PERIODE JADWAL tepat di tengah (satu sumbu dengan tag 14 HARI) + ikon di pojok, tahun di tengah bawah; di bawahnya hari/tanggal/bulan kiri & kanan dihubungkan garis berisi tag durasi. Nama hari merah = Sabtu/Minggu */
+function periodFull(){const a=days(),s=a[0].d,e=a[13].d,y=s.getFullYear()==e.getFullYear()?e.getFullYear():s.getFullYear()+' – '+e.getFullYear();
+return`<section class="pk"><div class="pk-t"><i>${ico('cal',24)}</i><span>Periode jadwal</span><i>${ico('term',24)}</i></div><div class="pk-d"><small${a[0].we?' class="w"':''}>${DAYL[s.getDay()]}</small><i></i><small${a[13].we?' class="w"':''}>${DAYL[e.getDay()]}</small><strong>${s.getDate()}</strong><span class="pk-l"><em>14 hari</em></span><strong>${e.getDate()}</strong><span class="pk-mo">${MON[s.getMonth()]}</span><b class="pk-y">${y}</b><span class="pk-mo">${MON[e.getMonth()]}</span></div></section>`}
+function periodMini(){return periodFull()}
+/* ===== Model tabel ala Excel: satu sumber untuk preview, Excel, dan PNG ===== */
+const SC={P:['#bdd7ee','#1f4e79'],S:['#ffe699','#7f6000'],R:['#f6b26b','#7f3f00'],L:['#ededed','#7f7f7f'],'-':['#ffffff','#000000']},
+NAVY='#1f2a44',TEAL='#1b7f79',SL1='#44546a',SL2='#5f7392',RED='#c00000',LN='#7f7f7f',
+hh=s=>s.replace(/\s*–\s*/,' – ');
+const mspans=a=>{const o=[];a.forEach((x,i)=>{const m=x.d.getMonth(),l=o[o.length-1];if(l&&l.m==m)l.n++;else o.push({m,i,n:1})});return o};
+function ptxt(){const a=days(),s=a[0].d,e=a[13].d;return'Periode: '+DAYL[s.getDay()]+', '+s.getDate()+' '+MONL[s.getMonth()]+(s.getFullYear()!=e.getFullYear()?' '+s.getFullYear():'')+' – '+DAYL[e.getDay()]+', '+e.getDate()+' '+MONL[e.getMonth()]+' '+e.getFullYear()+'  (14 hari)'}
+function model(kind,only,ed){
+const adm=kind=='adm',a=days(),cells=[],H=[],W=[30,92,...Array(14).fill(46),...(adm?[42,42,42,56,42]:[12,48,48,48,48])];
+const add=(r,c,t,o)=>cells.push({r,c,rs:1,cs:1,t:String(t),bg:'#fff',fg:'#000',b:0,fs:10.5,al:'c',...o});
+const fr=(r0,c0,r1,c1)=>cells.forEach(x=>{if(x.nb||x.r<r0||x.c<c0||x.r>r1||x.c>c1)return;if(x.r==r0)x.ft=1;if(x.r+x.rs-1==r1)x.fb=1;if(x.c==c0)x.fl=1;if(x.c+x.cs-1==c1)x.fr=1});
+let r=0;if(!only){H[0]=32;add(0,0,'JADWAL KERJA',{cs:21,bg:NAVY,fg:'#fff',b:1,fs:15,al:'l',nb:1,sp:1});
+H[1]=24;add(1,0,ptxt(),{cs:21,bg:'#dce6f1',fg:NAVY,b:1,fs:11,al:'l',nb:1,sp:1});H[2]=12;r=3}
+(only?[only]:Object.keys(D)).forEach((k,bi)=>{
+if(bi){H[r]=14;r++}
+const st=D[k].st,n=st.length,rows=adm?3+n:Math.max(3+n,5),t=D[k].t.toUpperCase(),nv={bg:NAVY,fg:'#fff',b:1,fs:10};
+H[r]=H[r+1]=H[r+2]=20;
+add(r,0,t,{rs:2,cs:2,bg:TEAL,fg:'#fff',b:1,fs:11});
+mspans(a).forEach(m=>add(r,2+m.i,m.n<2?MON[m.m].toUpperCase():MONL[m.m].toUpperCase(),{cs:m.n,bg:m.m%2?SL2:SL1,fg:'#fff',b:1,fs:8.5}));
+a.forEach((d,j)=>{const o={...nv,bg:d.we?RED:NAVY};add(r+1,2+j,d.n,o);add(r+2,2+j,d.x,o)});
+add(r+2,0,'NO',nv);add(r+2,1,'NAMA',nv);
+st.forEach((p,i)=>{const y=r+3+i,c={P:0,S:0,R:0,L:0};p.s.forEach(x=>{if(x in c)c[x]++});
+add(y,0,i+1);add(y,1,p.n,{al:'l',ed:{t:'n',i}});
+p.s.forEach((x,j)=>add(y,2+j,SH[x][0],{bg:SC[x][0],fg:SC[x][1],b:x!='L'?1:0,ed:{t:'s',i,j,v:x}}));
+if(adm){add(y,16,c.P);add(y,17,c.S);add(y,18,c.R);add(y,19,c.P+c.S+c.R,{bg:'#f2f2f2',b:1});add(y,20,c.L)}});
+for(let y=r+3;y<r+rows;y++)H[y]=22;
+fr(r,0,r+2+n,15);
+if(adm){
+add(r,16,'REKAP SHIFT (2 MINGGU)',{cs:5,bg:SL1,fg:'#fff',b:1});
+['P','S','R'].forEach((q,i)=>add(r+1,16+i,SH[q][0],{rs:2,bg:SC[q][0],fg:SC[q][1],b:1}));
+add(r+1,19,'Total Shift',{rs:2,...nv});add(r+1,20,'Libur',{rs:2,bg:SC.L[0],fg:SC.L[1],b:1});
+fr(r,16,r+2+n,20);
+const e=r+3+n;H[e]=22;
+add(e,0,'JUMLAH STAFF PER SHIFT',{cs:16,bg:'#d9d9d9',fg:'#404040',b:1,al:'l',sp:1});
+add(e,16,'SHIFT',{cs:3,bg:SL1,fg:'#fff',b:1});add(e,19,'JAM KERJA',{cs:2,bg:SL1,fg:'#fff',b:1});
+KS.forEach((q,i)=>{const y=e+1+i,[bg,fg]=SC[q];H[y]=22;
+add(y,0,SH[q][0],{cs:2,bg,fg,b:1,al:'l'});
+a.forEach((d,j)=>{const z=cnt(k,j)[q],bad=!z&&q!='L';add(y,2+j,z,{bg:bad?'#ffc7ce':bg,fg:bad?'#9c0006':fg,b:1})});
+add(y,16,SH[q][0],{cs:3,bg,fg,b:1,al:'l'});add(y,19,hh(D[k].h[q]),{cs:2,bg,fg,ed:{t:'h',q}})});
+fr(e,0,e+4,15);fr(e,16,e+4,20);cells.forEach(x=>{if(x.c==16)x.fl=0;if(x.r==e)x.ft=0});r=e+5}
+else{
+add(r,17,'SHIFT '+t,{cs:2,bg:SL1,fg:'#fff',b:1,fs:10});add(r,19,'JAM KERJA',{cs:2,bg:SL1,fg:'#fff',b:1,fs:10});
+KS.forEach((q,i)=>{const[bg,fg]=SC[q];add(r+1+i,17,SH[q][0],{cs:2,bg,fg,b:1,al:'l'});add(r+1+i,19,hh(D[k].h[q]),{cs:2,bg,fg})});
+fr(r,17,r+4,20);r+=rows}
+});
+return{W,H,cells,ed:!!ed}}
+const bd=(x,T,M)=>x.nb?'':(x.nr?'':`border-right:${x.fr?M:T} solid ${LN};`)+`border-bottom:${x.fb?M:T} solid ${LN};`+(x.fl?`border-left:${M} solid ${LN};`:'')+(x.ft?`border-top:${M} solid ${LN};`:'');
+/* label "JUMLAH STAFF PER SHIFT" memakai --ub (diukur terpisah di dalam .bl) */
+function bar(x,T,M){const s=`background:${x.bg};color:${x.fg};font-weight:${x.b?700:400};`;
+return`<td colspan="2" class="fz sp bx" style="${s}font-size:calc(${x.fs}px*var(--ub));left:var(--ox);${bd({...x,nr:1},T,M)}"><span class="bl">${esc(x.t)}</span></td><td colspan="${x.cs-2}" style="${s}${bd({...x,fl:0},T,M)}"></td>`}
+const edx=(M,x)=>{if(!M.ed||!x.ed)return['','',''];const o=x.ed;return[' ed',o.t=='n'?` onclick="staff(${o.i})"`:o.t=='h'?` onclick="hrs('${o.q}')"`:'',o.t=='s'?`<select class="ds" aria-label="Pilih shift" onchange="setS(${o.i},${o.j},this.value)">${[...KS,'-'].map(c=>`<option value="${c}"${c==o.v?' selected':''}>${c=='-'?'Kosong':SH[c][0]}</option>`).join('')}</select>`:'']};
+/* FS: di layar pakai calc(px*--u); untuk ekspor Excel (stk=false) tetap px biasa */
+function xt(M,stk){const T1=stk?'var(--tn)':'1px',T2=stk?'var(--md)':'2px',FS=stk?(v=>`calc(${v}px*var(--u))`):(v=>v+'px'),by={},occ=new Set(),NC=M.W.length,TW=M.W.reduce((p,q)=>p+q,0);
+M.cells.forEach(x=>{(by[x.r]=by[x.r]||{})[x.c]=x;for(let i=0;i<x.rs;i++)for(let j=0;j<x.cs;j++)if(i||j)occ.add((x.r+i)+','+(x.c+j))});
+let h=`<table class="xt" style="width:${TW}px"><colgroup>${M.W.map(w=>`<col width="${w}" style="width:${w}px">`).join('')}</colgroup>`;
+M.H.forEach((ht,r)=>{h+=`<tr height="${ht}" style="height:${ht}px">`;
+for(let c=0;c<NC;c++){const x=(by[r]||{})[c];
+if(x&&stk&&x.sp&&!x.nb&&!x.c&&x.cs>2)h+=bar(x,T1,T2);
+else if(x){const fz=stk&&x.c<2&&x.c+x.cs<=2,sp=stk&&x.sp;
+let st=`background:${x.bg};color:${x.fg};font-size:${FS(x.fs)};font-weight:${x.b?700:400};text-align:${x.al=='l'?'left':'center'};${x.al=='l'?'padding-left:7px;':''}${bd(x,T1,T2)}`;
+const E=edx(M,x);if(fz)st+=`left:calc(var(--ox) + ${x.c?M.W[0]:0}px);`;
+h+=`<td${x.rs>1?` rowspan="${x.rs}"`:''}${x.cs>1?` colspan="${x.cs}"`:''}${fz?' class="fz'+E[0]+'"':sp?' class="sp"':E[0]?' class="ed"':''}${E[1]} style="${st}">${sp?`<span class="sk">${esc(x.t)}</span>`:esc(x.t)}${E[2]}</td>`}
+else if(!occ.has(r+','+c))h+='<td class="e"></td>'}
+h+='</tr>'});
+return h+'</table>'}
+const xv=(kind,cls,only)=>`<div class="xs ${cls}"><div class="xw">${xt(model(kind,only,!!only),true)}</div></div>`;
+function save(b,n){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.style.display='none';document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(a.href)},1500)}
+/* ===== Terhubung ke server lokal (jadwal/server.py): simpan otomatis + export Excel/PNG dibuat oleh Python ===== */
+const payload=()=>({start:S.start,divisions:Object.keys(D).map(k=>({key:k,title:D[k].t,hours:D[k].h,staff:D[k].st.map(p=>({name:p.n,shifts:p.s.join('')}))}))});
+let _sv;function persist(){clearTimeout(_sv);_sv=setTimeout(()=>{fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload())}).catch(()=>{})},400)}
+async function loadState(){try{const r=await fetch('/api/state');if(!r.ok)return;const p=await r.json();if(p&&/^\d{4}-\d{2}-\d{2}$/.test(p.start))S.start=p.start;(p.divisions||[]).forEach(v=>{const d=D[v.key];if(!d)return;d.st=v.staff.map(x=>({n:x.name,s:[...x.shifts]}));d.h=Object.assign(d.h,v.hours)})}catch(e){}}
+async function exportFile(kind){const bs=()=>document.querySelectorAll('.ab .btn');bs().forEach(b=>b.disabled=true);
+try{const r=await fetch('/api/export/'+kind,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload(),sheet:S.pr})});
+if(!r.ok){let m='Server menolak permintaan ('+r.status+').';try{m=(await r.json()).error||m}catch(e){}throw new Error(m)}
+if((r.headers.get('Content-Type')||'').includes('application/json')){const j=await r.json();toast('Tersimpan di Downloads: '+j.saved,3500);return}
+const name=(/filename="?([^";]+)"?/.exec(r.headers.get('Content-Disposition')||'')||[])[1]||('jadwal.'+kind);
+save(await r.blob(),name)}
+catch(e){open('<h3>Gagal membuat file</h3><p style="margin:8px 0 0;line-height:1.5">'+esc(String(e.message||e))+'</p>')}
+finally{bs().forEach(b=>b.disabled=false)}}
+const xls=()=>exportFile('xlsx'),png=()=>exportFile('png');
+const PR=[['adm','Administrator'],['gl','Jadwal Global'],['all','Semua Sheet']];
+const prAll=()=>`<div class="pv" style="padding:14px 14px 4px"><div class="kh">Semua Sheet</div><p class="sub" style="margin:8px 0 10px;line-height:1.5">Satu file Excel (<b>jadwal_kerja.xlsx</b>) berisi 3 Sheet: <b>Config</b>, <b>Administrator</b>, dan <b>Jadwal Global</b>. Rumus dan Dropdown Shift tetap ada, jadi bisa diedit di komputer.</p></div>`;
+function prBody(){const all=S.pr=='all';return`<div class="seg" style="margin-top:14px">${PR.map(([k,l])=>`<button class="${S.pr==k?'on':''}" onclick="go('config',{pr:'${k}'})">${l}</button>`).join('')}</div>${all?prAll():xv(S.pr,'pv')}<div class="ab"><button class="btn" onclick="xls()">${ico('dl',20)}Download Excel</button>${all?'':`<button class="btn" onclick="png()">${ico('img',20)}Save PNG</button>`}</div>`}
+const tabs=()=>`<div class="tb">${[['config','gear','Settings'],['admin','usr','Administrator'],['print','prn','Print Jadwal']].map(([k,i,l])=>`<button class="${S.tab==k?'on':''}" onclick="go('config',{tab:'${k}'})">${ico(i,19)}<span>${l}</span></button>`).join('')}</div>`;
+const sh=(i,t,d)=>`<div class="sh"><i>${ico(i,26)}</i><div><b>${t}</b><span>${d}</span></div></div>`;
+/* Inisial avatar otomatis dari nama staff: 1 kata = 1 huruf, 2+ kata = huruf awal 2 kata pertama (mis. "Kitchen 1" = K1). Maks. 3 avatar, sisanya +N */
+const ini=n=>{const w=String(n||'').trim().split(/\s+/).filter(Boolean);return w.length?esc(w.slice(0,2).map(x=>[...x][0]).join('').toUpperCase()):'•'};
+const avs=k=>{const s=D[k].st;return s.slice(0,3).map(p=>`<span class="a">${ini(p.n)}</span>`).join('')+(s.length>3?`<span class="a p">+${s.length-3}</span>`:'')};
+const hdA=()=>{const n=Object.keys(D).length,t=Object.values(D).reduce((a,d)=>a+d.st.length,0);return`<div class="hda"><h2>Kelola Divisi</h2><span>${n} DIVISI · ${t} STAFF</span></div>`};
+const DAYL=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+function cfgBody(){const[y,m,d]=S.start.split('-').map(Number);return`<div class="cfg"><label>Tanggal<select id="cd" onchange="cfgSet()">${[...Array(31)].map((_,i)=>`<option value="${i+1}"${i+1==d?' selected':''}>${i+1}</option>`).join('')}</select></label><label>Bulan<select id="cm" onchange="cfgSet()">${MONL.map((n,i)=>`<option value="${i+1}"${i+1==m?' selected':''}>${n}</option>`).join('')}</select></label><label>Tahun<select id="cy" onchange="cfgSet()">${Array.from({length:Math.max(2040,y)-Math.min(2025,y)+1},(_,i)=>Math.min(2025,y)+i).map(v=>`<option value="${v}"${v==y?' selected':''}>${v}</option>`).join('')}</select></label></div><div class="cfg2"><div class="tl"><small>Hari</small><b id="ch">${DAYL[new Date(y,m-1,d).getDay()]}</b></div><div class="tl"><small>Check</small><span class="ok" id="ck">${ico('ok',16)}Sesuai kalender</span></div></div>`}
+function cfgSet(){const d=+$('#cd').value,m=+$('#cm').value,y=+$('#cy').value,t=new Date(y,m-1,d),v=t.getFullYear()==y&&t.getMonth()==m-1&&t.getDate()==d;
+$('#ck').className='ok'+(v?'':' no');$('#ck').innerHTML=v?ico('ok',16)+'Sesuai kalender':'Tanggal tidak valid';
+if(v){S.start=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;$('#ch').textContent=DAYL[t.getDay()];$('.pk').outerHTML=periodFull();S.sel=todayIdx();persist()}}
+const V={
+home(){const a=days(),x=a[S.sel];return`<div class="rd"><div class="rd-h">${DAYL[x.d.getDay()]}, ${x.x} ${MONL[x.d.getMonth()]} ${x.d.getFullYear()}</div><div class="rd-s">${[0,1].map(g=>`<div class="rd-g">${a.slice(g*7,g*7+7).map((y,i)=>{const n=g*7+i;return`<button class="${n==S.sel?'on':''}${y.we?' we':''}" onclick="go('home',{sel:${n}})">${y.n}<b>${y.x}</b></button>`}).join('')}</div>`).join('')}</div></div>
+${Object.keys(D).map(k=>`<section class="dc ${k}"><div class="dc-h"><i>${ico(k,19)}</i><b>${D[k].t}</b><span>${D[k].st.length} staff</span></div>${KS.map(c=>{const n=D[k].st.filter(p=>p.s[S.sel]==c).map(p=>esc(p.n));return`<div class="dc-r"><div class="dc-s"><i class="dot s${c}"></i><div><b>${SH[c][0]}</b>${c=='L'||!D[k].h[c]?'':`<small>${hh(D[k].h[c])}</small>`}</div></div><div class="dc-n">${n.join(', ')||'–'}</div><em class="dc-c">${n.length}</em></div>`}).join('')}</section>`).join('')}`},
+config(){let b;if(S.tab=='config')b=cfgBody();
+else if(S.tab=='print')b=prBody();
+else b=`${hdA()}<div class="dvs">${Object.keys(D).map(k=>`<button class="dv ${k}" onclick="go('div',{div:'${k}',wk:0})"><i>${ico(k,34)}</i><span class="tx"><b>${esc(D[k].t)}</b><span class="av">${avs(k)}<em>${D[k].st.length} STAFF</em></span></span><em class="go">${ico('chev',22)}</em></button>`).join('')}</div>`;
+return`${periodFull()}${tabs()}${b}`},
+div(){const k=S.div,t=D[k].t;return`${periodMini()}<div class="crumb"><a href="#" onclick="go('config',{tab:'admin'});return false" aria-label="Home">${ico('home',22)}</a><em></em><a href="#" onclick="go('config',{tab:'admin'});return false">Administrator</a><i>/</i><span>${t}</span></div>
+<div class="seg">${Object.keys(D).map(x=>`<button class="${x==k?'on':''}" onclick="go('div',{div:'${x}'})">${D[x].t}</button>`).join('')}</div>
+${xv('adm','pv',k)}
+<div class="ab cp"><button class="btn gn" onclick="staff(-1)">${ico('plus',20)}TAMBAH STAFF</button><button class="btn gy" onclick="rstAsk()">${ico('rst',20)}RESET JADWAL</button><button class="btn dg" onclick="delList()">${ico('minus',20)}HAPUS STAFF</button></div>`},
+global(){return xv('gl','g')}};
+function draw(){$('#main').innerHTML=V[S.view]();const q=$('.rd-s');if(q)q.scrollLeft=Math.floor(S.sel/7)*q.clientWidth;const cur=S.view=='home'?'home':S.view=='global'?'global':'config';
+$('#nav').innerHTML=[['home','sum','Ringkasan'],['config','home','Home'],['global','cal','Jadwal Global']].map(([k,i,l])=>`<button class="${k==cur?'on':''}" onclick="go('${k}')">${ico(i,26)}${l}</button>`).join('');lock()}
+function bw(){const d=devicePixelRatio||1,p=n=>((n+.01)/d).toFixed(3)+'px',r=document.documentElement.style;r.setProperty('--tn',p(1));r.setProperty('--md',p(2))}
+bw();addEventListener('resize',bw);
+/* ===== Kunci skala teks =====
+   Chrome, WebView (Acode), dll. bisa menskalakan teks dengan faktor berbeda (ukuran layout px tetap sama, hanya teks yang berubah).
+   kOf() mengukur faktor itu (lebar teks uji di DOM dibanding canvas, yang tidak ikut diskalakan), lalu lock() mengompensasi lewat
+   --u (teks umum & tabel) dan --ub (label "JUMLAH STAFF PER SHIFT"), sehingga ukuran akhir selalu TS x angka px di CSS. */
+const TS=.8;
+function kOf(h){const p=document.createElement('span'),t='mmmmmmmmmmmmmmmm',F='20px Arial,Helvetica,sans-serif';
+p.textContent=t;p.style.cssText='font:'+F+';font-feature-settings:normal;letter-spacing:0;white-space:nowrap;visibility:hidden';
+h.appendChild(p);const w=p.getBoundingClientRect().width;p.remove();
+const g=kOf.g||(kOf.g=document.createElement('canvas').getContext('2d'));g.font=F;
+const k=w/g.measureText(t).width;return k>.3&&k<4?k:1}
+function lock(){const m=$('#main');if(!m)return;
+const h=document.createElement('div');m.appendChild(h);const k=kOf(h);h.remove();
+const r=document.documentElement.style,u=TS/k,b=$('.bl');
+r.setProperty('--u',u.toFixed(4));r.setProperty('--ub',(b?TS/kOf(b):u).toFixed(4))}
+addEventListener('resize',lock);
+/* ===== Penanda tanggal Ringkasan: otomatis = hari ini (berganti saat tengah malam). Hari ini di luar periode (kurang/lebih) -> hari pertama ===== */
+const ymd=d=>d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
+const todayIdx=()=>{const n=ymd(new Date()),i=days().findIndex(x=>ymd(x.d)==n);return i<0?0:i};
+let _today=ymd(new Date());
+function tickDay(){const t=ymd(new Date());if(t==_today)return;_today=t;S.sel=todayIdx();if(S.view=='home')draw()}
+setInterval(tickDay,20000);addEventListener('focus',tickDay);document.addEventListener('visibilitychange',()=>{if(!document.hidden)tickDay()});
+loadState().finally(()=>{S.sel=todayIdx();draw()});
+</script>
+</body>
+</html>
