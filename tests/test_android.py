@@ -184,22 +184,38 @@ class HookTema(unittest.TestCase):
                             "class A { void f(){ a = new WebView(x); b = new WebView(y); } }"):
             self.assertEqual(hook.patch_java(tidak_pasti), tidak_pasti)
 
-    def test_tombol_kembali_activity_diteruskan_ke_javascript(self):
+    def test_tombol_kembali_onkeydown_p4a_diteruskan_ke_javascript(self):
+        """Bentuk asli dari log build p4a: onKeyDown(int keyCode, KeyEvent event) -> goBack() / toast bawaan."""
         hook = self._hook()
         sumber = ("public class PythonActivity extends Activity {\n"
-                  "  @Override\n  public void onBackPressed() {\n"
-                  "    if (ganda) { super.onBackPressed(); return; }\n"
-                  '    Toast.makeText(this, "Tap again to close the app", 0).show();\n  }\n}\n')
+                  "  @Override\n  public boolean onKeyDown(int keyCode, KeyEvent event) {\n"
+                  "    if (keyCode == KeyEvent.KEYCODE_BACK) {\n"
+                  "      mWebView.goBack();\n"
+                  '      Toast.makeText(this, "Tap again to close the app", Toast.LENGTH_LONG).show();\n'
+                  "      return true;\n    }\n    return super.onKeyDown(keyCode, event);\n  }\n}\n")
         out = hook.patch_back(sumber)
         self.assertIn("window.__back && window.__back()", out)
-        self.assertIn("evaluateJavascript", out)
+        self.assertIn("if (keyCode == android.view.KeyEvent.KEYCODE_BACK)", out)         # nama parameter ikut dari kode asli
+        self.assertIn("event.getRepeatCount() == 0", out)
         self.assertLess(out.index("window.__back"), out.index("Tap again"))               # sebelum kode bawaan p4a
-        self.assertLess(out.index("@Override"), out.index("onBackPressed"))                # anotasi tidak terpisah dari metodenya
+        self.assertLess(out.index("@Override"), out.index("onKeyDown"))                    # anotasi tidak terpisah dari metodenya
         self.assertEqual(out.count("{") - out.count("}"), sumber.count("{") - sumber.count("}"))   # kurung seimbang
         self.assertEqual(hook.patch_back(out), out)                                        # aman dijalankan berulang
+        lain = hook.patch_back("class A { boolean onKeyDown(final int k, final android.view.KeyEvent ev) { return false; } }")
+        self.assertIn("if (k == android.view.KeyEvent.KEYCODE_BACK)", lain)
+        self.assertIn("ev.getRepeatCount()", lain)
         for tidak_pasti in ("class A { void f(){} }",
-                            "class A { void onBackPressed(){} void onBackPressed(){} }"):
+                            "class A { boolean onKeyDown(int k, KeyEvent e){return false;} boolean onKeyDown(int k, KeyEvent e){return false;} }"):
             self.assertEqual(hook.patch_back(tidak_pasti), tidak_pasti)
+
+    def test_tombol_kembali_onbackpressed_juga_ditangani_kalau_ada(self):
+        hook = self._hook()
+        sumber = "public class P extends Activity {\n  @Override\n  public void onBackPressed() {\n    super.onBackPressed();\n  }\n}\n"
+        out = hook.patch_back(sumber)
+        self.assertIn("window.__back && window.__back()", out)
+        self.assertLess(out.index("@Override"), out.index("onBackPressed"))
+        self.assertEqual(out.count("{") - out.count("}"), sumber.count("{") - sumber.count("}"))
+        self.assertEqual(hook.patch_back(out), out)
 
     def test_peringatan_tombol_kembali_menampilkan_kode_asli(self):
         import contextlib, io, tempfile
@@ -244,7 +260,7 @@ class HookTema(unittest.TestCase):
             java.write_text("class P { void f(){ mWebView = new WebView(this); } }", encoding="utf-8")
             hook.before_apk_build(SimpleNamespace(_dist=SimpleNamespace(dist_dir=str(dist))))
             self.assertIn("mWebView.setBackgroundColor(0xFFF6F8FC);", java.read_text(encoding="utf-8"))
-            java.write_text("class P { void onBackPressed() { super.onBackPressed(); } }", encoding="utf-8")
+            java.write_text("class P { boolean onKeyDown(int keyCode, KeyEvent event) { return false; } }", encoding="utf-8")
             hook.before_apk_build(SimpleNamespace(_dist=SimpleNamespace(dist_dir=str(dist))))
             self.assertIn("window.__back", java.read_text(encoding="utf-8"))
             for sub in ("values", "values-v31"):

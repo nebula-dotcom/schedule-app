@@ -93,9 +93,12 @@ def patch_java(text: str) -> str:
 
 
 BACK_TANDA = "/* jadwal: tombol kembali */"
+# p4a (webview): tombol kembali ditangani di onKeyDown(int keyCode, KeyEvent event) -> goBack() atau toast "Tap again to close the app".
+BACK_KEYDOWN = re.compile(r"\bboolean\s+onKeyDown\s*\(\s*(?:final\s+)?int\s+(?P<k>\w+)\s*,\s*"
+                          r"(?:final\s+)?(?:android\.view\.)?KeyEvent\s+(?P<e>\w+)\s*\)\s*(?:throws[^{]*)?\{")
 BACK_METODE = re.compile(r"\bvoid\s+onBackPressed\s*\(\s*\)\s*(?:throws[^{]*)?\{")
-BACK_JAVA = """
-        { android.webkit.WebView __jw = null;
+BACK_CARI = """
+          android.webkit.WebView __jw = null;
           java.util.ArrayDeque<android.view.View> __jq = new java.util.ArrayDeque<android.view.View>();
           __jq.add(getWindow().getDecorView());
           while (!__jq.isEmpty() && __jw == null) {
@@ -106,30 +109,45 @@ BACK_JAVA = """
               for (int __ji = 0; __ji < __jg.getChildCount(); __ji++) { __jq.add(__jg.getChildAt(__ji)); }
             }
           }
-          if (__jw != null) {
-            String __ju = __jw.getUrl();
-            if (__ju != null && __ju.split("[?#]")[0].replaceAll("/+$", "").endsWith("/app")) {
-              __jw.evaluateJavascript("window.__back && window.__back()", null);
-              return;
-            }
+          String __ju = (__jw == null) ? null : __jw.getUrl();
+          boolean __japp = __ju != null && __ju.split("[?#]")[0].replaceAll("/+$", "").endsWith("/app");
+"""
+BACK_KEYDOWN_JAVA = """
+        if (@K@ == android.view.KeyEvent.KEYCODE_BACK) {""" + BACK_CARI + """          if (__japp) {
+            if (@E@.getRepeatCount() == 0) { __jw.evaluateJavascript("window.__back && window.__back()", null); }
+            return true;
+          }
+        }
+"""
+BACK_JAVA = """
+        {""" + BACK_CARI + """          if (__japp) {
+            __jw.evaluateJavascript("window.__back && window.__back()", null);
+            return;
           }
         }
 """
 
 
 def patch_back(text: str) -> str:
-    """Tombol kembali Activity (onBackPressed bawaan p4a) diteruskan ke window.__back di halaman aplikasi (/app).
+    """Tombol kembali Activity (onKeyDown / onBackPressed bawaan p4a) diteruskan ke window.__back di halaman aplikasi (/app).
 
-    Tanpa ini p4a memunculkan pesan keluar bawaannya di SEMUA halaman. Sebelum /app tampil (layar loading), perilaku
-    bawaan tetap dipakai. Hanya diubah kalau ada tepat satu onBackPressed(); selain itu dibiarkan.
+    Tanpa ini p4a memakai logikanya sendiri di SEMUA halaman (goBack atau toast "Tap again to close the app"), jadi tab/menu
+    di index.html tidak pernah dapat giliran. Sebelum /app tampil (layar loading), perilaku bawaan tetap dipakai.
+    Tiap metode hanya diubah kalau cocok tepat satu kali; selain itu dibiarkan.
     """
     if BACK_TANDA in text:
         return text
-    cocok = list(BACK_METODE.finditer(text))
-    if len(cocok) != 1:
-        return text
-    m = cocok[0]
-    return text[:m.end()] + " " + BACK_TANDA + BACK_JAVA + text[m.end():]
+    sisip = []
+    kd = list(BACK_KEYDOWN.finditer(text))
+    if len(kd) == 1:
+        m = kd[0]
+        sisip.append((m.end(), BACK_KEYDOWN_JAVA.replace("@K@", m.group("k")).replace("@E@", m.group("e"))))
+    bp = list(BACK_METODE.finditer(text))
+    if len(bp) == 1:
+        sisip.append((bp[0].end(), BACK_JAVA))
+    for pos, kode in sorted(sisip, key=lambda x: x[0], reverse=True):
+        text = text[:pos] + " " + BACK_TANDA + kode + text[pos:]
+    return text
 
 
 def apply_back_button(dist_dir: Path) -> None:
@@ -145,7 +163,7 @@ def apply_back_button(dist_dir: Path) -> None:
         elif BACK_TANDA in old:
             dipasang = True
     if not dipasang:
-        print("[hook] PERINGATAN: onBackPressed() di PythonActivity.java (file bawaan p4a, bukan file proyek ini) tidak "
+        print("[hook] PERINGATAN: onKeyDown()/onBackPressed() di PythonActivity.java (file bawaan p4a, bukan file proyek ini) tidak "
               "ditemukan/ganda -- tombol kembali tidak diteruskan ke JavaScript dari sisi Activity.")
         if not berkas:
             print("[hook] PythonActivity.java tidak ada di dist ini.")
