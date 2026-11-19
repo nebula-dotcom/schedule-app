@@ -144,6 +144,8 @@ background:radial-gradient(circle at 3px 50%,#4fd1c5 3px,#0000 3.5px),radial-gra
 .sh{display:flex;align-items:center;gap:12px;margin:14px 0 12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
 .sh i{width:40px;height:40px;border-radius:12px;background:var(--soft);color:var(--pri);display:grid;place-items:center;flex:none}
 .sh b{display:block;font-size:calc(16px*var(--u));font-weight:700;letter-spacing:-.2px;line-height:1.25}.sh span{display:block;color:var(--mute);font-size:calc(12px*var(--u));line-height:1.4;margin-top:2px}
+.sph{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}#sheet .sph h3{margin:0;min-width:0}
+.spx{flex:none;width:32px;height:32px;border:0;border-radius:50%;background:var(--bg);color:var(--mute);display:grid;place-items:center}
 #toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translate(-50%,10px);max-width:86vw;padding:9px 16px;border-radius:99px;background:#0f1b4ce6;color:#fff;font-size:calc(12.5px*var(--u));font-weight:600;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:30}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 </style>
@@ -159,7 +161,7 @@ gear:'<path d="M19.08 10.23 L21.68 10.47 L21.68 13.53 L19.08 13.77 L18.26 15.76 
 usr:'<circle cx="9" cy="8" r="3.2"/><path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.4"/><path d="M17 13.8c2.4 0 4 1.7 4 4.2"/>',
 home:'<path d="M4 11 12 4l8 7v8.5a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z"/>',sum:'<rect x="5" y="4.5" width="14" height="16.5" rx="2.5"/><rect x="9" y="2.5" width="6" height="4" rx="1.2"/><path d="M9 11.5h6M9 15.5h4"/>',
 pen:'<path d="M4 20l1-4L16.5 4.5a2 2 0 0 1 3 3L8 19z"/>',rst:'<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',chev:'<path d="m9 6 6 6-6 6"/>',plus:'<path d="M12 5v14M5 12h14"/>',
-ok:'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',minus:'<path d="M5 12h14"/>',prn:'<path d="M7 9V4h10v5M7 17H5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2M7 14h10v6H7z"/>',dl:'<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',img:'<rect x="4" y="5" width="16" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m5 17 5-5 4 4 2-2 3 3"/>',menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+ok:'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',minus:'<path d="M5 12h14"/>',x:'<path d="M6 6l12 12M18 6 6 18"/>',prn:'<path d="M7 9V4h10v5M7 17H5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2M7 14h10v6H7z"/>',dl:'<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',img:'<rect x="4" y="5" width="16" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m5 17 5-5 4 4 2-2 3 3"/>',menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
 BAR:'<path d="M4 5h16l-8 9zM12 14v6M8 20h8"/>',FLOOR:'<path d="M4 9h16M6 9v10M18 9v10M4 5v4M20 5v4M9 13h6"/>',
 CASHIER:'<rect x="5" y="4" width="14" height="6" rx="1.5"/><path d="M3.5 10h17v9a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1zM8 14h8"/>',
 KITCHEN:'<path d="M7 20v-5a4 4 0 0 1-1-7.7A4 4 0 0 1 12 5a4 4 0 0 1 6 2.3A4 4 0 0 1 17 15v5zM7 17h10"/>'};
@@ -299,10 +301,12 @@ function save(b,n){const a=document.createElement('a');a.href=URL.createObjectUR
 const payload=()=>({start:S.start,divisions:Object.keys(D).map(k=>({key:k,title:D[k].t,hours:D[k].h,staff:D[k].st.map(p=>({name:p.n,shifts:p.s.join('')}))}))});
 let _sv;function persist(){clearTimeout(_sv);_sv=setTimeout(()=>{fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload())}).catch(()=>{})},400)}
 async function loadState(){try{const r=await fetch('/api/state');if(!r.ok)return;const p=await r.json();if(p&&/^\d{4}-\d{2}-\d{2}$/.test(p.start))S.start=p.start;(p.divisions||[]).forEach(v=>{const d=D[v.key];if(!d)return;d.st=v.staff.map(x=>({n:x.name,s:[...x.shifts]}));d.h=Object.assign(d.h,v.hours)})}catch(e){}}
+/* Popup (gaya sama dengan Reset jadwal) setelah file tersimpan ke Downloads di aplikasi Android */
+function savedPop(title,name){open(`<div class="sph"><h3>${esc(title)}</h3><button class="spx" type="button" aria-label="Tutup" onclick="close()">${ico('x',24)}</button></div><p class="sub" style="margin:0 0 2px;line-height:1.5;overflow-wrap:anywhere">Tersimpan di folder Download: <b>${esc(name)}</b></p>`)}
 async function exportFile(kind){const bs=()=>document.querySelectorAll('.ab .btn');bs().forEach(b=>b.disabled=true);
 try{const r=await fetch('/api/export/'+kind,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload(),sheet:S.pr})});
 if(!r.ok){let m='Server menolak permintaan ('+r.status+').';try{m=(await r.json()).error||m}catch(e){}throw new Error(m)}
-if((r.headers.get('Content-Type')||'').includes('application/json')){const j=await r.json();toast('Tersimpan di Downloads: '+j.saved,3500);return}
+if((r.headers.get('Content-Type')||'').includes('application/json')){const j=await r.json();savedPop(kind=='png'?'Save PNG':'Download Excel',j.saved);return}
 const name=(/filename="?([^";]+)"?/.exec(r.headers.get('Content-Disposition')||'')||[])[1]||('jadwal.'+kind);
 save(await r.blob(),name)}
 catch(e){open('<h3>Gagal membuat file</h3><p style="margin:8px 0 0;line-height:1.5">'+esc(String(e.message||e))+'</p>')}

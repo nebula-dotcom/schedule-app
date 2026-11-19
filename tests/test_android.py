@@ -380,3 +380,22 @@ class MainPyAndroid(unittest.TestCase):
         self.assertIn("droid.main_loop()", kode)              # thread utama melayani pekerjaan Java
         self.assertNotIn("install_back_hook", kode)
 
+
+class PopupSimpan(unittest.TestCase):
+    """Setelah Download Excel / Save PNG di Android: popup gaya Reset jadwal, bukan toast."""
+
+    def setUp(self):
+        self.html = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
+
+    def test_popup_isi_dan_tombol_tutup(self):
+        self.assertIn("function savedPop(title,name){open(`", self.html)                  # pakai open() seperti rstAsk
+        self.assertIn("Tersimpan di folder Download: <b>${esc(name)}</b>", self.html)      # nama file tebal
+        self.assertRegex(self.html, r'class="spx"[^>]*aria-label="Tutup"[^>]*onclick="close\(\)"')   # tombol X -> close()
+        self.assertIn("x:'<path", self.html)                                               # ikon X tersedia
+
+    def test_judul_sesuai_jenis_file(self):
+        self.assertIn("savedPop(kind=='png'?'Save PNG':'Download Excel',j.saved)", self.html)
+
+    def test_toast_lama_tidak_dipakai_untuk_hasil_simpan(self):
+        self.assertNotIn("toast('Tersimpan", self.html)
+
