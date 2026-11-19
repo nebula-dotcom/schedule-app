@@ -148,6 +148,30 @@ background:radial-gradient(circle at 3px 50%,#4fd1c5 3px,#0000 3.5px),radial-gra
 .spx{flex:none;width:32px;height:32px;border:0;border-radius:50%;background:var(--bg);color:var(--mute);display:grid;place-items:center}
 #toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translate(-50%,10px);max-width:86vw;padding:9px 16px;border-radius:99px;background:#0f1b4ce6;color:#fff;font-size:calc(12.5px*var(--u));font-weight:600;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:30}
 #toast.on{opacity:1;transform:translate(-50%,0)}
+/* ===== Animasi tekan tombol =====
+   Kelas .pr dipasang lewat JS (bagian "Animasi tekan tombol" di bawah) saat jari menyentuh tombol. --ps = skala saat ditekan (bisa diganti per jenis tombol).
+   Melepas tombol memantul balik (cubic-bezier dengan overshoot); menekan masuk cepat (.09s). Riak digambar di #rp. */
+button,a[onclick],td.ed{-webkit-tap-highlight-color:transparent}
+button,a[onclick]{--ps:.93;transition:transform .32s cubic-bezier(.34,1.56,.64,1),filter .2s,background-color .2s,box-shadow .2s}
+button.pr,a.pr{transform:scale(var(--ps));filter:brightness(.9);transition-duration:.09s;transition-timing-function:ease-out}
+.btn.pr{box-shadow:inset 0 2px 8px #0b164640}
+.btn.dg.pr,.btn.gy.pr{filter:brightness(.95)}
+.dv{--ps:.97}.dv.pr{filter:brightness(.96)}
+.dv .go{transition:transform .32s cubic-bezier(.34,1.56,.64,1)}.dv.pr .go{transform:translateX(4px)}
+.tb button,.seg button,.wk button{--ps:.95}
+.tb button:first-child{border-radius:9px 0 0 9px}.tb button:last-child{border-radius:0 9px 9px 0}
+nav button{--ps:.9}.rd-s button{--ps:.9}.pill{--ps:.92}
+.mn{border-radius:50%;--ps:.82}.mn.pr{background:var(--soft)}
+.nm button{border-radius:8px;--ps:.8}.crumb a{border-radius:6px;--ps:.9}
+.spx{--ps:.82}.spx svg{transition:transform .34s cubic-bezier(.34,1.56,.64,1)}
+.spx.pr{background:var(--line);color:var(--ink);filter:none}.spx.pr svg{transform:rotate(90deg) scale(.9)}
+.xt td.ed.pr{filter:brightness(.9)}
+#rp{position:fixed;inset:0;z-index:40;pointer-events:none;overflow:hidden}
+#rp span{position:absolute;overflow:hidden;isolation:isolate;opacity:1;transform-origin:center;transition:opacity .3s ease,transform .09s ease-out}
+#rp span.out{opacity:0}
+#rp i{position:absolute;border-radius:50%;transform:scale(0);animation:rp .5s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes rp{to{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){button.pr,a.pr,.spx.pr svg,.dv.pr .go{transform:none}#rp{display:none}}
 </style>
 </head>
 <body>
@@ -367,6 +391,37 @@ let _today=ymd(new Date());
 function tickDay(){const t=ymd(new Date());if(t==_today)return;_today=t;S.sel=todayIdx();if(S.view=='home')draw()}
 setInterval(tickDay,20000);addEventListener('focus',tickDay);document.addEventListener('visibilitychange',()=>{if(!document.hidden)tickDay()});
 loadState().finally(()=>{S.sel=todayIdx();draw()});
+/* ===== Animasi tekan tombol =====
+   .pr dipasang saat jari menyentuh (pointerdown) dan dilepas paling cepat PRMIN ms kemudian, supaya animasi tetap terlihat walau ketukan sangat singkat
+   (WebView sering tidak sempat menampilkan :active). Riak digambar di #rp (di luar tombol) supaya tidak terhapus ketika halaman digambar ulang setelah klik.
+   Tombol baru di halaman mana pun otomatis ikut: cukup <button> atau <a onclick>, atau sel tabel td.ed. */
+const PRS='button,a[onclick],td.ed',PRMIN=180,RP=document.body.appendChild(Object.assign(document.createElement('div'),{id:'rp'}));
+let _pr=null;
+const prLum=c=>{const m=c.match(/[\d.]+/g)||[];return m.length>3&&+m[3]<.3?1:(.299*m[0]+.587*m[1]+.114*m[2])/255};
+function prRipple(el,x,y){
+if(matchMedia('(prefers-reduced-motion:reduce)').matches)return null;
+const r=el.getBoundingClientRect();if(!r.width||!r.height)return null;
+const cs=getComputedStyle(el),w=document.createElement('span'),c=document.createElement('i'),k=(cs.color.match(/[\d.]+/g)||[0,0,0]),dk=prLum(cs.backgroundColor)<.55;
+const d=2*Math.max(Math.hypot(x-r.left,y-r.top),Math.hypot(r.right-x,y-r.top),Math.hypot(x-r.left,r.bottom-y),Math.hypot(r.right-x,r.bottom-y));
+w.style.cssText=`left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;border-radius:${cs.borderRadius}`;
+c.style.cssText=`width:${d}px;height:${d}px;left:${x-r.left-d/2}px;top:${y-r.top-d/2}px;background:rgba(${k[0]},${k[1]},${k[2]},${dk?.32:.14})`;
+w.appendChild(c);RP.appendChild(w);
+const s=parseFloat(cs.getPropertyValue('--ps'));if(s&&s<1){w.offsetWidth;w.style.transform='scale('+s+')'}   /* ikut mengecil bersama tombol */
+return w}
+function prDown(e){
+if(e.pointerType=='mouse'&&e.button)return;
+const el=e.target.closest&&e.target.closest(PRS);if(!el||el.disabled)return;
+prUp(true);el.classList.add('pr');
+_pr={el,x:e.clientX,y:e.clientY,t:Date.now(),rw:prRipple(el,e.clientX,e.clientY),tm:setTimeout(()=>prUp(),1500)}}   /* 1,5 dtk: jaga-jaga pointerup tidak datang (mis. daftar pilihan bawaan <select> terbuka) */
+function prUp(now){
+const p=_pr;if(!p)return;_pr=null;clearTimeout(p.tm);
+const end=()=>{p.el.classList.remove('pr');if(p.rw){p.rw.style.transform='';p.rw.classList.add('out');setTimeout(()=>p.rw.remove(),400)}},w=now?0:PRMIN-(Date.now()-p.t);
+w>0?setTimeout(end,w):end()}
+document.addEventListener('pointerdown',prDown,{passive:true});
+document.addEventListener('pointerup',()=>prUp(),{passive:true});
+document.addEventListener('pointercancel',()=>prUp(true),{passive:true});   /* mulai menggulir -> batalkan */
+document.addEventListener('pointermove',e=>{if(_pr&&Math.hypot(e.clientX-_pr.x,e.clientY-_pr.y)>14)prUp(true)},{passive:true});
+addEventListener('blur',()=>prUp(true));document.addEventListener('contextmenu',()=>prUp(true));
 </script>
 </body>
 </html>
