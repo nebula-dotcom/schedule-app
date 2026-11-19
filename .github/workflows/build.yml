@@ -120,8 +120,13 @@ jobs:
           [ -f "$RAW" ] || exit 0
           LOG="$RUNNER_TEMP/buildozer.clean.log"
           # buang kode warna dan dump variabel lingkungan (baris "#     NAMA = '...'") supaya galat asli terlihat
-          sed 's/\x1b\[[0-9;]*m//g' "$RAW" | grep -v -E "^[0-9TZ:.-]* ?#     [A-Za-z_0-9]+ = " > "$LOG" || true
+          sed 's/\x1b\[[0-9;]*m//g' "$RAW" | grep -v -E "^[0-9TZ:.-]* ?#     [A-Za-z_0-9]+ = |^export [A-Za-z_0-9]+=" > "$LOG" || true
           {
+            echo "### Penyebab galat (isi setelah \"What went wrong\" / Traceback terakhir)"
+            echo '```'
+            grep -n -A12 "What went wrong" "$LOG" | cut -c1-300 | head -n 40 || true
+            grep -n -B1 -A14 "Traceback" "$LOG" | cut -c1-300 | tail -n 20 || true
+            echo '```'
             echo "### Baris galat (ringkas)"
             echo '```'
             grep -n -E "ImportError|Traceback|BUILD FAILED|What went wrong|Command failed|\[ERROR\]|FAILURE:" "$LOG" | cut -c1-300 | tail -n 20 || true
@@ -131,6 +136,29 @@ jobs:
             tail -n 60 "$LOG" | cut -c1-300
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          # galat "Error parsing AndroidManifest.xml": periksa file hasil render p4a dan cetak letak kesalahan XML-nya
+          DIST="$(ls -d .buildozer/android/platform/build-*/dists/* 2>/dev/null | head -n1)"
+          MF="$DIST/src/main/AndroidManifest.xml"
+          if [ -n "$DIST" ] && [ -f "$MF" ]; then
+            {
+              echo "### AndroidManifest.xml hasil render"
+              echo '```'
+              python - "$MF" <<'PY' 2>&1 || true
+          import sys
+          from xml.dom import minidom
+          try:
+              minidom.parse(sys.argv[1])
+              print("XML valid")
+          except Exception as e:
+              print("XML TIDAK VALID:", e)
+          PY
+              echo "--- baris android:theme di template (sesudah hook):"
+              grep -n "android:theme" "$DIST/templates/AndroidManifest.tmpl.xml" | cut -c1-250 || true
+              echo "--- isi manifest:"
+              cat -n "$MF" | cut -c1-220 | head -n 90
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
           echo "===== 40 baris terakhir log buildozer ====="
           tail -n 40 "$LOG" | cut -c1-300
 

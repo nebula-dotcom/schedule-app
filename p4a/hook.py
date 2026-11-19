@@ -16,7 +16,7 @@ server itu merespons).
 Satu-satunya skrip: kalau halaman ini sampai terbuka lagi lewat tombol kembali (riwayat WebView),
 ia langsung kembali ke /app supaya tidak pernah menjadi jalan buntu.
 
-Hook ini juga memaksa tema berlatar #F6F8FC (@style/JadwalTheme, lihat android_res/) dipakai aplikasi dan activity utama di
+Hook ini juga memaksa tema berlatar #F6F8FC (@style/JadwalTheme, lihat android_res/) dipakai di
 AndroidManifest, lalu menyalin resource temanya langsung ke proyek Android. Tanpa ini, splash sistem Android 12+
 bisa tetap hitam kalau tema dari buildozer.spec tidak sampai ke manifest.
 """
@@ -71,15 +71,25 @@ THEME = "@style/JadwalTheme"
 ROOT = Path(__file__).resolve().parent.parent
 
 
+THEME_ATTR = re.compile(r'android:theme="([^"]*)"')
+
+
 def patch_manifest(text: str) -> str:
-    """Semua android:theme diganti tema kita; activity utama (PythonActivity) tanpa android:theme diberi tema kita."""
-    text = re.sub(r'android:theme="[^"]*"', f'android:theme="{THEME}"', text)
+    """Ganti android:theme yang bernilai tetap (mis. @android:style/Theme.NoTitleBar) dengan tema kita.
 
-    def tambah(m):
-        tag = m.group(0)
-        return tag if "android:theme=" in tag else tag.replace("<activity", f'<activity android:theme="{THEME}"', 1)
+    Yang TIDAK disentuh:
+    - nilai berisi Jinja ({{ ... }}, {% ... %}): template p4a mengisinya dari --android-apptheme
+      (android.apptheme di buildozer.spec = @style/JadwalTheme), jadi sudah benar;
+    - atribut baru tidak pernah ditambahkan (activity tanpa android:theme otomatis memakai tema aplikasi).
+    Dengan begitu hook tidak bisa menghasilkan atribut ganda atau sisa potongan Jinja di AndroidManifest.xml.
+    """
+    def ganti(m):
+        nilai = m.group(1)
+        if "{{" in nilai or "{%" in nilai or "{#" in nilai:
+            return m.group(0)
+        return f'android:theme="{THEME}"'
 
-    return re.sub(r"<activity\b[^>]*org\.kivy\.android\.PythonActivity[^>]*>", tambah, text)
+    return THEME_ATTR.sub(ganti, text)
 
 
 def apply_theme(dist_dir: Path) -> None:

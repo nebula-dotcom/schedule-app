@@ -86,23 +86,46 @@ class TemaLatar(unittest.TestCase):
 
 
 class HookTema(unittest.TestCase):
-    def test_manifest_dan_resource_dipaksa_tema(self):
-        import tempfile
-        from types import SimpleNamespace
+    @staticmethod
+    def _hook():
         spec = importlib.util.spec_from_file_location("p4a_hook2", ROOT / "p4a" / "hook.py")
         hook = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(hook)
+        return hook
+
+    def test_manifest_hanya_ganti_tema_tetap(self):
+        """Nilai Jinja dibiarkan, tema bernilai tetap diganti, dan tidak ada atribut yang ditambah."""
+        hook = self._hook()
+        jinja_app = ('android:theme="{{args.android_apptheme}}'
+                     '{% if not args.android_apptheme %}@android:style/Theme.NoTitleBar{% endif %}"')
+        jinja_kutip = 'android:theme="{% if args.x == "y" %}@style/A{% endif %}"'      # ada tanda kutip di dalam Jinja
+        sumber = ('<manifest><application ' + jinja_app + ' android:label="x">'
+                  '<activity android:name="{{ args.android_entrypoint }}" {% if args.min_sdk_version >= 9 %}'
+                  'android:label="y"{% endif %}></activity>'
+                  '<activity android:name="org.kivy.android.PythonActivity" android:label="z"></activity>'
+                  '<activity android:name="a.Izin" android:theme="@android:style/Theme.Translucent"></activity>'
+                  '<activity android:name="a.Lain" ' + jinja_kutip + '></activity>'
+                  '</application></manifest>')
+        out = hook.patch_manifest(sumber)
+        self.assertIn(jinja_app, out)
+        self.assertIn(jinja_kutip, out)
+        self.assertNotIn("Theme.Translucent", out)
+        self.assertEqual(out.count('android:theme="@style/JadwalTheme"'), 1)
+        self.assertEqual(out.count("android:theme="), sumber.count("android:theme="))     # tidak ada atribut ditambah
+        self.assertEqual(hook.patch_manifest(out), out)                                   # aman dijalankan berulang
+
+    def test_manifest_dan_resource_dipasang(self):
+        import tempfile
+        from types import SimpleNamespace
+        hook = self._hook()
         with tempfile.TemporaryDirectory() as tmp:
             dist = Path(tmp)
             (dist / "templates").mkdir()
             mf = dist / "templates" / "AndroidManifest.tmpl.xml"
-            mf.write_text('<manifest><application android:theme="{{args.theme}}" android:label="x">'
-                          '<activity android:name="org.kivy.android.PythonActivity" android:label="y">'
-                          '</activity></application></manifest>', encoding="utf-8")
+            mf.write_text('<manifest><application android:theme="@android:style/Theme.NoTitleBar" android:label="x">'
+                          '</application></manifest>', encoding="utf-8")
             hook.before_apk_build(SimpleNamespace(_dist=SimpleNamespace(dist_dir=str(dist))))
-            out = mf.read_text(encoding="utf-8")
-            self.assertEqual(out.count('android:theme="@style/JadwalTheme"'), 2)
-            self.assertNotIn("{{args.theme}}", out)
+            self.assertIn('android:theme="@style/JadwalTheme"', mf.read_text(encoding="utf-8"))
             for sub in ("values", "values-v31"):
                 self.assertTrue((dist / "src" / "main" / "res" / sub / "jadwal_theme.xml").is_file(), sub)
 
