@@ -157,7 +157,9 @@ button.pr,a.pr{transform:scale(var(--ps));filter:brightness(.9);transition-durat
 .btn.pr{box-shadow:inset 0 2px 8px #0b164640}
 .btn.dg.pr,.btn.gy.pr{filter:brightness(.95)}
 .dv{--ps:.97}.dv.pr{filter:brightness(.96)}
-.dv .go{transition:transform .32s cubic-bezier(.34,1.56,.64,1)}.dv.pr .go{transform:translateX(4px)}
+.dv .go{transition:transform .3s cubic-bezier(.34,1.56,.64,1),background-color .2s,color .2s}
+/* ketukan kartu langsung pindah halaman (~0,1 dtk), jadi efek panah dibuat cepat (.1s) dan berupa isi warna + geser + membesar */
+.dv.pr .go{transform:translateX(6px) scale(1.1);background:var(--k);color:#fff;transition-duration:.1s;transition-timing-function:ease-out}
 .tb button,.seg button,.wk button{--ps:.95}
 .tb button:first-child{border-radius:9px 0 0 9px}.tb button:last-child{border-radius:0 9px 9px 0}
 nav button{--ps:.9}.rd-s button{--ps:.9}.pill{--ps:.92}
