@@ -12,6 +12,7 @@ import time
 ON_ANDROID = "ANDROID_ARGUMENT" in os.environ     # diisi otomatis oleh python-for-android
 
 KEYCODE_BACK = 4
+LATAR_WEBVIEW = "#F6F8FC"   # latar WebView (sebelum/antar halaman); harus sama dengan --bg di web/index.html
 ACTION_UP = 1
 _hooked = None            # WebView yang sudah dipasangi pendengar tombol kembali
 _keep = []                # cegah pendengar Python dibuang oleh garbage collector
@@ -154,6 +155,11 @@ def _hook_once() -> bool:
 
         @java_method("()V")
         def run(self):
+            try:                                         # WebView berlatar putih bawaan -> samakan dengan warna aplikasi
+                from jnius import autoclass
+                webview.setBackgroundColor(autoclass("android.graphics.Color").parseColor(LATAR_WEBVIEW))
+            except Exception as err:
+                print("latar_webview:", err)
             listener = BackListener()
             _keep.append(listener)
             webview.setFocusableInTouchMode(True)

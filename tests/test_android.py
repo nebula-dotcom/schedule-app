@@ -1,5 +1,6 @@
 """Tes bagian Android yang bisa dijalankan tanpa HP: pembersih riwayat WebView dan hook p4a."""
 import importlib.util
+import re
 import unittest
 from pathlib import Path
 
@@ -75,14 +76,66 @@ class TemaLatar(unittest.TestCase):
             self.assertIn(f"android_res/{sub}/jadwal_theme.xml:{sub}/jadwal_theme.xml", spec)
             self.assertTrue((ROOT / "android_res" / sub / "jadwal_theme.xml").is_file())
 
-    def test_splash_sistem_f6f8fc(self):
+    def test_splash_sistem_tanpa_ikon_dan_force_dark(self):
         xml = (ROOT / "android_res" / "values-v31" / "jadwal_theme.xml").read_text(encoding="utf-8")
-        self.assertRegex(xml, r'(?i)windowSplashScreenBackground">#F6F8FC<')
-        self.assertRegex(xml, r'(?i)windowBackground">#F6F8FC<')
-        lama = (ROOT / "android_res" / "values" / "jadwal_theme.xml").read_text(encoding="utf-8")
-        self.assertRegex(lama, r'(?i)windowBackground">#F6F8FC<')   # Android < 12: latar jendela = splash
         self.assertIn("forceDarkAllowed", xml)
         self.assertIn("windowSplashScreenAnimatedIcon\">@android:color/transparent<", xml)
+
+
+class WarnaSeragam(unittest.TestCase):
+    """Satu warna dasar untuk semuanya: --bg di web/index.html = web/loading.html = layar loading bawaan hook
+    = latar jendela dan splash Android = presplash (buildozer.spec + assets/presplash.png).
+    Mau ganti warna dasar? Ubah --bg di index.html, lalu tes ini menunjukkan file mana yang masih berbeda."""
+
+    HEX = r"(#[0-9a-fA-F]{6})"
+
+    @staticmethod
+    def _baca(*bagian):
+        return ROOT.joinpath(*bagian).read_text(encoding="utf-8")
+
+    def _cari(self, pola, teks, nama):
+        m = re.search(pola, teks)
+        self.assertIsNotNone(m, f"warna tidak ditemukan di {nama}")
+        return m.group(1).lower()
+
+    def setUp(self):
+        self.dasar = self._cari(r":root\{--bg:" + self.HEX, self._baca("web", "index.html"), "web/index.html (--bg)")
+
+    def test_loading_html(self):
+        warna = self._cari(r"html,body\{[^}]*background:" + self.HEX, self._baca("web", "loading.html"), "web/loading.html")
+        self.assertEqual(warna, self.dasar, "web/loading.html")
+
+    def test_loading_bawaan_hook(self):
+        spec = importlib.util.spec_from_file_location("p4a_hook3", ROOT / "p4a" / "hook.py")
+        hook = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(hook)
+        warna = self._cari(r"html,body\{[^}]*background:" + self.HEX, hook.render_loading(), "p4a/hook.py (LOADING_HTML)")
+        self.assertEqual(warna, self.dasar, "p4a/hook.py (LOADING_HTML)")
+
+    def test_tema_android(self):
+        untuk = {"values": ("windowBackground",), "values-v31": ("windowBackground", "windowSplashScreenBackground")}
+        for folder, kunci in untuk.items():
+            xml = self._baca("android_res", folder, "jadwal_theme.xml")
+            for k in kunci:
+                warna = self._cari(k + r'">' + self.HEX + "<", xml, f"android_res/{folder}/jadwal_theme.xml ({k})")
+                self.assertEqual(warna, self.dasar, f"android_res/{folder}/jadwal_theme.xml ({k})")
+
+    def test_latar_webview(self):
+        spec = importlib.util.spec_from_file_location("p4a_hook4", ROOT / "p4a" / "hook.py")
+        hook = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(hook)
+        self.assertEqual("#" + hook.LATAR_JAVA[4:].lower(), self.dasar, "p4a/hook.py (LATAR_JAVA)")
+        self.assertTrue(hook.LATAR_JAVA.upper().startswith("0XFF"), "latar WebView harus tidak transparan (alfa FF)")
+        self.assertEqual(droid.LATAR_WEBVIEW.lower(), self.dasar, "jadwal/droid.py (LATAR_WEBVIEW)")
+
+    def test_presplash(self):
+        warna = self._cari(r"(?m)^android\.presplash_color\s*=\s*" + self.HEX, self._baca("buildozer.spec"),
+                           "buildozer.spec (android.presplash_color)")
+        self.assertEqual(warna, self.dasar, "buildozer.spec (android.presplash_color)")
+        from PIL import Image
+        gambar = Image.open(ROOT / "assets" / "presplash.png").convert("RGB")
+        for titik in ((0, 0), (gambar.width // 2, gambar.height // 2), (gambar.width - 1, gambar.height - 1)):
+            self.assertEqual("#%02x%02x%02x" % gambar.getpixel(titik), self.dasar, f"assets/presplash.png {titik}")
 
 
 class HookTema(unittest.TestCase):
@@ -114,6 +167,37 @@ class HookTema(unittest.TestCase):
         self.assertEqual(out.count("android:theme="), sumber.count("android:theme="))     # tidak ada atribut ditambah
         self.assertEqual(hook.patch_manifest(out), out)                                   # aman dijalankan berulang
 
+    def test_latar_webview_dipasang_di_java(self):
+        hook = self._hook()
+        sumber = ("public class PythonActivity extends Activity {\n"
+                  "  protected void onPostExecute(String r) {\n"
+                  "    PythonActivity.mActivity.mWebView = new WebView(PythonActivity.mActivity);\n"
+                  "    mWebView.getSettings().setJavaScriptEnabled(true);\n  }\n}\n")
+        out = hook.patch_java(sumber)
+        self.assertIn("PythonActivity.mActivity.mWebView.setBackgroundColor(0xFFF6F8FC);", out)
+        self.assertLess(out.index("setBackgroundColor"), out.index("getSettings"))      # segera setelah dibuat
+        self.assertEqual(hook.patch_java(out), out)                                      # aman dijalankan berulang
+        lokal = hook.patch_java("void f(){ WebView w = new WebView(this); w.loadUrl(u); }")
+        self.assertIn("w.setBackgroundColor(0xFFF6F8FC);", lokal)
+        # tidak ada / lebih dari satu pembuatan WebView: dibiarkan apa adanya (lebih baik tidak mengubah daripada salah)
+        for tidak_pasti in ("class A { void f(){} }",
+                            "class A { void f(){ a = new WebView(x); b = new WebView(y); } }"):
+            self.assertEqual(hook.patch_java(tidak_pasti), tidak_pasti)
+
+    def test_peringatan_menampilkan_kode_asli_kalau_webview_tidak_ketemu(self):
+        import contextlib, io, tempfile
+        hook = self._hook()
+        with tempfile.TemporaryDirectory() as tmp:
+            java = Path(tmp) / "src" / "main" / "java" / "PythonActivity.java"
+            java.parent.mkdir(parents=True)
+            java.write_text("class P {\n  void f(){ setContentView(buatTampilan()); WebView w = buat(); }\n}\n", encoding="utf-8")
+            keluar = io.StringIO()
+            with contextlib.redirect_stdout(keluar):
+                hook.apply_webview_background(Path(tmp))
+            teks = keluar.getvalue()
+            self.assertIn("PERINGATAN", teks)
+            self.assertIn("setContentView(buatTampilan())", teks)
+
     def test_manifest_dan_resource_dipasang(self):
         import tempfile
         from types import SimpleNamespace
@@ -126,6 +210,11 @@ class HookTema(unittest.TestCase):
                           '</application></manifest>', encoding="utf-8")
             hook.before_apk_build(SimpleNamespace(_dist=SimpleNamespace(dist_dir=str(dist))))
             self.assertIn('android:theme="@style/JadwalTheme"', mf.read_text(encoding="utf-8"))
+            java = dist / "src" / "main" / "java" / "org" / "kivy" / "android" / "PythonActivity.java"
+            java.parent.mkdir(parents=True)
+            java.write_text("class P { void f(){ mWebView = new WebView(this); } }", encoding="utf-8")
+            hook.before_apk_build(SimpleNamespace(_dist=SimpleNamespace(dist_dir=str(dist))))
+            self.assertIn("mWebView.setBackgroundColor(0xFFF6F8FC);", java.read_text(encoding="utf-8"))
             for sub in ("values", "values-v31"):
                 self.assertTrue((dist / "src" / "main" / "res" / sub / "jadwal_theme.xml").is_file(), sub)
 
