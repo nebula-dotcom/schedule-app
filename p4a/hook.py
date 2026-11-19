@@ -92,6 +92,72 @@ def patch_java(text: str) -> str:
     return text[:m.end()] + f" {m.group('lhs')}.setBackgroundColor({LATAR_JAVA}); {JAVA_TANDA}" + text[m.end():]
 
 
+BACK_TANDA = "/* jadwal: tombol kembali */"
+BACK_METODE = re.compile(r"\bvoid\s+onBackPressed\s*\(\s*\)\s*(?:throws[^{]*)?\{")
+BACK_JAVA = """
+        { android.webkit.WebView __jw = null;
+          java.util.ArrayDeque<android.view.View> __jq = new java.util.ArrayDeque<android.view.View>();
+          __jq.add(getWindow().getDecorView());
+          while (!__jq.isEmpty() && __jw == null) {
+            android.view.View __jv = __jq.poll();
+            if (__jv instanceof android.webkit.WebView) { __jw = (android.webkit.WebView) __jv; }
+            else if (__jv instanceof android.view.ViewGroup) {
+              android.view.ViewGroup __jg = (android.view.ViewGroup) __jv;
+              for (int __ji = 0; __ji < __jg.getChildCount(); __ji++) { __jq.add(__jg.getChildAt(__ji)); }
+            }
+          }
+          if (__jw != null) {
+            String __ju = __jw.getUrl();
+            if (__ju != null && __ju.split("[?#]")[0].replaceAll("/+$", "").endsWith("/app")) {
+              __jw.evaluateJavascript("window.__back && window.__back()", null);
+              return;
+            }
+          }
+        }
+"""
+
+
+def patch_back(text: str) -> str:
+    """Tombol kembali Activity (onBackPressed bawaan p4a) diteruskan ke window.__back di halaman aplikasi (/app).
+
+    Tanpa ini p4a memunculkan pesan keluar bawaannya di SEMUA halaman. Sebelum /app tampil (layar loading), perilaku
+    bawaan tetap dipakai. Hanya diubah kalau ada tepat satu onBackPressed(); selain itu dibiarkan.
+    """
+    if BACK_TANDA in text:
+        return text
+    cocok = list(BACK_METODE.finditer(text))
+    if len(cocok) != 1:
+        return text
+    m = cocok[0]
+    return text[:m.end()] + " " + BACK_TANDA + BACK_JAVA + text[m.end():]
+
+
+def apply_back_button(dist_dir: Path) -> None:
+    berkas = list(dist_dir.rglob("PythonActivity.java"))
+    dipasang = False
+    for java in berkas:
+        old = java.read_text(encoding="utf-8")
+        new = patch_back(old)
+        if new != old:
+            java.write_text(new, encoding="utf-8")
+            print(f"[hook] tombol kembali diteruskan ke JavaScript di {java}")
+            dipasang = True
+        elif BACK_TANDA in old:
+            dipasang = True
+    if not dipasang:
+        print("[hook] PERINGATAN: onBackPressed() di PythonActivity.java (file bawaan p4a, bukan file proyek ini) tidak "
+              "ditemukan/ganda -- tombol kembali tidak diteruskan ke JavaScript dari sisi Activity.")
+        if not berkas:
+            print("[hook] PythonActivity.java tidak ada di dist ini.")
+        kunci = re.compile(r"Tap again|onBackPressed|KEYCODE_BACK|onKeyDown|onKeyUp|dispatchKeyEvent|OnBackInvoked|Toast|goBack|canGoBack")
+        for java in berkas[:1]:
+            baris = [f"{i}: {b.strip()[:160]}" for i, b in enumerate(java.read_text(encoding="utf-8").splitlines(), 1)
+                     if kunci.search(b)]
+            print(f"[hook] baris terkait tombol kembali di {java}:")
+            for b in baris[:40]:
+                print(f"[hook]    {b}")
+
+
 def apply_webview_background(dist_dir: Path) -> None:
     berkas = list(dist_dir.rglob("PythonActivity.java"))
     dipasang = False
@@ -160,6 +226,7 @@ def before_apk_build(toolchain):
     dist_dir = Path(toolchain._dist.dist_dir)
     apply_theme(dist_dir)
     apply_webview_background(dist_dir)
+    apply_back_button(dist_dir)
     hits = list(dist_dir.rglob("_load.html"))   # dicari by name: lokasi persisnya bisa beda antar versi p4a
     for hit in hits:
         hit.write_text(render_loading(), encoding="utf-8")

@@ -184,6 +184,35 @@ class HookTema(unittest.TestCase):
                             "class A { void f(){ a = new WebView(x); b = new WebView(y); } }"):
             self.assertEqual(hook.patch_java(tidak_pasti), tidak_pasti)
 
+    def test_tombol_kembali_activity_diteruskan_ke_javascript(self):
+        hook = self._hook()
+        sumber = ("public class PythonActivity extends Activity {\n"
+                  "  @Override\n  public void onBackPressed() {\n"
+                  "    if (ganda) { super.onBackPressed(); return; }\n"
+                  '    Toast.makeText(this, "Tap again to close the app", 0).show();\n  }\n}\n')
+        out = hook.patch_back(sumber)
+        self.assertIn("window.__back && window.__back()", out)
+        self.assertIn("evaluateJavascript", out)
+        self.assertLess(out.index("window.__back"), out.index("Tap again"))               # sebelum kode bawaan p4a
+        self.assertLess(out.index("@Override"), out.index("onBackPressed"))                # anotasi tidak terpisah dari metodenya
+        self.assertEqual(out.count("{") - out.count("}"), sumber.count("{") - sumber.count("}"))   # kurung seimbang
+        self.assertEqual(hook.patch_back(out), out)                                        # aman dijalankan berulang
+        for tidak_pasti in ("class A { void f(){} }",
+                            "class A { void onBackPressed(){} void onBackPressed(){} }"):
+            self.assertEqual(hook.patch_back(tidak_pasti), tidak_pasti)
+
+    def test_peringatan_tombol_kembali_menampilkan_kode_asli(self):
+        import contextlib, io, tempfile
+        hook = self._hook()
+        with tempfile.TemporaryDirectory() as tmp:
+            java = Path(tmp) / "PythonActivity.java"
+            java.write_text('class P {\n  boolean onKeyDown(int k){ toast("Tap again to close the app"); }\n}\n', encoding="utf-8")
+            keluar = io.StringIO()
+            with contextlib.redirect_stdout(keluar):
+                hook.apply_back_button(Path(tmp))
+            self.assertIn("PERINGATAN", keluar.getvalue())
+            self.assertIn("Tap again to close the app", keluar.getvalue())
+
     def test_peringatan_menampilkan_kode_asli_kalau_webview_tidak_ketemu(self):
         import contextlib, io, tempfile
         hook = self._hook()
@@ -215,6 +244,9 @@ class HookTema(unittest.TestCase):
             java.write_text("class P { void f(){ mWebView = new WebView(this); } }", encoding="utf-8")
             hook.before_apk_build(SimpleNamespace(_dist=SimpleNamespace(dist_dir=str(dist))))
             self.assertIn("mWebView.setBackgroundColor(0xFFF6F8FC);", java.read_text(encoding="utf-8"))
+            java.write_text("class P { void onBackPressed() { super.onBackPressed(); } }", encoding="utf-8")
+            hook.before_apk_build(SimpleNamespace(_dist=SimpleNamespace(dist_dir=str(dist))))
+            self.assertIn("window.__back", java.read_text(encoding="utf-8"))
             for sub in ("values", "values-v31"):
                 self.assertTrue((dist / "src" / "main" / "res" / sub / "jadwal_theme.xml").is_file(), sub)
 

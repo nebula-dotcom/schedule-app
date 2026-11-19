@@ -200,7 +200,7 @@ if($('#sheet').classList.contains('open')){close();return}
 if(BK.length){Object.assign(S,BK.pop());draw();scrollTo(0,0);return}
 if(pageKey()!=HOME){Object.assign(S,{view:'config',tab:'admin'});draw();scrollTo(0,0);return}
 const n=Date.now();if(n-_bt<2000){exitApp();return}
-_bt=n;toast('Tekan sekali lagi untuk keluar')}
+_bt=n;toast('Tap again to close the app')}
 window.__back=onBack;
 /* Jebakan riwayat hanya untuk browser. Di Android WebView ("; wv)" di user agent) tombol kembali sudah ditangani droid.py -> window.__back,
    dan riwayat WebView dibersihkan di sana; jebakan di sini malah bisa memicu onBack kedua kali. */
