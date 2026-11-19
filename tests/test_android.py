@@ -1,8 +1,11 @@
 """Tes bagian Android yang bisa dijalankan tanpa HP: pembersih riwayat WebView dan hook p4a."""
 import importlib.util
 import re
+import threading
+import time
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from jadwal import droid
 from jadwal import settings as cfg
@@ -282,3 +285,98 @@ class TombolKembaliHalaman(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PekerjaanJavaDiThreadUtama(unittest.TestCase):
+    """Kelas Java milik aplikasi (org.kivy.android.PythonActivity) hanya bisa ditemukan THREAD UTAMA.
+
+    Thread pelayan server buatan Python memakai class loader sistem: ClassNotFoundException saat Save PNG / Download Excel.
+    Jadi semua pekerjaan Java dari thread lain harus dititipkan ke thread utama (droid.main_loop)."""
+
+    def setUp(self):
+        self.hook_thread = []
+        self.patches = [mock.patch.object(droid, "ON_ANDROID", True),
+                        mock.patch.object(droid, "_activity", lambda: None),
+                        mock.patch.object(droid, "_hook_once", lambda: self.hook_thread.append(threading.get_ident()) or True)]
+        for p in self.patches:
+            p.start()
+        self.stop = threading.Event()
+        self.loop = threading.Thread(target=droid.main_loop, args=(self.stop,), daemon=True)
+        self.loop.start()
+        t0 = time.time()
+        while droid._main_id[0] is None and time.time() - t0 < 5:
+            time.sleep(0.01)
+
+    def tearDown(self):
+        self.stop.set()
+        self.loop.join(5)
+        for p in self.patches:
+            p.stop()
+
+    def dari_thread_lain(self, fn):
+        """Jalankan fn di thread lain (seperti thread pelayan server); kembalikan (hasil, galat)."""
+        out = {}
+
+        def kerja():
+            try:
+                out["hasil"] = fn()
+            except BaseException as err:
+                out["galat"] = err
+        t = threading.Thread(target=kerja)
+        t.start()
+        t.join(10)
+        return out.get("hasil"), out.get("galat")
+
+    def test_pekerjaan_dari_thread_lain_berjalan_di_thread_utama(self):
+        hasil, galat = self.dari_thread_lain(lambda: droid.run_on_main(threading.get_ident))
+        self.assertIsNone(galat)
+        self.assertEqual(hasil, self.loop.ident)
+        self.assertNotEqual(hasil, threading.get_ident())
+
+    def test_galat_dikirim_balik_ke_pemanggil(self):
+        def gagal():
+            raise ValueError("galat uji")
+        _, galat = self.dari_thread_lain(lambda: droid.run_on_main(gagal))
+        self.assertIsInstance(galat, ValueError)
+        self.assertEqual(str(galat), "galat uji")
+        hasil, galat = self.dari_thread_lain(lambda: droid.run_on_main(lambda: 7))     # loop tetap hidup
+        self.assertEqual((hasil, galat), (7, None))
+
+    def test_simpan_ke_downloads_dititipkan_ke_thread_utama(self):
+        tercatat = []
+        with mock.patch.object(droid, "_save_to_downloads",
+                               lambda *a: tercatat.append((threading.get_ident(), a))):
+            _, galat = self.dari_thread_lain(lambda: droid.save_to_downloads("a.xlsx", b"PK", "m/x"))
+        self.assertIsNone(galat)
+        self.assertEqual(tercatat, [(self.loop.ident, ("a.xlsx", b"PK", "m/x"))])
+
+    def test_keluar_menutup_activity_dari_thread_utama(self):
+        tercatat = []
+        with mock.patch.object(droid, "_finish", lambda: tercatat.append(threading.get_ident())), \
+                mock.patch.object(droid.os, "_exit") as keluar:
+            droid.exit_app(delay=0)
+            t0 = time.time()
+            while not keluar.called and time.time() - t0 < 5:
+                time.sleep(0.02)
+            keluar.assert_called_once_with(0)
+        self.assertEqual(tercatat, [self.loop.ident])
+
+    def test_tombol_kembali_dipasang_dari_thread_utama(self):
+        t0 = time.time()
+        while not self.hook_thread and time.time() - t0 < 5:
+            time.sleep(0.02)
+        self.assertIn(self.loop.ident, self.hook_thread)
+
+    def test_di_luar_android_langsung_dijalankan(self):
+        with mock.patch.object(droid, "ON_ANDROID", False):
+            hasil, _ = self.dari_thread_lain(lambda: droid.run_on_main(threading.get_ident))
+        self.assertNotEqual(hasil, self.loop.ident)           # tidak lewat thread utama
+
+
+class MainPyAndroid(unittest.TestCase):
+    def test_server_di_thread_sendiri_dan_java_di_thread_utama(self):
+        kode = (ROOT / "main.py").read_text(encoding="utf-8")
+        self.assertIn("target=server.serve_forever", kode)    # server tidak memblokir thread utama
+        self.assertIn("droid.main_loop()", kode)              # thread utama melayani pekerjaan Java
+        self.assertNotIn("install_back_hook", kode)
+

@@ -22,8 +22,14 @@ from jadwal.server import make_server, pick_port
 
 
 def run_android():
-    threading.Thread(target=droid.install_back_hook, daemon=True).start()
-    make_server("127.0.0.1", cfg.ANDROID_PORT).serve_forever()
+    """Server berjalan di thread tersendiri; THREAD UTAMA dipakai untuk semua pekerjaan Java (droid.main_loop).
+
+    Hanya thread utama yang bisa menemukan kelas Java milik aplikasi (mis. org.kivy.android.PythonActivity);
+    thread buatan Python gagal dengan ClassNotFoundException. Simpan ke Downloads, keluar, dan tombol kembali
+    karena itu dititipkan ke thread utama lewat droid.run_on_main."""
+    server = make_server("127.0.0.1", cfg.ANDROID_PORT)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    droid.main_loop()
 
 
 def run_desktop():
