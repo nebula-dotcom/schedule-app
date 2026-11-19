@@ -390,7 +390,7 @@ class PopupSimpan(unittest.TestCase):
     def test_popup_isi_dan_tombol_tutup(self):
         self.assertIn("function savedPop(title,name){open(`", self.html)                  # pakai open() seperti rstAsk
         self.assertIn("Tersimpan di folder Download: <b>${esc(name)}</b>", self.html)      # nama file tebal
-        self.assertRegex(self.html, r'class="spx"[^>]*aria-label="Tutup"[^>]*onclick="close\(\)"')   # tombol X -> close()
+        self.assertRegex(self.html, r'class="spx"[^>]*aria-label="Tutup"[^>]*onclick="closeSheet\(\)"')   # tombol X -> closeSheet()
         self.assertIn("x:'<path", self.html)                                               # ikon X tersedia
 
     def test_judul_sesuai_jenis_file(self):
@@ -398,4 +398,12 @@ class PopupSimpan(unittest.TestCase):
 
     def test_toast_lama_tidak_dipakai_untuk_hasil_simpan(self):
         self.assertNotIn("toast('Tersimpan", self.html)
+
+    def test_tombol_di_atribut_tidak_memakai_nama_bawaan_document(self):
+        """Di atribut onclick="..." nama seperti close()/open()/write() memanggil document.close() dst (tidak menutup popup).
+        Tombol Batal dan X dulu tidak berfungsi karena ini."""
+        bentrok = re.findall(r'\bon[a-z]+=\\?"[^"]*?(?<![\w.$])(close|open|write|writeln)\(', self.html)
+        self.assertEqual(bentrok, [], "pakai closeSheet() / nama lain di atribut onclick")
+        self.assertIn("function closeSheet(){", self.html)
+        self.assertIn("function close(){closeSheet()}", self.html)          # kode script yang memanggil close() tetap jalan
 

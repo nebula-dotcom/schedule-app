@@ -181,7 +181,10 @@ const days=()=>{const b=new Date(S.start+'T00:00');return[...Array(14)].map((_,i
 const f=d=>d.getDate()+' '+MON[d.getMonth()],rng=(a,b)=>a.getMonth()==b.getMonth()?a.getDate()+'–'+f(b):f(a)+'–'+f(b);
 const cnt=(k,i)=>{const c={P:0,S:0,R:0,L:0};D[k].st.forEach(p=>{const x=p.s[i];if(x in c)c[x]++});return c};
 const KS=[...'PSRL'];
-function close(){$('#sheet').classList.remove('open');$('#shade').style.display='none'}
+/* Di atribut onclick="..." nama close() berarti document.close() (bawaan browser, tidak melakukan apa-apa), bukan fungsi ini.
+   Karena itu tombol di dalam popup memanggil closeSheet(); close() hanya dipakai dari kode script. */
+function closeSheet(){$('#sheet').classList.remove('open');$('#shade').style.display='none'}
+function close(){closeSheet()}
 function open(h){$('#sheet').innerHTML=h;$('#sheet').classList.add('open');$('#shade').style.display='block'}
 $('#shade').onclick=close;$('#lg').innerHTML=BALL;$('#mn').innerHTML=ico('menu',26);
 /* ===== Tombol kembali / gestur geser kembali =====
@@ -220,11 +223,11 @@ function staff(i){const p=i<0?{n:''}:D[S.div].st[i];open(`<h3>${i<0?'Tambah staf
 function saveS(i){const n=$('#nm').value.trim();if(!n)return;if(i<0)D[S.div].st.push({n,s:Array(14).fill('-')});else D[S.div].st[i].n=n;rx()}
 function delS(i){D[S.div].st.splice(i,1);rx()}
 /* Reset jadwal divisi: kosongkan semua sel shift staff + jam kerja Pagi/Siang/Malam (Libur kembali ke teks bawaan); nama staff tetap */
-function rstAsk(){open(`<h3>Reset jadwal ${esc(D[S.div].t)}?</h3><p class="sub">Semua shift dan jam kerja divisi ini dikosongkan.</p><div style="display:flex;gap:8px"><button class="btn dg" style="flex:1" onclick="rstDiv()">Reset</button><button class="btn" style="flex:1" onclick="close()">Batal</button></div>`)}
+function rstAsk(){open(`<h3>Reset jadwal ${esc(D[S.div].t)}?</h3><p class="sub">Semua shift dan jam kerja divisi ini dikosongkan.</p><div style="display:flex;gap:8px"><button class="btn dg" style="flex:1" onclick="rstDiv()">Reset</button><button class="btn" style="flex:1" onclick="closeSheet()">Batal</button></div>`)}
 function rstDiv(){const d=D[S.div];d.st.forEach(p=>{p.s=Array(14).fill('-')});d.h={P:'',S:'',R:'',L:'Tidak bertugas'};rx()}
 function delList(){const l=D[S.div].st;open(`<h3>Hapus staff</h3>${l.length?`<div class="dl">${l.map((p,i)=>`<button class="btn dg w" onclick="delAsk(${i})">${esc(p.n)}</button>`).join('')}</div>`:'<p class="sub">Belum ada staff.</p>'}`)}
-function delAsk(i){open(`<h3>Hapus ${esc(D[S.div].st[i].n)}?</h3><p class="sub">Jadwal staff ini ikut terhapus.</p><div style="display:flex;gap:8px"><button class="btn dg" style="flex:1" onclick="delS(${i})">Ya, hapus</button><button class="btn" style="flex:1" onclick="close()">Batal</button></div>`)}
-function per(){open(`<h3>Ubah periode</h3><label for="sd" class="mut" style="font-size:calc(13px*var(--u));color:var(--mute)">Tanggal mulai (14 hari)</label><input type="date" id="sd" value="${S.start}" style="margin-top:6px"><button class="btn w" onclick="S.start=$('#sd').value||S.start;S.sel=todayIdx();close();draw()">Simpan periode</button>`)}
+function delAsk(i){open(`<h3>Hapus ${esc(D[S.div].st[i].n)}?</h3><p class="sub">Jadwal staff ini ikut terhapus.</p><div style="display:flex;gap:8px"><button class="btn dg" style="flex:1" onclick="delS(${i})">Ya, hapus</button><button class="btn" style="flex:1" onclick="closeSheet()">Batal</button></div>`)}
+function per(){open(`<h3>Ubah periode</h3><label for="sd" class="mut" style="font-size:calc(13px*var(--u));color:var(--mute)">Tanggal mulai (14 hari)</label><input type="date" id="sd" value="${S.start}" style="margin-top:6px"><button class="btn w" onclick="S.start=$('#sd').value||S.start;S.sel=todayIdx();closeSheet();draw()">Simpan periode</button>`)}
 const chips=()=>`<div class="lg">${KS.map(c=>`<span class="chip"><i class="dot s${c}"></i>${SH[c][0]}</span>`).join('')}</div>`;
 const hours=k=>`<div class="lh">${KS.map(c=>`<div><i class="dot s${c}"></i><b style="font-weight:600">${SH[c][0]}<span>${D[k].h[c]?'('+D[k].h[c]+')':''}</span></b></div>`).join('')}</div>`;
 /* Banner periode: baris atas = teks PERIODE JADWAL tepat di tengah (satu sumbu dengan tag 14 HARI) + ikon di pojok, tahun di tengah bawah; di bawahnya hari/tanggal/bulan kiri & kanan dihubungkan garis berisi tag durasi. Nama hari merah = Sabtu/Minggu */
@@ -302,7 +305,7 @@ const payload=()=>({start:S.start,divisions:Object.keys(D).map(k=>({key:k,title:
 let _sv;function persist(){clearTimeout(_sv);_sv=setTimeout(()=>{fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload())}).catch(()=>{})},400)}
 async function loadState(){try{const r=await fetch('/api/state');if(!r.ok)return;const p=await r.json();if(p&&/^\d{4}-\d{2}-\d{2}$/.test(p.start))S.start=p.start;(p.divisions||[]).forEach(v=>{const d=D[v.key];if(!d)return;d.st=v.staff.map(x=>({n:x.name,s:[...x.shifts]}));d.h=Object.assign(d.h,v.hours)})}catch(e){}}
 /* Popup (gaya sama dengan Reset jadwal) setelah file tersimpan ke Downloads di aplikasi Android */
-function savedPop(title,name){open(`<div class="sph"><h3>${esc(title)}</h3><button class="spx" type="button" aria-label="Tutup" onclick="close()">${ico('x',24)}</button></div><p class="sub" style="margin:0 0 2px;line-height:1.5;overflow-wrap:anywhere">Tersimpan di folder Download: <b>${esc(name)}</b></p>`)}
+function savedPop(title,name){open(`<div class="sph"><h3>${esc(title)}</h3><button class="spx" type="button" aria-label="Tutup" onclick="closeSheet()">${ico('x',24)}</button></div><p class="sub" style="margin:0 0 2px;line-height:1.5;overflow-wrap:anywhere">Tersimpan di folder Download: <b>${esc(name)}</b></p>`)}
 async function exportFile(kind){const bs=()=>document.querySelectorAll('.ab .btn');bs().forEach(b=>b.disabled=true);
 try{const r=await fetch('/api/export/'+kind,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload(),sheet:S.pr})});
 if(!r.ok){let m='Server menolak permintaan ('+r.status+').';try{m=(await r.json()).error||m}catch(e){}throw new Error(m)}
