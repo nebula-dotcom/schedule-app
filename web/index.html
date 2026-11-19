@@ -165,8 +165,9 @@ button.pr,a.pr{transform:scale(var(--ps));filter:brightness(.9);transition-durat
 nav button{--ps:.9}.rd-s button{--ps:.9}.pill{--ps:.92}
 .mn{border-radius:50%;--ps:.82}.mn.pr{background:var(--soft)}
 .nm button{border-radius:8px;--ps:.8}.crumb a{border-radius:6px;--ps:.9}
+/* Ikon X simetris: diputar 90° tampak sama dengan diam, jadi diputar 45° (X berubah jadi +) supaya putarannya terlihat; tekan masuk cepat, lepas memantul */
 .spx{--ps:.82}.spx svg{transition:transform .34s cubic-bezier(.34,1.56,.64,1)}
-.spx.pr{background:var(--line);color:var(--ink);filter:none}.spx.pr svg{transform:rotate(90deg) scale(.9)}
+.spx.pr{background:#fde1e4;color:#b4232f;filter:none}.spx.pr svg{transform:rotate(45deg);transition-duration:.12s;transition-timing-function:ease-out}
 .xt td.ed.pr{filter:brightness(.9)}
 #rp{position:fixed;inset:0;z-index:40;pointer-events:none;overflow:hidden}
 #rp span{position:absolute;overflow:hidden;isolation:isolate;opacity:1;transform-origin:center;transition:opacity .3s ease,transform .09s ease-out}
