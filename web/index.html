@@ -175,6 +175,28 @@ nav button{--ps:.9}.rd-s button{--ps:.9}.pill{--ps:.92}
 #rp i{position:absolute;border-radius:50%;transform:scale(0);animation:rp .5s cubic-bezier(.2,.7,.3,1) forwards}
 @keyframes rp{to{transform:scale(1)}}
 @media(prefers-reduced-motion:reduce){button.pr,a.pr,.spx.pr svg,.dv.pr .go{transform:none}#rp{display:none}}
+/* ===== Import Excel (Settings) ===== */
+.imp{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;display:flex;flex-direction:column;gap:10px}
+.imp-h{display:flex;gap:10px;align-items:center}.imp-h>i{flex:none;width:38px;height:38px;border-radius:10px;background:var(--soft);color:var(--pri);display:grid;place-items:center}
+.imp-h .nmf{min-width:0}.imp-h b{display:block;font-size:calc(13.5px*var(--u))}.imp-h small{display:block;color:var(--mute);font-size:calc(11px*var(--u));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.imp-n{font-size:calc(10.5px*var(--u));color:var(--mute);line-height:1.5}
+.imp-f{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.imp-ld{display:flex;align-items:center;gap:10px;color:var(--mute);font-size:calc(12px*var(--u));padding:6px 2px}
+.spn{width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--pri);border-radius:50%;animation:spn .7s linear infinite}@keyframes spn{to{transform:rotate(360deg)}}
+.imp-e,.imp-ok,.imp-w{display:flex;gap:8px;align-items:flex-start;border-radius:10px;padding:9px 10px;font-size:calc(11.5px*var(--u));line-height:1.5}
+.imp-e{background:#fde1e4;color:#b4232f}.imp-ok{background:#d9f5e3;color:#13803f;font-weight:600}.imp-w{background:#fff6dd;color:#7a5600;flex-direction:column;gap:3px}
+.imp-e svg,.imp-ok svg{flex:none;margin-top:2px}.imp-w b{display:flex;align-items:center;gap:6px}.imp-w ul{margin:0 0 0 16px;padding:0}.imp-w li{margin:1px 0}
+.imp-per{background:var(--soft);border-radius:10px;padding:8px 10px}.imp-per b{display:block;font-size:calc(12.5px*var(--u))}.imp-per small{color:var(--mute);font-size:calc(10.5px*var(--u))}
+.imp-st{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.imp-st div{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 4px;text-align:center}
+.imp-st b{display:block;font-size:calc(16px*var(--u));font-weight:700}.imp-st b em{font-style:normal;font-size:calc(11px*var(--u));color:var(--mute);font-weight:600}.imp-st small{font-size:calc(9.5px*var(--u));color:var(--mute);text-transform:uppercase;letter-spacing:.3px;font-weight:600}
+.imp .seg{margin:0}.imp .xs{border:1px solid var(--line);border-radius:10px}
+.it{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:calc(10.5px*var(--u))}
+.it th,.it td{height:30px;min-width:33px;text-align:center;padding:0 2px;border-bottom:1px solid var(--line);font-weight:600}
+.it th{background:var(--bg);color:var(--mute);font-size:calc(9px*var(--u));line-height:1.15;height:34px}.it th b{display:block;font-size:calc(11px*var(--u));color:var(--ink)}
+.it th.we,.it th.we b{color:#c00000}.it tr:last-child td{border-bottom:0}.it td.e{color:#b9c1d6;font-weight:400}
+.it .n{position:sticky;left:0;z-index:1;background:#fff;text-align:left;padding:0 8px;min-width:86px;max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-right:1px solid var(--line)}.it th.n{background:var(--bg);z-index:2;color:var(--mute)}
+.imp-lg{display:flex;gap:6px;flex-wrap:wrap}.imp-lg span{border-radius:99px;padding:3px 9px;font-size:calc(10px*var(--u));font-weight:700}
+.imp-b{display:flex;gap:8px}.imp-b .btn{flex:1}.imp-b .btn:last-child{flex:1.6}
 </style>
 </head>
 <body>
@@ -191,7 +213,10 @@ pen:'<path d="M4 20l1-4L16.5 4.5a2 2 0 0 1 3 3L8 19z"/>',rst:'<path d="M3 12a9 9
 ok:'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',minus:'<path d="M5 12h14"/>',x:'<path d="M6 6l12 12M18 6 6 18"/>',prn:'<path d="M7 9V4h10v5M7 17H5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2M7 14h10v6H7z"/>',dl:'<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',img:'<rect x="4" y="5" width="16" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m5 17 5-5 4 4 2-2 3 3"/>',menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
 BAR:'<path d="M4 5h16l-8 9zM12 14v6M8 20h8"/>',FLOOR:'<path d="M4 9h16M6 9v10M18 9v10M4 5v4M20 5v4M9 13h6"/>',
 CASHIER:'<rect x="5" y="4" width="14" height="6" rx="1.5"/><path d="M3.5 10h17v9a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1zM8 14h8"/>',
-KITCHEN:'<path d="M7 20v-5a4 4 0 0 1-1-7.7A4 4 0 0 1 12 5a4 4 0 0 1 6 2.3A4 4 0 0 1 17 15v5zM7 17h10"/>'};
+KITCHEN:'<path d="M7 20v-5a4 4 0 0 1-1-7.7A4 4 0 0 1 12 5a4 4 0 0 1 6 2.3A4 4 0 0 1 17 15v5zM7 17h10"/>',
+up:'<path d="M12 16V4M7 9l5-5 5 5M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/>',
+xls:'<path d="M6 3h8l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM14 3v4h4M9.5 12l5 5M14.5 12l-5 5"/>',
+warn:'<path d="M12 4 2.8 19.5h18.4zM12 10v4.5M12 17.2v.1"/>'};
 const ico=(n,s=20)=>`<svg width="${Math.round(s*.7)}" height="${Math.round(s*.7)}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
 const BALL='<svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14.5" fill="#111827"/><ellipse cx="10.5" cy="9.5" rx="5.2" ry="3" transform="rotate(-35 10.5 9.5)" fill="#fff" opacity=".2"/><circle cx="16" cy="16" r="6.6" fill="#fff"/><text x="16" y="19.6" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="9.5" fill="#111827">8</text></svg>';
 const SH={P:['Pagi','09.00–17.00'],S:['Siang','11.30–19.30'],R:['Malam','16.30–00.30'],L:['Libur','Tidak bertugas'],'-':['','Kosong']};
@@ -352,7 +377,7 @@ const ini=n=>{const w=String(n||'').trim().split(/\s+/).filter(Boolean);return w
 const avs=k=>{const s=D[k].st;return s.slice(0,3).map(p=>`<span class="a">${ini(p.n)}</span>`).join('')+(s.length>3?`<span class="a p">+${s.length-3}</span>`:'')};
 const hdA=()=>{const n=Object.keys(D).length,t=Object.values(D).reduce((a,d)=>a+d.st.length,0);return`<div class="hda"><h2>Kelola Divisi</h2><span>${n} DIVISI · ${t} STAFF</span></div>`};
 const DAYL=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
-function cfgBody(){const[y,m,d]=S.start.split('-').map(Number);return`<div class="cfg"><label>Tanggal<select id="cd" onchange="cfgSet()">${[...Array(31)].map((_,i)=>`<option value="${i+1}"${i+1==d?' selected':''}>${i+1}</option>`).join('')}</select></label><label>Bulan<select id="cm" onchange="cfgSet()">${MONL.map((n,i)=>`<option value="${i+1}"${i+1==m?' selected':''}>${n}</option>`).join('')}</select></label><label>Tahun<select id="cy" onchange="cfgSet()">${Array.from({length:Math.max(2040,y)-Math.min(2025,y)+1},(_,i)=>Math.min(2025,y)+i).map(v=>`<option value="${v}"${v==y?' selected':''}>${v}</option>`).join('')}</select></label></div><div class="cfg2"><div class="tl"><small>Hari</small><b id="ch">${DAYL[new Date(y,m-1,d).getDay()]}</b></div><div class="tl"><small>Check</small><span class="ok" id="ck">${ico('ok',16)}Sesuai kalender</span></div></div>`}
+function cfgBody(){const[y,m,d]=S.start.split('-').map(Number);return`<div class="cfg"><label>Tanggal<select id="cd" onchange="cfgSet()">${[...Array(31)].map((_,i)=>`<option value="${i+1}"${i+1==d?' selected':''}>${i+1}</option>`).join('')}</select></label><label>Bulan<select id="cm" onchange="cfgSet()">${MONL.map((n,i)=>`<option value="${i+1}"${i+1==m?' selected':''}>${n}</option>`).join('')}</select></label><label>Tahun<select id="cy" onchange="cfgSet()">${Array.from({length:Math.max(2040,y)-Math.min(2025,y)+1},(_,i)=>Math.min(2025,y)+i).map(v=>`<option value="${v}"${v==y?' selected':''}>${v}</option>`).join('')}</select></label></div><div class="cfg2"><div class="tl"><small>Hari</small><b id="ch">${DAYL[new Date(y,m-1,d).getDay()]}</b></div><div class="tl"><small>Check</small><span class="ok" id="ck">${ico('ok',16)}Sesuai kalender</span></div></div>${impBox()}`}
 function cfgSet(){const d=+$('#cd').value,m=+$('#cm').value,y=+$('#cy').value,t=new Date(y,m-1,d),v=t.getFullYear()==y&&t.getMonth()==m-1&&t.getDate()==d;
 $('#ck').className='ok'+(v?'':' no');$('#ck').innerHTML=v?ico('ok',16)+'Sesuai kalender':'Tanggal tidak valid';
 if(v){S.start=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;$('#ch').textContent=DAYL[t.getDay()];$('.pk').outerHTML=periodFull();S.sel=todayIdx();persist()}}
@@ -394,6 +419,51 @@ let _today=ymd(new Date());
 function tickDay(){const t=ymd(new Date());if(t==_today)return;_today=t;S.sel=todayIdx();if(S.view=='home')draw()}
 setInterval(tickDay,20000);addEventListener('focus',tickDay);document.addEventListener('visibilitychange',()=>{if(!document.hidden)tickDay()});
 loadState().finally(()=>{S.sel=todayIdx();draw()});
+/* ===== Import Excel (menu Settings) =====
+   Alur: pilih file -> POST /api/import (server hanya MEMBACA, tidak menyimpan apa pun) -> pratinjau -> Terapkan.
+   Terapkan memakai jalur yang sama dengan loadState() lalu persist(), jadi setelah itu semua sel shift, tanggal, dan jam bisa diubah seperti biasa.
+   Semua teks dari file lewat esc() sebelum masuk HTML. */
+let IM={st:'idle'};const IMX=350*1024,imL={P:'P',S:'S',R:'M',L:'L'};
+const impBox=()=>`<section class="imp" id="imp">${impIn()}</section>`,impDraw=()=>{const e=$('#imp');if(e)e.innerHTML=impIn()};
+const impDays=s=>{const b=new Date(s+'T00:00');return[...Array(14)].map((_,i)=>{const d=new Date(b);d.setDate(b.getDate()+i);return{n:DAY[d.getDay()],x:d.getDate(),we:d.getDay()%6==0}})};
+const impHd=(t,s)=>`<div class="imp-h"><i>${ico('xls',30)}</i><div class="nmf"><b>${t}</b><small>${s}</small></div></div>`;
+const impPk=l=>`<button class="btn w" onclick="$('#imf').click()">${ico('up',18)}${l}</button><input type="file" id="imf" class="imp-f" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onchange="impPick(this)">`;
+function impIn(){
+if(IM.st=='load')return impHd('Membaca file…',esc(IM.name))+`<div class="imp-ld"><span class="spn"></span>Mohon tunggu sebentar</div>`;
+if(IM.st=='err')return impHd('Import Excel','Tidak bisa dibaca')+`<div class="imp-e">${ico('x',16)}<span>${esc(IM.msg)}</span></div>`+impPk('Pilih file lain');
+if(IM.st=='done')return impHd('Berhasil diimpor','Jadwal sudah diperbarui')+`<div class="imp-ok">${ico('ok',16)}<span>${esc(IM.sum)}</span></div><div class="imp-b"><button class="btn gy" onclick="impUndo()">${ico('rst',16)}Urungkan</button><button class="btn" onclick="impReset(1)">Import file lain</button></div><p class="imp-n">Urungkan mengembalikan jadwal ke kondisi sebelum impor, termasuk perubahan yang kamu buat sesudahnya.</p>`;
+if(IM.st=='prev')return impPrev();
+return impHd('Import Excel','Ambil jadwal dari file .xlsx')+impPk('Pilih file Excel')+`<p class="imp-n">Bisa membaca file hasil Download Excel: Semua Sheet, Administrator, atau Jadwal Global. Tanggal mulai dibaca otomatis dari file.</p>`}
+function impTot(){return IM.info.divisions.reduce((o,d)=>({s:o.s+d.staff,f:o.f+d.filled,c:o.c+d.cells}),{s:0,f:0,c:0})}
+function impPrev(){const p=IM.payload,i=IM.info,v=p.divisions.find(x=>x.key==IM.tab)||p.divisions[0],a=impDays(p.start),t=impTot();
+const hrs=['P','S','R'].filter(c=>v.hours&&v.hours[c]).map(c=>`<span class="s${c}">${SH[c][0]} ${esc(v.hours[c])}</span>`).join('');
+return`<div class="imp-h"><i>${ico('xls',30)}</i><div class="nmf"><b>Pratinjau import</b><small>${esc(IM.name)}</small></div></div>
+<div class="imp-per"><b>${esc(i.period.replace(/^Periode: /,'').replace(/ +\(\d+ hari\)$/,''))}</b><small>Tanggal dibaca dari ${esc(i.source)} · sheet ${esc(i.sheet)}</small></div>
+<div class="imp-st"><div><b>${p.divisions.length}</b><small>Divisi</small></div><div><b>${t.s}</b><small>Staff</small></div><div><b>${t.f}<em>/${t.c}</em></b><small>Shift terisi</small></div></div>
+${i.warnings.length?`<div class="imp-w"><b>${ico('warn',16)}Perlu dicek (${i.warnings.length})</b><ul>${i.warnings.map(w=>`<li>${esc(w)}</li>`).join('')}</ul></div>`:''}
+<div class="seg">${p.divisions.map(d=>`<button class="${d.key==v.key?'on':''}" onclick="impTab('${d.key}')">${esc(d.title)}</button>`).join('')}</div>
+<div class="xs"><table class="it"><thead><tr><th class="n">Nama</th>${a.map(y=>`<th class="${y.we?'we':''}">${y.n}<b>${y.x}</b></th>`).join('')}</tr></thead><tbody>${v.staff.map(q=>`<tr><td class="n">${esc(q.name)}</td>${[...q.shifts].map(c=>c=='-'?'<td class="e">·</td>':`<td class="s${c}">${imL[c]}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+<div class="imp-lg">${KS.map(c=>`<span class="s${c}">${imL[c]} = ${SH[c][0]}</span>`).join('')}</div>${hrs?`<div class="imp-lg">${hrs}</div>`:''}
+<div class="imp-b"><button class="btn gy" onclick="impReset()">Batal</button><button class="btn" onclick="impApply()">${ico('ok',16)}Terapkan ke jadwal</button></div>
+<p class="imp-n">Mengganti staff, shift, dan jam kerja divisi yang ada di file ini. Divisi yang tidak ada di file tidak diubah.</p>`}
+async function impPick(inp){const f=inp.files&&inp.files[0];if(!f)return;
+if(!/\.xlsx$/i.test(f.name)){IM={st:'err',msg:'File harus berformat .xlsx (Excel). Pilih file hasil Download Excel dari aplikasi ini.'};return impDraw()}
+if(f.size>IMX){IM={st:'err',msg:'File terlalu besar (maksimal '+IMX/1024+' KB). Pastikan ini file jadwal.'};return impDraw()}
+IM={st:'load',name:f.name};impDraw();
+try{const b=new Uint8Array(await f.arrayBuffer());let t='';for(let i=0;i<b.length;i+=32768)t+=String.fromCharCode.apply(null,b.subarray(i,i+32768));
+const r=await fetch('/api/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:f.name,data:btoa(t)})});
+let j={};try{j=await r.json()}catch(e){}
+if(!r.ok||!j.payload)throw new Error(j.error||'File tidak bisa dibaca.');
+IM={st:'prev',name:f.name,payload:j.payload,info:j.info,tab:j.payload.divisions[0].key}}
+catch(e){IM={st:'err',msg:e instanceof TypeError?'Tidak bisa terhubung ke aplikasi. Coba lagi.':e.message}}
+impDraw()}
+function impTab(k){IM.tab=k;impDraw()}
+function impReset(go){IM={st:'idle'};impDraw();if(go){const e=$('#imf');if(e)e.click()}}
+/* sama dengan isi loadState(): ganti staff/shift/jam divisi yang ada di data */
+function impSet(p){S.start=p.start;p.divisions.forEach(v=>{const d=D[v.key];if(!d)return;d.st=v.staff.map(x=>({n:x.name,s:[...x.shifts]}));if(v.hours)Object.assign(d.h,v.hours)});S.sel=todayIdx()}
+function impApply(){if(IM.st!='prev')return;const t=impTot(),n=IM.payload.divisions.length;
+const bk=JSON.stringify(payload());impSet(IM.payload);IM={st:'done',bk,sum:n+' divisi · '+t.s+' staff · '+t.f+' shift terisi'};persist();draw()}
+function impUndo(){if(IM.st!='done'||!IM.bk)return;impSet(JSON.parse(IM.bk));IM={st:'idle'};persist();draw()}
 /* ===== Animasi tekan tombol =====
    .pr dipasang saat jari menyentuh (pointerdown) dan dilepas paling cepat PRMIN ms kemudian, supaya animasi tetap terlihat walau ketukan sangat singkat
    (WebView sering tidak sempat menampilkan :active). Riak digambar di #rp (di luar tombol) supaya tidak terhapus ketika halaman digambar ulang setelah klik.

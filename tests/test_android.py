@@ -270,6 +270,122 @@ class HookTema(unittest.TestCase):
                 self.assertTrue((dist / "src" / "main" / "res" / sub / "jadwal_theme.xml").is_file(), sub)
 
 
+    # ---- pemilih file untuk Import Excel (<input type="file"> di WebView) ----
+    JAVA_P = ("public class PythonActivity extends Activity {\n"
+              "  protected void onPostExecute(String r) {\n"
+              "    PythonActivity.mActivity.mWebView = new WebView(PythonActivity.mActivity);\n"
+              "    mWebView.getSettings().setJavaScriptEnabled(true);\n  }\n}\n")
+
+    def test_pemilih_file_dipasang_di_java(self):
+        hook = self._hook()
+        out = hook.patch_file_chooser(self.JAVA_P)
+        self.assertIn("PythonActivity.mActivity.mWebView.setWebChromeClient(new android.webkit.WebChromeClient()", out)
+        self.assertIn("onShowFileChooser", out)
+        self.assertIn("org.jadwal.FilePickActivity.start(__w.getContext(), __cb)", out)
+        self.assertLess(out.index("setWebChromeClient"), out.index("getSettings"))        # segera setelah WebView dibuat
+        self.assertEqual(hook.patch_file_chooser(out), out)                              # aman dijalankan berulang
+        self.assertIn("w.setWebChromeClient(", hook.patch_file_chooser("void f(){ WebView w = new WebView(this); }"))
+        self.assertEqual(out.count("{"), out.count("}"))
+        self.assertEqual(out.count("("), out.count(")"))
+
+    def test_pemilih_file_tidak_mengubah_kalau_tidak_pasti(self):
+        hook = self._hook()
+        for tidak_pasti in ("class A { void f(){} }",                                              # tidak ada WebView
+                            "class A { void f(){ a = new WebView(x); b = new WebView(y); } }",    # dua WebView
+                            "class A { void f(){ w = new WebView(x); w.setWebChromeClient(c); } }"):   # sudah ada milik p4a
+            self.assertEqual(hook.patch_file_chooser(tidak_pasti), tidak_pasti)
+
+    def test_patch_latar_dan_pemilih_file_bisa_dipakai_bersama_dalam_urutan_apa_pun(self):
+        hook = self._hook()
+        a = hook.patch_file_chooser(hook.patch_java(self.JAVA_P))
+        b = hook.patch_java(hook.patch_file_chooser(self.JAVA_P))
+        for out in (a, b):
+            self.assertIn("setBackgroundColor(0xFFF6F8FC);", out)
+            self.assertIn("onShowFileChooser", out)
+            self.assertEqual(out.count("{"), out.count("}"))
+            self.assertEqual(hook.patch_file_chooser(hook.patch_java(out)), out)
+
+    def test_kelas_filepickactivity_lengkap(self):
+        hook = self._hook()
+        j = hook.FILE_PICK_ACTIVITY
+        for harus in ("package org.jadwal;", "public class FilePickActivity extends Activity", "ACTION_GET_CONTENT",
+                      "CATEGORY_OPENABLE", "FileChooserParams.parseResult", "startActivityForResult",
+                      "public static boolean start(Context ctx, ValueCallback<Uri[]> cb)"):
+            self.assertIn(harus, j)
+        self.assertEqual(j.count("{"), j.count("}"))
+        self.assertEqual(j.count("("), j.count(")"))
+        # halaman web selalu dibalas (hasil, batal, atau gagal) supaya input file tidak macet
+        self.assertGreaterEqual(j.count("deliver("), 5)
+
+    def test_manifest_mendaftarkan_activity_sekali(self):
+        hook = self._hook()
+        mf = '<manifest><application android:label="x"><activity android:name="a"/></application></manifest>'
+        out = hook.patch_manifest_file_picker(mf)
+        self.assertEqual(out.count("org.jadwal.FilePickActivity"), 1)
+        self.assertIn("Theme.Translucent.NoTitleBar", out)
+        self.assertLess(out.index("org.jadwal.FilePickActivity"), out.index("</application>"))
+        self.assertEqual(hook.patch_manifest_file_picker(out), out)
+        for tidak_pasti in ("<manifest/>", "<application></application><application></application>"):
+            self.assertEqual(hook.patch_manifest_file_picker(tidak_pasti), tidak_pasti)
+
+    def test_tema_transparan_filepickactivity_tidak_ditimpa_tema_aplikasi(self):
+        hook = self._hook()
+        mf = hook.patch_manifest_file_picker('<application android:theme="@android:style/Theme.NoTitleBar"></application>')
+        out = hook.patch_manifest(mf)
+        self.assertIn('android:theme="@style/JadwalTheme"', out)               # tema aplikasi tetap diganti
+        self.assertIn("Theme.Translucent.NoTitleBar", out)                      # tema activity pemilih file dibiarkan
+        self.assertEqual(hook.patch_manifest(out), out)
+
+    def test_before_apk_build_memasang_pemilih_file_lengkap_dan_aman_diulang(self):
+        import contextlib
+        import io
+        import tempfile
+        from types import SimpleNamespace
+        hook = self._hook()
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            mf = dist / "src" / "main" / "AndroidManifest.xml"
+            java = dist / "src" / "main" / "java" / "org" / "kivy" / "android" / "PythonActivity.java"
+            mf.parent.mkdir(parents=True)
+            java.parent.mkdir(parents=True)
+            mf.write_text('<manifest><application android:theme="@android:style/Theme.NoTitleBar"></application></manifest>',
+                          encoding="utf-8")
+            java.write_text(self.JAVA_P, encoding="utf-8")
+            jalankan = lambda: hook.before_apk_build(SimpleNamespace(_dist=SimpleNamespace(dist_dir=str(dist))))
+            with contextlib.redirect_stdout(io.StringIO()):
+                jalankan()
+                jalankan()                                                              # build ulang di dist yang sama
+            kelas = dist / "src" / "main" / "java" / "org" / "jadwal" / "FilePickActivity.java"
+            self.assertTrue(kelas.is_file())
+            self.assertEqual(kelas.read_text(encoding="utf-8"), hook.FILE_PICK_ACTIVITY)
+            teks_java = java.read_text(encoding="utf-8")
+            self.assertEqual(teks_java.count("onShowFileChooser"), 1)
+            teks_mf = mf.read_text(encoding="utf-8")
+            self.assertEqual(teks_mf.count("org.jadwal.FilePickActivity"), 1)
+            self.assertIn("Theme.Translucent.NoTitleBar", teks_mf)                      # tidak tertimpa di build kedua
+            self.assertIn('android:theme="@style/JadwalTheme"', teks_mf)
+
+    def test_pemilih_file_tidak_dipasang_dan_ada_peringatan_kalau_webview_tidak_ketemu(self):
+        import contextlib
+        import io
+        import tempfile
+        hook = self._hook()
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            java = dist / "src" / "main" / "java" / "org" / "kivy" / "android" / "PythonActivity.java"
+            mf = dist / "AndroidManifest.xml"
+            java.parent.mkdir(parents=True)
+            java.write_text("class P { void f(){ WebView w = buat(); } }", encoding="utf-8")
+            mf.write_text("<manifest><application></application></manifest>", encoding="utf-8")
+            keluar = io.StringIO()
+            with contextlib.redirect_stdout(keluar):
+                hook.apply_file_chooser(dist)
+            self.assertIn("PERINGATAN: pemilih file", keluar.getvalue())
+            self.assertIn("WebView w = buat();", keluar.getvalue())                     # baris asli ikut dicetak untuk diagnosa
+            self.assertFalse((dist / "src" / "main" / "java" / "org" / "jadwal").exists())
+            self.assertNotIn("FilePickActivity", mf.read_text(encoding="utf-8"))
+
+
 class TombolKembaliHalaman(unittest.TestCase):
     """index.html: satu tekan kembali hanya diproses sekali, dan jebakan riwayat tidak dipasang di Android WebView."""
 

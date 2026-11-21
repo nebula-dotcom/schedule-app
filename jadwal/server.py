@@ -17,7 +17,7 @@ import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlsplit
 
-from . import droid, excel, image
+from . import droid, excel, image, importer
 from . import settings as cfg
 from .schedule import Schedule, ScheduleError
 
@@ -110,7 +110,9 @@ class Handler(BaseHTTPRequestHandler):
             return self._export(match.group(1))
         if path == "/api/exit" and method == "POST":
             return self._exit()
-        known = path in PAGES or path in ("/favicon.ico", "/api/state", "/api/exit") or match
+        if path == "/api/import" and method == "POST":
+            return self._import()
+        known = path in PAGES or path in ("/favicon.ico", "/api/state", "/api/exit", "/api/import") or match
         raise HttpError(405 if known else 404, "Metode tidak diizinkan." if known else "Tidak ditemukan.")
 
     # ------------------------------------------------------------- simpan otomatis
@@ -130,6 +132,15 @@ class Handler(BaseHTTPRequestHandler):
             json.dump(sched.to_payload(), fh, ensure_ascii=False, indent=1)
         os.replace(tmp, cfg.STATE_FILE)                  # tulis penuh dulu, baru ganti (anti rusak)
         self._json({"ok": True})
+
+    # ------------------------------------------------------------- import
+    def _import(self):
+        """Baca file .xlsx kiriman halaman web (base64) -> pratinjau. Tidak menyimpan apa pun;
+        data baru dipakai setelah pengguna menekan Terapkan (halaman web yang menyimpannya lewat /api/state)."""
+        body = self._read_json()
+        if not isinstance(body, dict):
+            raise HttpError(400, "Permintaan tidak valid.")
+        self._json({"ok": True, **importer.parse_b64(body.get("data"))})
 
     # ------------------------------------------------------------- export
     def _export(self, kind: str):

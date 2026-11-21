@@ -16,6 +16,10 @@ server itu merespons).
 Satu-satunya skrip: kalau halaman ini sampai terbuka lagi lewat tombol kembali (riwayat WebView),
 ia langsung kembali ke /app supaya tidak pernah menjadi jalan buntu.
 
+Hook ini juga memasang pemilih file untuk <input type="file"> (fitur Import Excel): WebView Android tidak membuka
+pemilih file sendiri, jadi WebView diberi WebChromeClient.onShowFileChooser yang membuka activity kecil tak terlihat
+(org.jadwal.FilePickActivity, ditulis hook ini ke dist dan didaftarkan di AndroidManifest).
+
 Hook ini juga memaksa tema berlatar #F6F8FC (@style/JadwalTheme, lihat android_res/) dipakai di
 AndroidManifest, lalu menyalin resource temanya langsung ke proyek Android. Tanpa ini, splash sistem Android 12+
 bisa tetap hitam kalau tema dari buildozer.spec tidak sampai ke manifest.
@@ -202,6 +206,162 @@ def apply_webview_background(dist_dir: Path) -> None:
                 print(f"[hook]    {b}")
 
 
+FILE_TANDA = "/* jadwal: pemilih file */"
+FILE_MANIFEST_TANDA = "org.jadwal.FilePickActivity"
+FILE_JAVA = """ @L@.setWebChromeClient(new android.webkit.WebChromeClient() {
+            @Override
+            public boolean onShowFileChooser(android.webkit.WebView __w, android.webkit.ValueCallback<android.net.Uri[]> __cb,
+                                             android.webkit.WebChromeClient.FileChooserParams __p) {
+              return org.jadwal.FilePickActivity.start(__w.getContext(), __cb);
+            }
+          }); """ + FILE_TANDA
+
+FILE_PICK_ACTIVITY = """package org.jadwal;
+
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
+
+/**
+ * Activity tak terlihat: membuka pemilih file bawaan Android untuk <input type="file"> di WebView
+ * (WebView tidak bisa melakukannya sendiri), menyerahkan hasilnya ke halaman web, lalu menutup diri.
+ * Dibuat otomatis oleh p4a/hook.py saat build APK -- jangan diubah di sini.
+ */
+public class FilePickActivity extends Activity {
+    private static final int REQ = 7711;
+    private static ValueCallback<Uri[]> sCallback;
+
+    public static boolean start(Context ctx, ValueCallback<Uri[]> cb) {
+        if (sCallback != null) {
+            sCallback.onReceiveValue(null);
+            sCallback = null;
+        }
+        sCallback = cb;
+        try {
+            Intent i = new Intent(ctx, FilePickActivity.class);
+            if (!(ctx instanceof Activity)) {
+                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            }
+            ctx.startActivity(i);
+        } catch (Exception e) {
+            deliver(null);
+        }
+        return true;
+    }
+
+    @Override
+    protected void onCreate(Bundle state) {
+        super.onCreate(state);
+        if (state != null) {
+            return;
+        }
+        if (sCallback == null) {
+            finish();
+            return;
+        }
+        try {
+            Intent pick = new Intent(Intent.ACTION_GET_CONTENT);
+            pick.addCategory(Intent.CATEGORY_OPENABLE);
+            pick.setType("*/*");
+            startActivityForResult(pick, REQ);
+        } catch (Exception e) {
+            deliver(null);
+            finish();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Uri[] hasil = null;
+        if (requestCode == REQ && resultCode == RESULT_OK && data != null) {
+            hasil = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+        }
+        deliver(hasil);
+        finish();
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (isFinishing()) {
+            deliver(null);
+        }
+        super.onDestroy();
+    }
+
+    private static void deliver(Uri[] hasil) {
+        ValueCallback<Uri[]> cb = sCallback;
+        sCallback = null;
+        if (cb != null) {
+            cb.onReceiveValue(hasil);
+        }
+    }
+}
+"""
+ACTIVITY_XML = ('<activity android:name="org.jadwal.FilePickActivity" android:exported="false" '
+                'android:excludeFromRecents="true" android:theme="@android:style/Theme.Translucent.NoTitleBar" />')
+
+
+def patch_file_chooser(text: str) -> str:
+    """Pasang WebChromeClient.onShowFileChooser pada WebView buatan p4a (segera setelah dibuat).
+
+    Hanya diubah kalau ada tepat satu pembuatan WebView dan belum ada setWebChromeClient lain di file itu
+    (kalau ada, memasang satu lagi bisa saling menimpa); selain itu dibiarkan apa adanya.
+    """
+    if FILE_TANDA in text or "setWebChromeClient" in text:
+        return text
+    cocok = list(WEBVIEW_BARU.finditer(text))
+    if len(cocok) != 1:
+        return text
+    m = cocok[0]
+    return text[:m.end()] + FILE_JAVA.replace("@L@", m.group("lhs")) + text[m.end():]
+
+
+def patch_manifest_file_picker(text: str) -> str:
+    """Daftarkan FilePickActivity di AndroidManifest (hanya kalau belum ada dan ada tepat satu </application>)."""
+    if FILE_MANIFEST_TANDA in text or text.count("</application>") != 1:
+        return text
+    return text.replace("</application>", "    " + ACTIVITY_XML + "\n    </application>", 1)
+
+
+def apply_file_chooser(dist_dir: Path) -> None:
+    berkas = list(dist_dir.rglob("PythonActivity.java"))
+    dipasang = False
+    for java in berkas:
+        old = java.read_text(encoding="utf-8")
+        new = patch_file_chooser(old)
+        if new != old:
+            java.write_text(new, encoding="utf-8")
+            print(f"[hook] pemilih file (Import Excel) dipasang di {java}")
+        if new != old or FILE_TANDA in old:
+            dipasang = True
+            root = next((p for p in java.parents if p.name == "java"), java.parent)
+            kelas = root / "org" / "jadwal" / "FilePickActivity.java"
+            kelas.parent.mkdir(parents=True, exist_ok=True)
+            kelas.write_text(FILE_PICK_ACTIVITY, encoding="utf-8")
+            print(f"[hook] FilePickActivity ditulis: {kelas}")
+    if dipasang:
+        for manifest in dist_dir.rglob("AndroidManifest*.xml"):
+            old = manifest.read_text(encoding="utf-8")
+            new = patch_manifest_file_picker(old)
+            if new != old:
+                manifest.write_text(new, encoding="utf-8")
+                print(f"[hook] FilePickActivity didaftarkan di {manifest}")
+        return
+    print("[hook] PERINGATAN: pemilih file untuk Import Excel TIDAK terpasang (pembuatan WebView di PythonActivity.java "
+          "tidak ditemukan/ganda, atau sudah ada setWebChromeClient) -- tombol Pilih file di halaman tidak akan membuka apa-apa.")
+    for java in berkas[:1]:
+        baris = [f"{i}: {b.strip()[:160]}" for i, b in enumerate(java.read_text(encoding="utf-8").splitlines(), 1)
+                 if "WebView" in b or "WebChromeClient" in b]
+        print(f"[hook] baris WebView/WebChromeClient di {java}:")
+        for b in baris[:30]:
+            print(f"[hook]    {b}")
+
+
 THEME_ATTR = re.compile(r'android:theme="([^"]*)"')
 
 
@@ -220,7 +380,10 @@ def patch_manifest(text: str) -> str:
             return m.group(0)
         return f'android:theme="{THEME}"'
 
-    return THEME_ATTR.sub(ganti, text)
+    # Tag FilePickActivity (milik hook ini) sengaja bertema transparan: disisihkan dulu supaya tidak ikut diganti
+    # (kalau ikut diganti, build ulang di dist yang sama membuat layar putih berkedip saat pemilih file dibuka).
+    simpan = "\0jadwal-filepick\0"
+    return THEME_ATTR.sub(ganti, text.replace(ACTIVITY_XML, simpan)).replace(simpan, ACTIVITY_XML)
 
 
 def apply_theme(dist_dir: Path) -> None:
@@ -245,6 +408,7 @@ def before_apk_build(toolchain):
     apply_theme(dist_dir)
     apply_webview_background(dist_dir)
     apply_back_button(dist_dir)
+    apply_file_chooser(dist_dir)
     hits = list(dist_dir.rglob("_load.html"))   # dicari by name: lokasi persisnya bisa beda antar versi p4a
     for hit in hits:
         hit.write_text(render_loading(), encoding="utf-8")
