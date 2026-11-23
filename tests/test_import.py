@@ -1,6 +1,3 @@
-"""Tes Import Excel: file hasil Download Excel (Semua Sheet / Administrator / Jadwal Global) dibaca kembali
-menjadi data jadwal yang sama persis. Jalankan dari folder utama:   python -m unittest -v tests.test_import
-"""
 import base64
 import http.client
 import io
@@ -20,23 +17,25 @@ from tests.sample import payload, payload_kosong
 
 try:
     import openpyxl
-except ImportError:                      # openpyxl hanya dipakai untuk membuat file uji yang diubah-ubah
+except ImportError:
     openpyxl = None
 
+# Folder proyek
 ROOT = Path(__file__).resolve().parent.parent
 
 
+# Buat file Excel uji dari aplikasi
 def xlsx(sheet, p=None) -> bytes:
     return excel.build_workbook(Schedule.from_payload(p or payload()), sheet)
 
 
+# Bentuk data setelah validasi
 def utuh(p):
-    """Bentuk payload setelah validasi (nama dirapikan, jam default terisi), supaya bisa dibandingkan."""
     return Schedule.from_payload(p).to_payload()
 
 
+# Ubah file Excel uji lewat openpyxl
 def ubah(data: bytes, fungsi) -> bytes:
-    """Buka file xlsx dengan openpyxl, ubah, simpan lagi (rumus tetap ada, tapi nilai cache hilang)."""
     wb = openpyxl.load_workbook(io.BytesIO(data))
     fungsi(wb)
     out = io.BytesIO()
@@ -44,8 +43,8 @@ def ubah(data: bytes, fungsi) -> bytes:
     return out.getvalue()
 
 
+# Buat file xlsx tulisan tangan
 def xlsx_mini(sheets: dict) -> bytes:
-    """File xlsx buatan tangan: {nama sheet: {'A2': nilai}}, teks ditulis sebagai inlineStr (seperti sebagian aplikasi lain)."""
     def sel(ref, v):
         if isinstance(v, (int, float)):
             return f'<c r="{ref}"><v>{v}</v></c>'
@@ -74,8 +73,8 @@ def xlsx_mini(sheets: dict) -> bytes:
     return buf.getvalue()
 
 
+# Tes data ke Excel lalu impor kembali
 class BolakBalik(unittest.TestCase):
-    """Data -> Excel (app) -> impor harus menghasilkan data yang sama persis."""
 
     def cek(self, p, jenis):
         hasil = importer.parse_xlsx(xlsx(jenis, p))
@@ -118,6 +117,7 @@ class BolakBalik(unittest.TestCase):
                     self.assertEqual(hasil["info"]["warnings"], [])
 
 
+# Tes sumber tanggal mulai
 class SumberTanggal(unittest.TestCase):
     @unittest.skipUnless(openpyxl, "butuh openpyxl")
     def test_tanggal_dari_judul_periode_untuk_file_satu_sheet(self):
@@ -135,9 +135,9 @@ class SumberTanggal(unittest.TestCase):
             wb["Jadwal Global"]["A2"] = None
         hasil = importer.parse_xlsx(ubah(xlsx("gl"), hapus))
         start = date.fromisoformat(hasil["payload"]["start"])
-        self.assertEqual((start.month, start.day, start.weekday()), (11, 20, 4))      # Jumat 20 November
+        self.assertEqual((start.month, start.day, start.weekday()), (11, 20, 4))
         self.assertEqual(hasil["info"]["source"], "header tabel")
-        self.assertTrue(any("tahun" in w.lower() for w in hasil["info"]["warnings"]))  # tahun hanya perkiraan -> diberi tahu
+        self.assertTrue(any("tahun" in w.lower() for w in hasil["info"]["warnings"]))
 
     @unittest.skipUnless(openpyxl, "butuh openpyxl")
     def test_config_menang_atas_judul(self):
@@ -154,7 +154,6 @@ class SumberTanggal(unittest.TestCase):
             importer.parse_xlsx(ubah(xlsx("all"), ganti))
 
     def test_judul_dan_header_hanya_ada_di_xlsx_buatan_tangan(self):
-        """File dari aplikasi lain: teks inlineStr, tanpa Config, tanpa sharedStrings."""
         cells = {"A2": "Periode: Sabtu, 20 Desember 2026 – Jumat, 2 Januari 2027  (14 hari)",
                  "A4": "BAR", "A6": "NO", "B6": "NAMA", "A7": 1, "B7": "Sadewa", "C7": "pagi ", "D7": "MALAM", "E7": "libur"}
         hasil = importer.parse_xlsx(xlsx_mini({"Jadwal Global": cells}))
@@ -162,6 +161,7 @@ class SumberTanggal(unittest.TestCase):
         self.assertEqual(hasil["payload"]["divisions"][0]["staff"][0]["shifts"], "PRL" + "-" * 11)
 
 
+# Tes isi file tidak wajar
 class IsiTidakWajar(unittest.TestCase):
     @unittest.skipUnless(openpyxl, "butuh openpyxl")
     def test_shift_tidak_dikenal_dikosongkan_dan_diberi_peringatan(self):
@@ -177,11 +177,19 @@ class IsiTidakWajar(unittest.TestCase):
     def test_nama_kosong_dilewati_dan_divisi_tak_dikenal_dilewati(self):
         def ganti(wb):
             ws = wb["Jadwal Global"]
-            ws["B8"] = None                     # Ana tanpa nama
-            ws["A4"] = "RESTO"                  # judul divisi pertama tak dikenal
+            ws["B8"] = None
+            ws["A4"] = "RESTO"
         hasil = importer.parse_xlsx(ubah(xlsx("gl"), ganti))
         self.assertEqual([d["key"] for d in hasil["payload"]["divisions"]], ["FLOOR", "CASHIER", "KITCHEN"])
         self.assertTrue(any("RESTO" in w for w in hasil["info"]["warnings"]))
+
+    def test_judul_blok_terlalu_panjang_dilewati_bukan_membatalkan_impor(self):
+        cells = {"A2": "Periode: Jumat, 20 November – Kamis, 3 Desember 2026  (14 hari)",
+                 "A4": "x" * 200, "A6": "NO", "B6": "NAMA", "A7": 1, "B7": "Budi",
+                 "A14": "BAR", "A16": "NO", "B16": "NAMA", "A17": 1, "B17": "Sadewa", "C17": "Pagi"}
+        hasil = importer.parse_xlsx(xlsx_mini({"Administrator": cells}))
+        self.assertEqual([d["key"] for d in hasil["payload"]["divisions"]], ["BAR"])
+        self.assertTrue(any("tidak dikenali" in w for w in hasil["info"]["warnings"]))
 
     def test_tidak_ada_divisi_dikenal(self):
         cells = {"A2": "Periode: Jumat, 20 November – Kamis, 3 Desember 2026  (14 hari)",
@@ -200,6 +208,7 @@ class IsiTidakWajar(unittest.TestCase):
             importer.parse_xlsx(xlsx_mini({"Administrator": cells}))
 
 
+# Tes file rusak
 class FileRusak(unittest.TestCase):
     def test_bukan_zip(self):
         with self.assertRaisesRegex(ScheduleError, "bukan file Excel"):
@@ -207,7 +216,7 @@ class FileRusak(unittest.TestCase):
 
     def test_xls_lama_ditolak(self):
         with self.assertRaisesRegex(ScheduleError, "bukan file Excel"):
-            importer.parse_xlsx(b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1" + b"\0" * 200)     # tanda file .xls (OLE)
+            importer.parse_xlsx(b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1" + b"\0" * 200)
 
     def test_zip_tanpa_workbook(self):
         buf = io.BytesIO()
@@ -227,12 +236,38 @@ class FileRusak(unittest.TestCase):
         with self.assertRaisesRegex(ScheduleError, "terlalu besar"):
             importer.parse_xlsx(b"0" * (importer.MAX_FILE + 1))
 
+    def test_file_dirusak_acak_hanya_menghasilkan_scheduleerror(self):
+        import random
+        rng = random.Random(7)
+        asli = xlsx("all")
+        for i in range(150):
+            data = bytearray(asli)
+            for _ in range(rng.choice([1, 3, 10, 40])):
+                data[rng.randrange(len(data))] = rng.randrange(256)
+            try:
+                importer.parse_xlsx(bytes(data))
+            except ScheduleError:
+                pass
+            except Exception as err:
+                self.fail(f"percobaan {i}: {type(err).__name__}: {err}")
+        for potong in (30, len(asli) // 2, len(asli) - 5):
+            with self.assertRaises(ScheduleError):
+                importer.parse_xlsx(asli[:potong])
+
+    def test_xml_encoding_aneh_ditolak_dengan_pesan_ramah(self):
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w") as z:
+            z.writestr("xl/workbook.xml", '<?xml version="1.0" encoding="UTFa8"?><workbook/>')
+        with self.assertRaisesRegex(ScheduleError, "rusak"):
+            importer.parse_xlsx(buf.getvalue())
+
     def test_base64_rusak_dan_kosong(self):
         for isi in ("%%%bukan-base64%%%", "", None, 123):
             with self.subTest(isi=isi), self.assertRaises(ScheduleError):
                 importer.parse_b64(isi)
 
 
+# Tes endpoint POST /api/import
 class EndpointHttp(unittest.TestCase):
     def setUp(self):
         from jadwal import server as aplikasi
@@ -265,7 +300,7 @@ class EndpointHttp(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertTrue(j["ok"])
         self.assertEqual(j["payload"], utuh(payload()))
-        self.assertFalse(cfg.STATE_FILE.exists())            # hanya membaca; halaman yang menyimpan setelah Terapkan
+        self.assertFalse(cfg.STATE_FILE.exists())
 
     def test_file_salah_dibalas_422_dengan_pesan_indonesia(self):
         status, j = self.kirim(json.dumps({"data": base64.b64encode(b"bukan excel").decode()}).encode())
@@ -290,8 +325,8 @@ class EndpointHttp(unittest.TestCase):
         conn.close()
 
 
+# Tes kartu Import di index.html
 class HalamanWeb(unittest.TestCase):
-    """Pemeriksaan ringan index.html (uji tampilan sebenarnya dilakukan di browser)."""
 
     def setUp(self):
         self.html = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
@@ -303,13 +338,15 @@ class HalamanWeb(unittest.TestCase):
         self.assertIn('accept=".xlsx,', self.html)
         self.assertIn("fetch('/api/import'", self.html)
 
+    def test_pembaca_file_punya_cadangan_untuk_webview_lama(self):
+        self.assertIn("new FileReader()", self.html)
+
     def test_teks_dari_file_selalu_di_escape(self):
         for ekspresi in ("esc(q.name)", "esc(d.title)", "esc(w)", "esc(IM.msg)", "esc(IM.name)"):
             self.assertIn(ekspresi, self.html)
 
     def test_tidak_memakai_nama_bawaan_document_di_atribut(self):
-        """Di atribut onclick, close()/open() = document.close()/open(); tombol Import tidak boleh memakainya."""
-        blok = self.html[self.html.index("/* ===== Import Excel (menu Settings)"):]
+        blok = self.html[self.html.index("let IM={st:"):]
         for panggilan in re.findall(r'onclick="([^"]+)"', blok):
             self.assertNotRegex(panggilan, r"(^|[^.\w])(close|open|write)\(")
 

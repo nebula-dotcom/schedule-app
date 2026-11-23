@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Android 12+: splash sistem berlatar #F6F8FC dan TANPA ikon/logo (ikon transparan). Ganti #F6F8FC untuk warna lain, mis. #FFFFFF;
-     hapus baris windowSplashScreenAnimatedIcon kalau ingin ikon aplikasi tampil di splash. -->
+<!-- Tema Android 12+: splash tanpa ikon -->
 <resources>
     <style name="JadwalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">#F6F8FC</item>

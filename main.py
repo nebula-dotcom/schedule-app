@@ -1,16 +1,4 @@
 #!/usr/bin/env python3
-"""Jadwal Kerja: skrip utama (satu-satunya skrip di luar folder).
-
-Komputer/Termux:  python main.py            lalu buka  http://localhost:8888
-                  python main.py --port 9000        port lain
-                  python main.py --host 0.0.0.0     bisa dibuka dari perangkat lain di Wi-Fi yang sama
-
-Android (APK): python-for-android menjalankan file ini (harus bernama main.py di folder utama).
-Server berjalan di 127.0.0.1:<ANDROID_PORT> dan WebView aplikasi membukanya
-(port yang sama diatur di buildozer.spec -> p4a.port).
-
-Semua logika ada di paket `jadwal/`; halaman web di `web/`.
-"""
 import argparse
 import os
 import threading
@@ -21,17 +9,14 @@ from jadwal import settings as cfg
 from jadwal.server import make_server, pick_port
 
 
+# Mode Android: server lokal dan loop utama
 def run_android():
-    """Server berjalan di thread tersendiri; THREAD UTAMA dipakai untuk semua pekerjaan Java (droid.main_loop).
-
-    Hanya thread utama yang bisa menemukan kelas Java milik aplikasi (mis. org.kivy.android.PythonActivity);
-    thread buatan Python gagal dengan ClassNotFoundException. Simpan ke Downloads, keluar, dan tombol kembali
-    karena itu dititipkan ke thread utama lewat droid.run_on_main."""
     server = make_server("127.0.0.1", cfg.ANDROID_PORT)
     threading.Thread(target=server.serve_forever, daemon=True).start()
     droid.main_loop()
 
 
+# Mode komputer: server untuk browser
 def run_desktop():
     ap = argparse.ArgumentParser(description="Jadwal Kerja")
     ap.add_argument("--host", default=os.environ.get("HOST", "127.0.0.1"))
@@ -48,8 +33,9 @@ def run_desktop():
         print("\n  Dihentikan.")
 
 
-try:                                   # dipanggil langsung (tanpa penjaga __name__) agar pasti jalan di Android
+# Titik masuk aplikasi
+try:
     run_android() if droid.ON_ANDROID else run_desktop()
 except Exception:
-    traceback.print_exc()              # terlihat di logcat kalau server gagal start
+    traceback.print_exc()
     raise

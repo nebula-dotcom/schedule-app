@@ -1,8 +1,8 @@
-"""Data contoh untuk tes (jadwal terisi penuh, mulai 20 Nov 2026). Isi bawaan halaman web kini kosong; lihat payload_kosong()."""
-
+# Data contoh jam kerja
 HOURS = {"P": "09.00–17.00", "S": "11.30–19.30", "R": "16.30–00.30", "L": "Tidak bertugas"}
 
 
+# Buat staff dari teks shift
 def _staff(text):
     out = []
     for item in text.split(","):
@@ -11,6 +11,7 @@ def _staff(text):
     return out
 
 
+# Data contoh dengan shift terisi
 def payload(start="2026-11-20"):
     return {
         "start": start,
@@ -31,8 +32,8 @@ def payload(start="2026-11-20"):
     }
 
 
+# Data contoh tanpa shift
 def payload_kosong(start="2026-11-20"):
-    """Seperti isi bawaan halaman web: semua nama ada, semua sel shift kosong ("-")."""
     p = payload(start)
     for d in p["divisions"]:
         for st in d["staff"]:

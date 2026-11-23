@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Jadwal Kerja</title>
 <noscript><meta http-equiv="refresh" content="0;url=/app"></noscript>
-<style>
+<style>/* Dasar halaman */
 html,body{height:100%;margin:0;background:#f6f8fc}
 body{display:flex;align-items:center;justify-content:center;overflow:hidden}
 
@@ -79,9 +79,8 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden}
 <div></div>
 </div>
 <script>
-/* Layar loading wajib tampil LOADING_MS (4 detik = 2x putaran animasi), lalu pindah ke aplikasi.
-   "replace" supaya halaman ini tidak masuk riwayat (tombol kembali). */
-var LOADING_MS = 4000;
+/* Pindah ke aplikasi setelah loading */
+var LOADING_MS = 2000;
 setTimeout(function(){location.replace('/app')}, LOADING_MS);
 </script>
 </body>

@@ -1,8 +1,3 @@
-"""Bagian khusus Android (python-for-android, bootstrap webview).
-
-Di luar Android (Termux/PC) `ON_ANDROID` bernilai False dan tidak ada yang dijalankan di sini.
-Semua akses ke Java lewat pyjnius dan di-import saat dipakai saja.
-"""
 from __future__ import annotations
 
 import os
@@ -10,38 +5,37 @@ import queue
 import threading
 import time
 
-ON_ANDROID = "ANDROID_ARGUMENT" in os.environ     # diisi otomatis oleh python-for-android
+# Deteksi Android
+ON_ANDROID = "ANDROID_ARGUMENT" in os.environ
 
+# Konstanta tombol kembali dan latar WebView
 KEYCODE_BACK = 4
-LATAR_WEBVIEW = "#F6F8FC"   # latar WebView (sebelum/antar halaman); harus sama dengan --bg di web/index.html
+LATAR_WEBVIEW = "#F6F8FC"
 ACTION_UP = 1
-_hooked = None            # WebView yang sudah dipasangi pendengar tombol kembali
-_keep = []                # cegah pendengar Python dibuang oleh garbage collector
-_tidy_job = None          # Runnable pembersih riwayat/fokus WebView (dibuat sekali, dipakai ulang)
-_last_back = [0]         # waktu (ms) tekan kembali terakhir yang diteruskan ke JavaScript
-_tasks = queue.Queue()   # pekerjaan Java yang dititipkan ke thread utama
-_main_id = [None]        # id thread utama yang menjalankan main_loop()
+# State hook WebView dan antrean tugas
+_hooked = None
+_keep = []
+_tidy_job = None
+_last_back = [0]
+_tasks = queue.Queue()
+_main_id = [None]
 
 
+# Activity utama Android
 def _activity():
     from jnius import autoclass
     return autoclass("org.kivy.android.PythonActivity").mActivity
 
 
-# ----------------------------------------------------------------- semua pekerjaan Java lewat thread utama
+# Tugas untuk thread utama
 class _Task:
     def __init__(self, fn, args):
         self.fn, self.args = fn, args
         self.done, self.result, self.error = threading.Event(), None, None
 
 
+# Jalankan fungsi di thread utama Android
 def run_on_main(fn, *args, wait: bool = True, timeout: float = 30.0):
-    """Jalankan fn(*args) di thread utama Python dan kembalikan hasilnya.
-
-    Hanya thread utama (yang menjalankan main.py) bisa menemukan kelas Java milik aplikasi, mis.
-    org.kivy.android.PythonActivity. Thread buatan Python (termasuk thread pelayan server) memakai class loader
-    sistem dan gagal dengan "ClassNotFoundException: org.kivy.android.PythonActivity". Karena itu semua yang
-    menyentuh kelas aplikasi dititipkan ke sini. Di luar Android, atau kalau dipanggil dari thread utama, langsung dijalankan."""
     if not ON_ANDROID or _main_id[0] is None or threading.get_ident() == _main_id[0]:
         return fn(*args)
     task = _Task(fn, args)
@@ -55,14 +49,12 @@ def run_on_main(fn, *args, wait: bool = True, timeout: float = 30.0):
     return task.result
 
 
+# Loop thread utama: tugas dan pasang hook
 def main_loop(stop: threading.Event | None = None) -> None:
-    """Dijalankan di THREAD UTAMA (dari main.py) dan tidak pernah selesai: melayani pekerjaan Java dari
-    run_on_main, memasang/memeriksa pendengar tombol kembali di WebView, sekaligus menjaga proses tetap hidup.
-    `stop` hanya untuk tes."""
     _main_id[0] = threading.get_ident()
     try:
         try:
-            _activity()                                  # sekali di awal: memanaskan pyjnius, galat langsung tampak di logcat
+            _activity()
         except Exception as err:
             print("main_loop: activity belum siap:", err)
         next_hook = 0.0
@@ -74,13 +66,13 @@ def main_loop(stop: threading.Event | None = None) -> None:
             if task is not None:
                 try:
                     task.result = task.fn(*task.args)
-                except BaseException as err:             # dikirim balik ke thread yang menunggu
+                except BaseException as err:
                     task.error = err
                 task.done.set()
             if time.monotonic() >= next_hook:
                 try:
                     ok = _hook_once()
-                except Exception as err:                 # kegagalan di sini tidak boleh mematikan aplikasi
+                except Exception as err:
                     print("install_back_hook:", err)
                     ok = False
                 next_hook = time.monotonic() + (3 if ok else 0.5)
@@ -88,15 +80,12 @@ def main_loop(stop: threading.Event | None = None) -> None:
         _main_id[0] = None
 
 
-# ----------------------------------------------------------------- simpan ke Downloads
+# Simpan file ke folder Download
 def save_to_downloads(name: str, data: bytes, mime: str) -> None:
-    """Simpan file langsung ke folder Downloads HP lewat MediaStore (Android 10+, tanpa izin penyimpanan).
-
-    Nama yang sudah ada otomatis menjadi "nama (1).ext" oleh Android; tidak ada salinan lain di mana pun.
-    Dipanggil dari thread pelayan server, jadi pekerjaan Java-nya dititipkan ke thread utama."""
     run_on_main(_save_to_downloads, name, data, mime)
 
 
+# Simpan file lewat MediaStore
 def _save_to_downloads(name: str, data: bytes, mime: str) -> None:
     from jnius import autoclass
     if autoclass("android.os.Build$VERSION").SDK_INT < 29:
@@ -122,27 +111,26 @@ def _save_to_downloads(name: str, data: bytes, mime: str) -> None:
         out.close()
 
 
-# ----------------------------------------------------------------- keluar dari aplikasi
+# Keluar aplikasi
 def exit_app(delay: float = 0.3) -> None:
-    """Tutup aplikasi sepenuhnya (activity ditutup, lalu proses dihentikan)."""
     def work():
-        time.sleep(delay)                                # beri waktu balasan HTTP terkirim
+        time.sleep(delay)
         try:
             run_on_main(_finish, timeout=3.0)
-        except Exception as err:                         # tetap lanjut hentikan proses
+        except Exception as err:
             print("exit_app:", err)
         time.sleep(0.4)
         os._exit(0)
     threading.Thread(target=work, daemon=True).start()
 
 
+# Tutup activity
 def _finish() -> None:
     _activity().finishAndRemoveTask()
 
 
-# ----------------------------------------------------------------- tombol kembali
+# Cari WebView di tampilan
 def _find_webview(view):
-    """Cari WebView di dalam tampilan activity (bootstrap webview tidak membukanya ke Python)."""
     from jnius import autoclass, cast
     Class = autoclass("java.lang.Class")
     if Class.forName("android.webkit.WebView").isInstance(view):
@@ -156,13 +144,8 @@ def _find_webview(view):
     return None
 
 
+# Rapikan WebView: riwayat dan fokus
 def _tidy(webview) -> None:
-    """Dijalankan di thread UI, berulang selama aplikasi hidup.
-
-    1) Begitu aplikasi (/app) tampil, riwayat WebView dihapus. Di bawah aplikasi masih ada halaman pembuka
-       bawaan p4a (_load.html); tombol/gestur kembali yang lolos dari pendengar (mis. saat fokus WebView
-       hilang) akan membawa ke sana dan layar loading jadi jalan buntu. Tanpa riwayat tidak ada lagi tujuan "kembali".
-    2) WebView diminta memegang fokus lagi kalau kehilangannya, supaya pendengar tombol kembali selalu dipanggil."""
     url = webview.getUrl() or ""
     if url.split("?")[0].split("#")[0].rstrip("/").endswith("/app") and webview.canGoBack():
         webview.clearHistory()
@@ -170,8 +153,8 @@ def _tidy(webview) -> None:
         webview.requestFocus()
 
 
+# Runnable perapian WebView
 def _tidy_runnable():
-    """Runnable untuk _tidy; dibuat sekali supaya tidak menumpuk objek Java/Python tiap beberapa detik."""
     global _tidy_job
     if _tidy_job is None:
         from jnius import PythonJavaClass, java_method
@@ -185,16 +168,15 @@ def _tidy_runnable():
                 try:
                     if _hooked is not None:
                         _tidy(_hooked)
-                except Exception as err:                 # gagal membersihkan tidak boleh mematikan aplikasi
+                except Exception as err:
                     print("tidy_webview:", err)
 
         _tidy_job = Tidy()
     return _tidy_job
 
 
+# Pasang tombol kembali dan latar WebView
 def _hook_once() -> bool:
-    """(Thread utama, dipanggil main_loop) Pasang pendengar tombol kembali di WebView. Tombol/gestur kembali diteruskan ke JavaScript
-    (window.__back), supaya halaman yang mengatur: tutup popup, halaman sebelumnya, atau keluar 2x."""
     global _hooked
     from jnius import PythonJavaClass, java_method
 
@@ -216,10 +198,10 @@ def _hook_once() -> bool:
                 return False
             if event.getAction() == ACTION_UP:
                 now = event.getEventTime()
-                if now - _last_back[0] >= 200:           # satu tekan bisa sampai 2x ke pendengar ini: hanya yang pertama diteruskan
+                if now - _last_back[0] >= 200:
                     _last_back[0] = now
                     webview.evaluateJavascript("window.__back && window.__back()", None)
-            return True                                  # tombol kembali selalu "dipakai" di sini
+            return True
 
     class OnUi(PythonJavaClass):
         __javainterfaces__ = ["java/lang/Runnable"]
@@ -227,7 +209,7 @@ def _hook_once() -> bool:
 
         @java_method("()V")
         def run(self):
-            try:                                         # WebView berlatar putih bawaan -> samakan dengan warna aplikasi
+            try:
                 from jnius import autoclass
                 webview.setBackgroundColor(autoclass("android.graphics.Color").parseColor(LATAR_WEBVIEW))
             except Exception as err:

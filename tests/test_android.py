@@ -1,4 +1,3 @@
-"""Tes bagian Android yang bisa dijalankan tanpa HP: pembersih riwayat WebView dan hook p4a."""
 import importlib.util
 import re
 import threading
@@ -10,9 +9,11 @@ from unittest import mock
 from jadwal import droid
 from jadwal import settings as cfg
 
+# Folder proyek
 ROOT = Path(__file__).resolve().parent.parent
 
 
+# WebView palsu untuk tes droid.py
 class WebViewPalsu:
     def __init__(self, url, bisa_kembali=True, fokus=True):
         self.url, self.bisa_kembali, self.fokus = url, bisa_kembali, fokus
@@ -34,6 +35,7 @@ class WebViewPalsu:
         self.minta_fokus = True
 
 
+# Tes perapian riwayat WebView
 class BersihkanRiwayat(unittest.TestCase):
     def test_riwayat_dihapus_saat_aplikasi_tampil(self):
         w = WebViewPalsu("http://127.0.0.1:8765/app")
@@ -55,6 +57,7 @@ class BersihkanRiwayat(unittest.TestCase):
         self.assertFalse(w2.minta_fokus)
 
 
+# Tes hook p4a: layar loading
 class HookP4a(unittest.TestCase):
     def setUp(self):
         spec = importlib.util.spec_from_file_location("p4a_hook", ROOT / "p4a" / "hook.py")
@@ -71,6 +74,7 @@ class HookP4a(unittest.TestCase):
         self.assertNotIn("@PORT@", html)
 
 
+# Tes tema dan latar WebView
 class TemaLatar(unittest.TestCase):
     def test_tema_dan_resource_terpasang(self):
         spec = (ROOT / "buildozer.spec").read_text(encoding="utf-8")
@@ -85,10 +89,8 @@ class TemaLatar(unittest.TestCase):
         self.assertIn("windowSplashScreenAnimatedIcon\">@android:color/transparent<", xml)
 
 
+# Tes warna seragam Android dan web
 class WarnaSeragam(unittest.TestCase):
-    """Satu warna dasar untuk semuanya: --bg di web/index.html = web/loading.html = layar loading bawaan hook
-    = latar jendela dan splash Android = presplash (buildozer.spec + assets/presplash.png).
-    Mau ganti warna dasar? Ubah --bg di index.html, lalu tes ini menunjukkan file mana yang masih berbeda."""
 
     HEX = r"(#[0-9a-fA-F]{6})"
 
@@ -141,6 +143,7 @@ class WarnaSeragam(unittest.TestCase):
             self.assertEqual("#%02x%02x%02x" % gambar.getpixel(titik), self.dasar, f"assets/presplash.png {titik}")
 
 
+# Tes hook build: tema, tombol kembali, pemilih file
 class HookTema(unittest.TestCase):
     @staticmethod
     def _hook():
@@ -150,11 +153,10 @@ class HookTema(unittest.TestCase):
         return hook
 
     def test_manifest_hanya_ganti_tema_tetap(self):
-        """Nilai Jinja dibiarkan, tema bernilai tetap diganti, dan tidak ada atribut yang ditambah."""
         hook = self._hook()
         jinja_app = ('android:theme="{{args.android_apptheme}}'
                      '{% if not args.android_apptheme %}@android:style/Theme.NoTitleBar{% endif %}"')
-        jinja_kutip = 'android:theme="{% if args.x == "y" %}@style/A{% endif %}"'      # ada tanda kutip di dalam Jinja
+        jinja_kutip = 'android:theme="{% if args.x == "y" %}@style/A{% endif %}"'
         sumber = ('<manifest><application ' + jinja_app + ' android:label="x">'
                   '<activity android:name="{{ args.android_entrypoint }}" {% if args.min_sdk_version >= 9 %}'
                   'android:label="y"{% endif %}></activity>'
@@ -167,8 +169,8 @@ class HookTema(unittest.TestCase):
         self.assertIn(jinja_kutip, out)
         self.assertNotIn("Theme.Translucent", out)
         self.assertEqual(out.count('android:theme="@style/JadwalTheme"'), 1)
-        self.assertEqual(out.count("android:theme="), sumber.count("android:theme="))     # tidak ada atribut ditambah
-        self.assertEqual(hook.patch_manifest(out), out)                                   # aman dijalankan berulang
+        self.assertEqual(out.count("android:theme="), sumber.count("android:theme="))
+        self.assertEqual(hook.patch_manifest(out), out)
 
     def test_latar_webview_dipasang_di_java(self):
         hook = self._hook()
@@ -178,17 +180,15 @@ class HookTema(unittest.TestCase):
                   "    mWebView.getSettings().setJavaScriptEnabled(true);\n  }\n}\n")
         out = hook.patch_java(sumber)
         self.assertIn("PythonActivity.mActivity.mWebView.setBackgroundColor(0xFFF6F8FC);", out)
-        self.assertLess(out.index("setBackgroundColor"), out.index("getSettings"))      # segera setelah dibuat
-        self.assertEqual(hook.patch_java(out), out)                                      # aman dijalankan berulang
+        self.assertLess(out.index("setBackgroundColor"), out.index("getSettings"))
+        self.assertEqual(hook.patch_java(out), out)
         lokal = hook.patch_java("void f(){ WebView w = new WebView(this); w.loadUrl(u); }")
         self.assertIn("w.setBackgroundColor(0xFFF6F8FC);", lokal)
-        # tidak ada / lebih dari satu pembuatan WebView: dibiarkan apa adanya (lebih baik tidak mengubah daripada salah)
         for tidak_pasti in ("class A { void f(){} }",
                             "class A { void f(){ a = new WebView(x); b = new WebView(y); } }"):
             self.assertEqual(hook.patch_java(tidak_pasti), tidak_pasti)
 
     def test_tombol_kembali_onkeydown_p4a_diteruskan_ke_javascript(self):
-        """Bentuk asli dari log build p4a: onKeyDown(int keyCode, KeyEvent event) -> goBack() / toast bawaan."""
         hook = self._hook()
         sumber = ("public class PythonActivity extends Activity {\n"
                   "  @Override\n  public boolean onKeyDown(int keyCode, KeyEvent event) {\n"
@@ -198,12 +198,12 @@ class HookTema(unittest.TestCase):
                   "      return true;\n    }\n    return super.onKeyDown(keyCode, event);\n  }\n}\n")
         out = hook.patch_back(sumber)
         self.assertIn("window.__back && window.__back()", out)
-        self.assertIn("if (keyCode == android.view.KeyEvent.KEYCODE_BACK)", out)         # nama parameter ikut dari kode asli
+        self.assertIn("if (keyCode == android.view.KeyEvent.KEYCODE_BACK)", out)
         self.assertIn("event.getRepeatCount() == 0", out)
-        self.assertLess(out.index("window.__back"), out.index("Tap again"))               # sebelum kode bawaan p4a
-        self.assertLess(out.index("@Override"), out.index("onKeyDown"))                    # anotasi tidak terpisah dari metodenya
-        self.assertEqual(out.count("{") - out.count("}"), sumber.count("{") - sumber.count("}"))   # kurung seimbang
-        self.assertEqual(hook.patch_back(out), out)                                        # aman dijalankan berulang
+        self.assertLess(out.index("window.__back"), out.index("Tap again"))
+        self.assertLess(out.index("@Override"), out.index("onKeyDown"))
+        self.assertEqual(out.count("{") - out.count("}"), sumber.count("{") - sumber.count("}"))
+        self.assertEqual(hook.patch_back(out), out)
         lain = hook.patch_back("class A { boolean onKeyDown(final int k, final android.view.KeyEvent ev) { return false; } }")
         self.assertIn("if (k == android.view.KeyEvent.KEYCODE_BACK)", lain)
         self.assertIn("ev.getRepeatCount()", lain)
@@ -270,7 +270,6 @@ class HookTema(unittest.TestCase):
                 self.assertTrue((dist / "src" / "main" / "res" / sub / "jadwal_theme.xml").is_file(), sub)
 
 
-    # ---- pemilih file untuk Import Excel (<input type="file"> di WebView) ----
     JAVA_P = ("public class PythonActivity extends Activity {\n"
               "  protected void onPostExecute(String r) {\n"
               "    PythonActivity.mActivity.mWebView = new WebView(PythonActivity.mActivity);\n"
@@ -282,17 +281,17 @@ class HookTema(unittest.TestCase):
         self.assertIn("PythonActivity.mActivity.mWebView.setWebChromeClient(new android.webkit.WebChromeClient()", out)
         self.assertIn("onShowFileChooser", out)
         self.assertIn("org.jadwal.FilePickActivity.start(__w.getContext(), __cb)", out)
-        self.assertLess(out.index("setWebChromeClient"), out.index("getSettings"))        # segera setelah WebView dibuat
-        self.assertEqual(hook.patch_file_chooser(out), out)                              # aman dijalankan berulang
+        self.assertLess(out.index("setWebChromeClient"), out.index("getSettings"))
+        self.assertEqual(hook.patch_file_chooser(out), out)
         self.assertIn("w.setWebChromeClient(", hook.patch_file_chooser("void f(){ WebView w = new WebView(this); }"))
         self.assertEqual(out.count("{"), out.count("}"))
         self.assertEqual(out.count("("), out.count(")"))
 
     def test_pemilih_file_tidak_mengubah_kalau_tidak_pasti(self):
         hook = self._hook()
-        for tidak_pasti in ("class A { void f(){} }",                                              # tidak ada WebView
-                            "class A { void f(){ a = new WebView(x); b = new WebView(y); } }",    # dua WebView
-                            "class A { void f(){ w = new WebView(x); w.setWebChromeClient(c); } }"):   # sudah ada milik p4a
+        for tidak_pasti in ("class A { void f(){} }",
+                            "class A { void f(){ a = new WebView(x); b = new WebView(y); } }",
+                            "class A { void f(){ w = new WebView(x); w.setWebChromeClient(c); } }"):
             self.assertEqual(hook.patch_file_chooser(tidak_pasti), tidak_pasti)
 
     def test_patch_latar_dan_pemilih_file_bisa_dipakai_bersama_dalam_urutan_apa_pun(self):
@@ -314,7 +313,6 @@ class HookTema(unittest.TestCase):
             self.assertIn(harus, j)
         self.assertEqual(j.count("{"), j.count("}"))
         self.assertEqual(j.count("("), j.count(")"))
-        # halaman web selalu dibalas (hasil, batal, atau gagal) supaya input file tidak macet
         self.assertGreaterEqual(j.count("deliver("), 5)
 
     def test_manifest_mendaftarkan_activity_sekali(self):
@@ -332,8 +330,8 @@ class HookTema(unittest.TestCase):
         hook = self._hook()
         mf = hook.patch_manifest_file_picker('<application android:theme="@android:style/Theme.NoTitleBar"></application>')
         out = hook.patch_manifest(mf)
-        self.assertIn('android:theme="@style/JadwalTheme"', out)               # tema aplikasi tetap diganti
-        self.assertIn("Theme.Translucent.NoTitleBar", out)                      # tema activity pemilih file dibiarkan
+        self.assertIn('android:theme="@style/JadwalTheme"', out)
+        self.assertIn("Theme.Translucent.NoTitleBar", out)
         self.assertEqual(hook.patch_manifest(out), out)
 
     def test_before_apk_build_memasang_pemilih_file_lengkap_dan_aman_diulang(self):
@@ -354,7 +352,7 @@ class HookTema(unittest.TestCase):
             jalankan = lambda: hook.before_apk_build(SimpleNamespace(_dist=SimpleNamespace(dist_dir=str(dist))))
             with contextlib.redirect_stdout(io.StringIO()):
                 jalankan()
-                jalankan()                                                              # build ulang di dist yang sama
+                jalankan()
             kelas = dist / "src" / "main" / "java" / "org" / "jadwal" / "FilePickActivity.java"
             self.assertTrue(kelas.is_file())
             self.assertEqual(kelas.read_text(encoding="utf-8"), hook.FILE_PICK_ACTIVITY)
@@ -362,7 +360,7 @@ class HookTema(unittest.TestCase):
             self.assertEqual(teks_java.count("onShowFileChooser"), 1)
             teks_mf = mf.read_text(encoding="utf-8")
             self.assertEqual(teks_mf.count("org.jadwal.FilePickActivity"), 1)
-            self.assertIn("Theme.Translucent.NoTitleBar", teks_mf)                      # tidak tertimpa di build kedua
+            self.assertIn("Theme.Translucent.NoTitleBar", teks_mf)
             self.assertIn('android:theme="@style/JadwalTheme"', teks_mf)
 
     def test_pemilih_file_tidak_dipasang_dan_ada_peringatan_kalau_webview_tidak_ketemu(self):
@@ -381,13 +379,13 @@ class HookTema(unittest.TestCase):
             with contextlib.redirect_stdout(keluar):
                 hook.apply_file_chooser(dist)
             self.assertIn("PERINGATAN: pemilih file", keluar.getvalue())
-            self.assertIn("WebView w = buat();", keluar.getvalue())                     # baris asli ikut dicetak untuk diagnosa
+            self.assertIn("WebView w = buat();", keluar.getvalue())
             self.assertFalse((dist / "src" / "main" / "java" / "org" / "jadwal").exists())
             self.assertNotIn("FilePickActivity", mf.read_text(encoding="utf-8"))
 
 
+# Tes tombol kembali di halaman web
 class TombolKembaliHalaman(unittest.TestCase):
-    """index.html: satu tekan kembali hanya diproses sekali, dan jebakan riwayat tidak dipasang di Android WebView."""
 
     def setUp(self):
         self.html = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
@@ -399,15 +397,28 @@ class TombolKembaliHalaman(unittest.TestCase):
         self.assertIn("if(!/; wv\\)/.test(navigator.userAgent)){history.replaceState", self.html)
 
 
+# Tes animasi tekan tombol: kilau menyapu
+class AnimasiTekan(unittest.TestCase):
+    def setUp(self):
+        self.html = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
+
+    def test_memakai_kilau_menyapu_bukan_riak_dari_titik_sentuh(self):
+        self.assertIn("function prSweep(el)", self.html)
+        self.assertIn("@keyframes sw{", self.html)
+        self.assertNotIn("prRipple", self.html)
+        self.assertNotIn("Math.hypot(x-r.left", self.html)
+
+    def test_skala_tekan_seragam_dan_tombol_x_tetap_berputar(self):
+        self.assertIn("button,a[onclick]{--ps:.97;", self.html)
+        self.assertIn(".spx.pr svg{transform:rotate(45deg)", self.html)
+
+
 if __name__ == "__main__":
     unittest.main()
 
 
+# Tes pekerjaan Java di thread utama
 class PekerjaanJavaDiThreadUtama(unittest.TestCase):
-    """Kelas Java milik aplikasi (org.kivy.android.PythonActivity) hanya bisa ditemukan THREAD UTAMA.
-
-    Thread pelayan server buatan Python memakai class loader sistem: ClassNotFoundException saat Save PNG / Download Excel.
-    Jadi semua pekerjaan Java dari thread lain harus dititipkan ke thread utama (droid.main_loop)."""
 
     def setUp(self):
         self.hook_thread = []
@@ -430,7 +441,6 @@ class PekerjaanJavaDiThreadUtama(unittest.TestCase):
             p.stop()
 
     def dari_thread_lain(self, fn):
-        """Jalankan fn di thread lain (seperti thread pelayan server); kembalikan (hasil, galat)."""
         out = {}
 
         def kerja():
@@ -455,7 +465,7 @@ class PekerjaanJavaDiThreadUtama(unittest.TestCase):
         _, galat = self.dari_thread_lain(lambda: droid.run_on_main(gagal))
         self.assertIsInstance(galat, ValueError)
         self.assertEqual(str(galat), "galat uji")
-        hasil, galat = self.dari_thread_lain(lambda: droid.run_on_main(lambda: 7))     # loop tetap hidup
+        hasil, galat = self.dari_thread_lain(lambda: droid.run_on_main(lambda: 7))
         self.assertEqual((hasil, galat), (7, None))
 
     def test_simpan_ke_downloads_dititipkan_ke_thread_utama(self):
@@ -486,28 +496,29 @@ class PekerjaanJavaDiThreadUtama(unittest.TestCase):
     def test_di_luar_android_langsung_dijalankan(self):
         with mock.patch.object(droid, "ON_ANDROID", False):
             hasil, _ = self.dari_thread_lain(lambda: droid.run_on_main(threading.get_ident))
-        self.assertNotEqual(hasil, self.loop.ident)           # tidak lewat thread utama
+        self.assertNotEqual(hasil, self.loop.ident)
 
 
+# Tes main.py mode Android
 class MainPyAndroid(unittest.TestCase):
     def test_server_di_thread_sendiri_dan_java_di_thread_utama(self):
         kode = (ROOT / "main.py").read_text(encoding="utf-8")
-        self.assertIn("target=server.serve_forever", kode)    # server tidak memblokir thread utama
-        self.assertIn("droid.main_loop()", kode)              # thread utama melayani pekerjaan Java
+        self.assertIn("target=server.serve_forever", kode)
+        self.assertIn("droid.main_loop()", kode)
         self.assertNotIn("install_back_hook", kode)
 
 
+# Tes popup file tersimpan
 class PopupSimpan(unittest.TestCase):
-    """Setelah Download Excel / Save PNG di Android: popup gaya Reset jadwal, bukan toast."""
 
     def setUp(self):
         self.html = (ROOT / "web" / "index.html").read_text(encoding="utf-8")
 
     def test_popup_isi_dan_tombol_tutup(self):
-        self.assertIn("function savedPop(title,name){open(`", self.html)                  # pakai open() seperti rstAsk
-        self.assertIn("Tersimpan di folder Download: <b>${esc(name)}</b>", self.html)      # nama file tebal
-        self.assertRegex(self.html, r'class="spx"[^>]*aria-label="Tutup"[^>]*onclick="closeSheet\(\)"')   # tombol X -> closeSheet()
-        self.assertIn("x:'<path", self.html)                                               # ikon X tersedia
+        self.assertIn("function savedPop(title,name){open(`", self.html)
+        self.assertIn("Tersimpan di folder Download: <b>${esc(name)}</b>", self.html)
+        self.assertRegex(self.html, r'class="spx"[^>]*aria-label="Tutup"[^>]*onclick="closeSheet\(\)"')
+        self.assertIn("x:'<path", self.html)
 
     def test_judul_sesuai_jenis_file(self):
         self.assertIn("savedPop(kind=='png'?'Save PNG':'Download Excel',j.saved)", self.html)
@@ -516,10 +527,7 @@ class PopupSimpan(unittest.TestCase):
         self.assertNotIn("toast('Tersimpan", self.html)
 
     def test_tombol_di_atribut_tidak_memakai_nama_bawaan_document(self):
-        """Di atribut onclick="..." nama seperti close()/open()/write() memanggil document.close() dst (tidak menutup popup).
-        Tombol Batal dan X dulu tidak berfungsi karena ini."""
         bentrok = re.findall(r'\bon[a-z]+=\\?"[^"]*?(?<![\w.$])(close|open|write|writeln)\(', self.html)
         self.assertEqual(bentrok, [], "pakai closeSheet() / nama lain di atribut onclick")
         self.assertIn("function closeSheet(){", self.html)
-        self.assertIn("function close(){closeSheet()}", self.html)          # kode script yang memanggil close() tetap jalan
-
+        self.assertIn("function close(){closeSheet()}", self.html)

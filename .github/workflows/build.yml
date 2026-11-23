@@ -1,6 +1,6 @@
 name: Build APK
 
-# Setiap push ke main/master: tes -> build APK bertanda tangan -> Release baru (v1.0.0, v1.0.1, dst).
+# Pemicu: push ke main/master
 on:
   push:
     branches: [main, master]
@@ -15,6 +15,7 @@ permissions:
   contents: write
 
 jobs:
+  # Job tes
   test:
     runs-on: ubuntu-22.04
     steps:
@@ -25,6 +26,7 @@ jobs:
       - run: pip install xlsxwriter pillow openpyxl
       - run: python -m unittest -v
 
+  # Job build APK dan Release
   build:
     needs: test
     runs-on: ubuntu-22.04
@@ -45,7 +47,7 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      # Diperiksa SEBELUM build panjang (30-40 menit): kalau kunci salah, gagal di sini dengan pesan yang jelas.
+      # Langkah cek kunci tanda tangan
       - name: Cek kunci tanda tangan (Secrets)
         shell: bash
         env:
@@ -57,7 +59,7 @@ jobs:
             exit 1
           fi
           JKS="$RUNNER_TEMP/release.jks"
-          # buang spasi/enter yang ikut tertempel, lalu ubah kembali menjadi file keystore
+          # Ubah base64 menjadi file keystore
           if ! printf '%s' "$KEYSTORE_BASE64" | tr -d ' \t\r\n' | base64 -d > "$JKS" 2>/dev/null; then
             echo "::error::KEYSTORE_BASE64 bukan teks base64 yang valid. Salin ulang SELURUH isi KEYSTORE_BASE64.txt ke secret."
             exit 1
@@ -71,6 +73,7 @@ jobs:
           echo "Keystore valid, alias '$KEYSTORE_ALIAS' ditemukan."
           echo "KEYSTORE_FILE=$JKS" >> "$GITHUB_ENV"
 
+      # Langkah pasang alat build
       - name: Pasang alat build
         run: |
           sudo apt-get update
@@ -79,6 +82,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install buildozer "cython<3" virtualenv
 
+      # Langkah cache Buildozer
       - name: Cache Buildozer (SDK, NDK, python-for-android)
         uses: actions/cache@v5
         with:
@@ -88,6 +92,7 @@ jobs:
           key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
           restore-keys: buildozer-${{ runner.os }}-
 
+      # Langkah nomor versi
       - name: Tentukan nomor versi berikutnya
         id: ver
         run: |
@@ -99,6 +104,7 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Versi baru: v$VERSION (kode $CODE), sebelumnya: ${LAST:-belum ada}"
 
+      # Langkah build APK
       - name: Build APK (release, bertanda tangan)
         shell: bash
         env:
@@ -109,9 +115,10 @@ jobs:
           export P4A_RELEASE_KEYALIAS="$KEYSTORE_ALIAS"
           export P4A_RELEASE_KEYSTORE_PASSWD="$PASS"
           export P4A_RELEASE_KEYALIAS_PASSWD="$PASS"
-          # log disimpan supaya galatnya bisa diringkas kalau build gagal (pipefail: gagal tetap terdeteksi)
+          # Simpan log build
           buildozer -v android release 2>&1 | tee "$RUNNER_TEMP/buildozer.log"
 
+      # Langkah ringkasan galat
       - name: Ringkasan galat build
         if: failure()
         shell: bash
@@ -119,7 +126,7 @@ jobs:
           RAW="$RUNNER_TEMP/buildozer.log"
           [ -f "$RAW" ] || exit 0
           LOG="$RUNNER_TEMP/buildozer.clean.log"
-          # buang kode warna dan dump variabel lingkungan (baris "#     NAMA = '...'") supaya galat asli terlihat
+          # Bersihkan log
           sed 's/\x1b\[[0-9;]*m//g' "$RAW" | grep -v -E "^[0-9TZ:.-]* ?#     [A-Za-z_0-9]+ = |^export [A-Za-z_0-9]+=" > "$LOG" || true
           {
             echo "### Penyebab galat (isi setelah \"What went wrong\" / Traceback terakhir)"
@@ -136,7 +143,7 @@ jobs:
             tail -n 60 "$LOG" | cut -c1-300
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          # galat "Error parsing AndroidManifest.xml": periksa file hasil render p4a dan cetak letak kesalahan XML-nya
+          # Periksa AndroidManifest hasil render
           DIST="$(ls -d .buildozer/android/platform/build-*/dists/* 2>/dev/null | head -n1)"
           MF="$DIST/src/main/AndroidManifest.xml"
           if [ -n "$DIST" ] && [ -f "$MF" ]; then
@@ -162,10 +169,12 @@ jobs:
           echo "===== 40 baris terakhir log buildozer ====="
           tail -n 40 "$LOG" | cut -c1-300
 
+      # Langkah hapus keystore
       - name: Hapus keystore sementara
         if: always()
         run: rm -f "$RUNNER_TEMP/release.jks"
 
+      # Langkah siapkan APK
       - name: Siapkan file APK
         id: apk
         run: |
@@ -175,6 +184,7 @@ jobs:
           mv "$SRC" "bin/$OUT"
           echo "path=bin/$OUT" >> "$GITHUB_OUTPUT"
 
+      # Langkah buat Release
       - name: Buat Release
         uses: softprops/action-gh-release@v3
         with:

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Tema aplikasi: latar #F6F8FC (sama dengan loading.html) dan tidak ikut "force dark" milik HP (dipakai lewat android.apptheme di buildozer.spec) -->
+<!-- Tema aplikasi -->
 <resources>
     <style name="JadwalTheme" parent="@android:style/Theme.Light.NoTitleBar">
         <item name="android:windowBackground">#F6F8FC</item>

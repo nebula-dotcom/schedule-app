@@ -1,35 +1,11 @@
-"""Hook untuk python-for-android (dipanggil lewat p4a.hook di buildozer.spec).
-
-Bootstrap "webview" p4a punya halaman loading sendiri (file bernama "_load.html",
-berisi animasi garis/bar bawaan) yang tampil sendiri selagi server Python kita
-belum merespons -- SEBELUM web/loading.html milik proyek ini sempat terlihat.
-Ini sumber "logo + icon garis 3" yang muncul sebelum loading.html kita.
-
-before_apk_build berjalan setelah p4a menyiapkan seluruh proyek Android (termasuk
-menyalin _load.html miliknya ke dalam dist), tapi sebelum Gradle mengemasnya jadi
-APK. Di titik ini kita timpa _load.html itu dengan versi kita sendiri: tampilan
-sama persis dengan web/loading.html (spinner + warna #f6f8fc), tanpa skrip
-pindah-halaman (karena file ini tampil sebelum server kita menyala, jadi "/app"
-belum ada yang melayani; p4a sendiri yang akan memindah ke server kita begitu
-server itu merespons).
-
-Satu-satunya skrip: kalau halaman ini sampai terbuka lagi lewat tombol kembali (riwayat WebView),
-ia langsung kembali ke /app supaya tidak pernah menjadi jalan buntu.
-
-Hook ini juga memasang pemilih file untuk <input type="file"> (fitur Import Excel): WebView Android tidak membuka
-pemilih file sendiri, jadi WebView diberi WebChromeClient.onShowFileChooser yang membuka activity kecil tak terlihat
-(org.jadwal.FilePickActivity, ditulis hook ini ke dist dan didaftarkan di AndroidManifest).
-
-Hook ini juga memaksa tema berlatar #F6F8FC (@style/JadwalTheme, lihat android_res/) dipakai di
-AndroidManifest, lalu menyalin resource temanya langsung ke proyek Android. Tanpa ini, splash sistem Android 12+
-bisa tetap hitam kalau tema dari buildozer.spec tidak sampai ke manifest.
-"""
 import re
 import shutil
 from pathlib import Path
 
-PORT = 8765        # harus sama dengan p4a.port di buildozer.spec (dan ANDROID_PORT di jadwal/settings.py)
+# Port server aplikasi
+PORT = 8765
 
+# Layar loading bawaan p4a
 LOADING_HTML = """<!DOCTYPE html>
 <html lang="id">
 <head>
@@ -40,8 +16,7 @@ LOADING_HTML = """<!DOCTYPE html>
 html,body{height:100%;margin:0;background:#f6f8fc}
 body{display:flex;align-items:center;justify-content:center;overflow:hidden}
 
-/* From Uiverse.io by AqFox -- sama seperti web/loading.html, supaya tidak ada
-   bedanya dengan layar loading sendiri */
+/* From Uiverse.io by AqFox */
 .spinner{width:44px;height:44px;animation:spinner-y0fdc1 2s infinite ease;transform-style:preserve-3d}
 .spinner>div{background-color:rgba(0,77,255,0.2);height:100%;position:absolute;width:100%;border:2px solid #004dff}
 .spinner div:nth-of-type(1){transform:translateZ(-22px) rotateY(180deg)}
@@ -67,26 +42,24 @@ try{var n=performance.getEntriesByType('navigation')[0];if(n&&n.type==='back_for
 """
 
 
+# Isi layar loading dengan port
 def render_loading() -> str:
     return LOADING_HTML.replace("@PORT@", str(PORT))
 
 
+# Tema dan folder proyek
 THEME = "@style/JadwalTheme"
 ROOT = Path(__file__).resolve().parent.parent
 
 
-LATAR_JAVA = "0xFFF6F8FC"       # warna dasar #F6F8FC (ARGB) untuk latar WebView -- harus sama dengan --bg di web/index.html
+# Patch latar WebView
+LATAR_JAVA = "0xFFF6F8FC"
 JAVA_TANDA = "/* jadwal: latar WebView */"
 WEBVIEW_BARU = re.compile(r"(?P<lhs>[A-Za-z_][\w.]*)\s*=\s*new\s+WebView\s*\([^;]*\)\s*;")
 
 
+# Sisipkan latar WebView di PythonActivity.java
 def patch_java(text: str) -> str:
-    """Beri WebView buatan p4a latar #F6F8FC segera setelah dibuat.
-
-    WebView yang baru dibuat berlatar PUTIH sampai halaman pertamanya (_load.html) selesai digambar; di HP itu
-    terlihat sebagai kilatan putih sebelum layar loading. Tema dan presplash tidak bisa mengubahnya.
-    Hanya diubah kalau ada tepat satu pembuatan WebView (jadi kodenya pasti masuk akal); selain itu dibiarkan.
-    """
     if JAVA_TANDA in text:
         return text
     cocok = list(WEBVIEW_BARU.finditer(text))
@@ -96,8 +69,8 @@ def patch_java(text: str) -> str:
     return text[:m.end()] + f" {m.group('lhs')}.setBackgroundColor({LATAR_JAVA}); {JAVA_TANDA}" + text[m.end():]
 
 
+# Patch tombol kembali
 BACK_TANDA = "/* jadwal: tombol kembali */"
-# p4a (webview): tombol kembali ditangani di onKeyDown(int keyCode, KeyEvent event) -> goBack() atau toast "Tap again to close the app".
 BACK_KEYDOWN = re.compile(r"\bboolean\s+onKeyDown\s*\(\s*(?:final\s+)?int\s+(?P<k>\w+)\s*,\s*"
                           r"(?:final\s+)?(?:android\.view\.)?KeyEvent\s+(?P<e>\w+)\s*\)\s*(?:throws[^{]*)?\{")
 BACK_METODE = re.compile(r"\bvoid\s+onBackPressed\s*\(\s*\)\s*(?:throws[^{]*)?\{")
@@ -132,13 +105,8 @@ BACK_JAVA = """
 """
 
 
+# Sisipkan tombol kembali di PythonActivity.java
 def patch_back(text: str) -> str:
-    """Tombol kembali Activity (onKeyDown / onBackPressed bawaan p4a) diteruskan ke window.__back di halaman aplikasi (/app).
-
-    Tanpa ini p4a memakai logikanya sendiri di SEMUA halaman (goBack atau toast "Tap again to close the app"), jadi tab/menu
-    di index.html tidak pernah dapat giliran. Sebelum /app tampil (layar loading), perilaku bawaan tetap dipakai.
-    Tiap metode hanya diubah kalau cocok tepat satu kali; selain itu dibiarkan.
-    """
     if BACK_TANDA in text:
         return text
     sisip = []
@@ -154,58 +122,64 @@ def patch_back(text: str) -> str:
     return text
 
 
+# Cari PythonActivity.java di dist
+def activity_files(dist_dir: Path) -> list:
+    return list(dist_dir.rglob("PythonActivity.java"))
+
+
+# Terapkan patch ke semua PythonActivity.java
+def patch_activity_files(files: list, patch, marker: str, message: str) -> bool:
+    installed = False
+    for java in files:
+        old = java.read_text(encoding="utf-8")
+        new = patch(old)
+        if new != old:
+            java.write_text(new, encoding="utf-8")
+            print(message.format(java=java))
+            installed = True
+        elif marker in old:
+            installed = True
+    return installed
+
+
+# Cetak baris terkait untuk diagnosa
+def print_related_lines(files: list, match, title: str, limit: int) -> None:
+    for java in files[:1]:
+        lines = [f"{i}: {b.strip()[:160]}" for i, b in enumerate(java.read_text(encoding="utf-8").splitlines(), 1)
+                 if match(b)]
+        print(title.format(java=java))
+        for line in lines[:limit]:
+            print(f"[hook]    {line}")
+
+
+# Pasang tombol kembali
 def apply_back_button(dist_dir: Path) -> None:
-    berkas = list(dist_dir.rglob("PythonActivity.java"))
-    dipasang = False
-    for java in berkas:
-        old = java.read_text(encoding="utf-8")
-        new = patch_back(old)
-        if new != old:
-            java.write_text(new, encoding="utf-8")
-            print(f"[hook] tombol kembali diteruskan ke JavaScript di {java}")
-            dipasang = True
-        elif BACK_TANDA in old:
-            dipasang = True
-    if not dipasang:
-        print("[hook] PERINGATAN: onKeyDown()/onBackPressed() di PythonActivity.java (file bawaan p4a, bukan file proyek ini) tidak "
-              "ditemukan/ganda -- tombol kembali tidak diteruskan ke JavaScript dari sisi Activity.")
-        if not berkas:
-            print("[hook] PythonActivity.java tidak ada di dist ini.")
-        kunci = re.compile(r"Tap again|onBackPressed|KEYCODE_BACK|onKeyDown|onKeyUp|dispatchKeyEvent|OnBackInvoked|Toast|goBack|canGoBack")
-        for java in berkas[:1]:
-            baris = [f"{i}: {b.strip()[:160]}" for i, b in enumerate(java.read_text(encoding="utf-8").splitlines(), 1)
-                     if kunci.search(b)]
-            print(f"[hook] baris terkait tombol kembali di {java}:")
-            for b in baris[:40]:
-                print(f"[hook]    {b}")
+    files = activity_files(dist_dir)
+    if patch_activity_files(files, patch_back, BACK_TANDA, "[hook] tombol kembali diteruskan ke JavaScript di {java}"):
+        return
+    print("[hook] PERINGATAN: onKeyDown()/onBackPressed() di PythonActivity.java (file bawaan p4a, bukan file proyek ini) tidak "
+          "ditemukan/ganda -- tombol kembali tidak diteruskan ke JavaScript dari sisi Activity.")
+    if not files:
+        print("[hook] PythonActivity.java tidak ada di dist ini.")
+    keys = re.compile(r"Tap again|onBackPressed|KEYCODE_BACK|onKeyDown|onKeyUp|dispatchKeyEvent|OnBackInvoked|Toast|goBack|canGoBack")
+    print_related_lines(files, keys.search, "[hook] baris terkait tombol kembali di {java}:", 40)
 
 
+# Pasang latar WebView
 def apply_webview_background(dist_dir: Path) -> None:
-    berkas = list(dist_dir.rglob("PythonActivity.java"))
-    dipasang = False
-    for java in berkas:
-        old = java.read_text(encoding="utf-8")
-        new = patch_java(old)
-        if new != old:
-            java.write_text(new, encoding="utf-8")
-            print(f"[hook] latar WebView #F6F8FC dipasang di {java}")
-            dipasang = True
-        elif JAVA_TANDA in old:
-            dipasang = True
-    if not dipasang:
-        print("[hook] PERINGATAN: pembuatan WebView di PythonActivity.java (file bawaan p4a di folder dist, bukan file "
-              "proyek ini) tidak ditemukan/ganda -- latar WebView hanya diatur lewat droid.py setelah Python jalan, "
-              "kilatan putih singkat di awal bisa masih muncul.")
-        if not berkas:
-            print("[hook] PythonActivity.java tidak ada di dist ini.")
-        for java in berkas[:1]:                          # tunjukkan kode aslinya supaya bisa disesuaikan
-            baris = [f"{i}: {b.strip()[:160]}" for i, b in enumerate(java.read_text(encoding="utf-8").splitlines(), 1)
-                     if "WebView" in b or "setContentView" in b]
-            print(f"[hook] baris WebView/setContentView di {java}:")
-            for b in baris[:30]:
-                print(f"[hook]    {b}")
+    files = activity_files(dist_dir)
+    if patch_activity_files(files, patch_java, JAVA_TANDA, "[hook] latar WebView #F6F8FC dipasang di {java}"):
+        return
+    print("[hook] PERINGATAN: pembuatan WebView di PythonActivity.java (file bawaan p4a di folder dist, bukan file "
+          "proyek ini) tidak ditemukan/ganda -- latar WebView hanya diatur lewat droid.py setelah Python jalan, "
+          "kilatan putih singkat di awal bisa masih muncul.")
+    if not files:
+        print("[hook] PythonActivity.java tidak ada di dist ini.")
+    print_related_lines(files, lambda b: "WebView" in b or "setContentView" in b,
+                        "[hook] baris WebView/setContentView di {java}:", 30)
 
 
+# Patch pemilih file Import Excel
 FILE_TANDA = "/* jadwal: pemilih file */"
 FILE_MANIFEST_TANDA = "org.jadwal.FilePickActivity"
 FILE_JAVA = """ @L@.setWebChromeClient(new android.webkit.WebChromeClient() {
@@ -216,6 +190,7 @@ FILE_JAVA = """ @L@.setWebChromeClient(new android.webkit.WebChromeClient() {
             }
           }); """ + FILE_TANDA
 
+# Kelas Java FilePickActivity
 FILE_PICK_ACTIVITY = """package org.jadwal;
 
 import android.app.Activity;
@@ -226,15 +201,12 @@ import android.os.Bundle;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 
-/**
- * Activity tak terlihat: membuka pemilih file bawaan Android untuk <input type="file"> di WebView
- * (WebView tidak bisa melakukannya sendiri), menyerahkan hasilnya ke halaman web, lalu menutup diri.
- * Dibuat otomatis oleh p4a/hook.py saat build APK -- jangan diubah di sini.
- */
+// Activity pemilih file untuk Import Excel
 public class FilePickActivity extends Activity {
     private static final int REQ = 7711;
     private static ValueCallback<Uri[]> sCallback;
 
+    // Mulai pemilih file
     public static boolean start(Context ctx, ValueCallback<Uri[]> cb) {
         if (sCallback != null) {
             sCallback.onReceiveValue(null);
@@ -253,6 +225,7 @@ public class FilePickActivity extends Activity {
         return true;
     }
 
+    // Buka pemilih file sistem
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -274,6 +247,7 @@ public class FilePickActivity extends Activity {
         }
     }
 
+    // Terima hasil pilihan file
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -285,6 +259,7 @@ public class FilePickActivity extends Activity {
         finish();
     }
 
+    // Balas halaman bila ditutup tanpa hasil
     @Override
     protected void onDestroy() {
         if (isFinishing()) {
@@ -293,6 +268,7 @@ public class FilePickActivity extends Activity {
         super.onDestroy();
     }
 
+    // Kirim hasil ke halaman web
     private static void deliver(Uri[] hasil) {
         ValueCallback<Uri[]> cb = sCallback;
         sCallback = null;
@@ -302,16 +278,13 @@ public class FilePickActivity extends Activity {
     }
 }
 """
+# Daftar activity di manifest
 ACTIVITY_XML = ('<activity android:name="org.jadwal.FilePickActivity" android:exported="false" '
                 'android:excludeFromRecents="true" android:theme="@android:style/Theme.Translucent.NoTitleBar" />')
 
 
+# Sisipkan pemilih file di PythonActivity.java
 def patch_file_chooser(text: str) -> str:
-    """Pasang WebChromeClient.onShowFileChooser pada WebView buatan p4a (segera setelah dibuat).
-
-    Hanya diubah kalau ada tepat satu pembuatan WebView dan belum ada setWebChromeClient lain di file itu
-    (kalau ada, memasang satu lagi bisa saling menimpa); selain itu dibiarkan apa adanya.
-    """
     if FILE_TANDA in text or "setWebChromeClient" in text:
         return text
     cocok = list(WEBVIEW_BARU.finditer(text))
@@ -321,71 +294,71 @@ def patch_file_chooser(text: str) -> str:
     return text[:m.end()] + FILE_JAVA.replace("@L@", m.group("lhs")) + text[m.end():]
 
 
+# Daftarkan FilePickActivity di manifest
 def patch_manifest_file_picker(text: str) -> str:
-    """Daftarkan FilePickActivity di AndroidManifest (hanya kalau belum ada dan ada tepat satu </application>)."""
     if FILE_MANIFEST_TANDA in text or text.count("</application>") != 1:
         return text
     return text.replace("</application>", "    " + ACTIVITY_XML + "\n    </application>", 1)
 
 
+# Pasang pemilih file
 def apply_file_chooser(dist_dir: Path) -> None:
-    berkas = list(dist_dir.rglob("PythonActivity.java"))
-    dipasang = False
-    for java in berkas:
+    files = activity_files(dist_dir)
+    installed = False
+    for java in files:
         old = java.read_text(encoding="utf-8")
         new = patch_file_chooser(old)
         if new != old:
             java.write_text(new, encoding="utf-8")
             print(f"[hook] pemilih file (Import Excel) dipasang di {java}")
         if new != old or FILE_TANDA in old:
-            dipasang = True
-            root = next((p for p in java.parents if p.name == "java"), java.parent)
-            kelas = root / "org" / "jadwal" / "FilePickActivity.java"
-            kelas.parent.mkdir(parents=True, exist_ok=True)
-            kelas.write_text(FILE_PICK_ACTIVITY, encoding="utf-8")
-            print(f"[hook] FilePickActivity ditulis: {kelas}")
-    if dipasang:
-        for manifest in dist_dir.rglob("AndroidManifest*.xml"):
-            old = manifest.read_text(encoding="utf-8")
-            new = patch_manifest_file_picker(old)
-            if new != old:
-                manifest.write_text(new, encoding="utf-8")
-                print(f"[hook] FilePickActivity didaftarkan di {manifest}")
+            installed = True
+            write_pick_activity(java)
+    if installed:
+        register_pick_activity(dist_dir)
         return
     print("[hook] PERINGATAN: pemilih file untuk Import Excel TIDAK terpasang (pembuatan WebView di PythonActivity.java "
           "tidak ditemukan/ganda, atau sudah ada setWebChromeClient) -- tombol Pilih file di halaman tidak akan membuka apa-apa.")
-    for java in berkas[:1]:
-        baris = [f"{i}: {b.strip()[:160]}" for i, b in enumerate(java.read_text(encoding="utf-8").splitlines(), 1)
-                 if "WebView" in b or "WebChromeClient" in b]
-        print(f"[hook] baris WebView/WebChromeClient di {java}:")
-        for b in baris[:30]:
-            print(f"[hook]    {b}")
+    print_related_lines(files, lambda b: "WebView" in b or "WebChromeClient" in b,
+                        "[hook] baris WebView/WebChromeClient di {java}:", 30)
 
 
+# Tulis kelas FilePickActivity
+def write_pick_activity(java: Path) -> None:
+    root = next((p for p in java.parents if p.name == "java"), java.parent)
+    kelas = root / "org" / "jadwal" / "FilePickActivity.java"
+    kelas.parent.mkdir(parents=True, exist_ok=True)
+    kelas.write_text(FILE_PICK_ACTIVITY, encoding="utf-8")
+    print(f"[hook] FilePickActivity ditulis: {kelas}")
+
+
+# Daftarkan FilePickActivity di semua manifest
+def register_pick_activity(dist_dir: Path) -> None:
+    for manifest in dist_dir.rglob("AndroidManifest*.xml"):
+        old = manifest.read_text(encoding="utf-8")
+        new = patch_manifest_file_picker(old)
+        if new != old:
+            manifest.write_text(new, encoding="utf-8")
+            print(f"[hook] FilePickActivity didaftarkan di {manifest}")
+
+
+# Patch tema manifest
 THEME_ATTR = re.compile(r'android:theme="([^"]*)"')
 
 
+# Ganti tema di manifest
 def patch_manifest(text: str) -> str:
-    """Ganti android:theme yang bernilai tetap (mis. @android:style/Theme.NoTitleBar) dengan tema kita.
-
-    Yang TIDAK disentuh:
-    - nilai berisi Jinja ({{ ... }}, {% ... %}): template p4a mengisinya dari --android-apptheme
-      (android.apptheme di buildozer.spec = @style/JadwalTheme), jadi sudah benar;
-    - atribut baru tidak pernah ditambahkan (activity tanpa android:theme otomatis memakai tema aplikasi).
-    Dengan begitu hook tidak bisa menghasilkan atribut ganda atau sisa potongan Jinja di AndroidManifest.xml.
-    """
     def ganti(m):
         nilai = m.group(1)
         if "{{" in nilai or "{%" in nilai or "{#" in nilai:
             return m.group(0)
         return f'android:theme="{THEME}"'
 
-    # Tag FilePickActivity (milik hook ini) sengaja bertema transparan: disisihkan dulu supaya tidak ikut diganti
-    # (kalau ikut diganti, build ulang di dist yang sama membuat layar putih berkedip saat pemilih file dibuka).
     simpan = "\0jadwal-filepick\0"
     return THEME_ATTR.sub(ganti, text.replace(ACTIVITY_XML, simpan)).replace(simpan, ACTIVITY_XML)
 
 
+# Pasang tema dan resource
 def apply_theme(dist_dir: Path) -> None:
     for manifest in dist_dir.rglob("AndroidManifest*.xml"):
         old = manifest.read_text(encoding="utf-8")
@@ -403,13 +376,14 @@ def apply_theme(dist_dir: Path) -> None:
         print(f"[hook] resource tema disalin: {dest}")
 
 
+# Hook build APK p4a
 def before_apk_build(toolchain):
     dist_dir = Path(toolchain._dist.dist_dir)
     apply_theme(dist_dir)
     apply_webview_background(dist_dir)
     apply_back_button(dist_dir)
     apply_file_chooser(dist_dir)
-    hits = list(dist_dir.rglob("_load.html"))   # dicari by name: lokasi persisnya bisa beda antar versi p4a
+    hits = list(dist_dir.rglob("_load.html"))
     for hit in hits:
         hit.write_text(render_loading(), encoding="utf-8")
         print(f"[hook] _load.html bawaan p4a ditimpa: {hit}")

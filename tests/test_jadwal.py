@@ -1,7 +1,3 @@
-"""Tes otomatis. Jalankan dari folder utama:   python -m unittest -v
-
-Tes API memakai folder sementara, jadi data/ aslimu tidak tersentuh.
-"""
 import copy
 import http.client
 import io
@@ -21,21 +17,23 @@ from tests.sample import payload, payload_kosong
 
 try:
     import openpyxl
-except ImportError:                      # openpyxl hanya dipakai untuk memeriksa hasil
+except ImportError:
     openpyxl = None
 
 
+# Buka hasil Excel untuk dicek
 def muat(sheet, p=None):
-    """Bangun file Excel jenis `sheet` ('adm', 'gl', 'all') lalu buka dengan openpyxl."""
     s = Schedule.from_payload(p or payload())
     return openpyxl.load_workbook(io.BytesIO(excel.build_workbook(s, sheet)))
 
 
+# Daftar rumus di satu sheet
 def daftar_rumus(ws):
     return [c.coordinate for row in ws.iter_rows() for c in row
             if isinstance(c.value, str) and c.value.startswith("=")]
 
 
+# Tes validasi data jadwal
 class ValidasiData(unittest.TestCase):
     def test_data_contoh_valid(self):
         s = Schedule.from_payload(payload())
@@ -61,20 +59,18 @@ class ValidasiData(unittest.TestCase):
             Schedule.from_payload("bukan dict")
 
 
+# Tes isi file Excel
 class HasilExcel(unittest.TestCase):
     def test_label_bulan_cocok_dengan_pita_bulan(self):
-        """Tiap bulan dalam periode punya tepat satu label di Excel, termasuk bulan 1 hari."""
         for mulai in ("2026-11-20", "2026-12-25", "2026-05-31", "2027-02-20", "2028-02-20"):
             s = Schedule.from_payload(payload(mulai))
             labels = [excel.month_cell_value(s.start, k) for k in range(14)]
             for m in month_spans(s.days):
-                # bulan 1 hari (1 sel) memakai singkatan, selebihnya nama lengkap
                 nama = (cfg.MONTHS_SHORT if m["n"] < 2 else cfg.MONTHS_LONG)[m["m"]].upper()
                 dalam = labels[m["i"]:m["i"] + m["n"]]
                 self.assertEqual(dalam.count(nama), 1, (mulai, nama, labels))
 
     def test_bulan_satu_hari_pakai_singkatan(self):
-        # periode 31 Des - 13 Jan: Desember hanya 1 hari
         s = Schedule.from_payload(payload("2026-12-31"))
         self.assertEqual(excel.month_cell_value(s.start, 0), "DES")
         self.assertEqual([m["n"] for m in month_spans(s.days)], [1, 13])
@@ -86,7 +82,6 @@ class HasilExcel(unittest.TestCase):
 
     @unittest.skipIf(openpyxl is None, "openpyxl tidak terpasang")
     def test_administrator_dan_global_saja_tanpa_rumus_dan_dropdown(self):
-        """Excel Administrator / Jadwal Global: hanya satu sheet, nilai biasa, tidak ada dropdown."""
         for sheet, nama in (("adm", "Administrator"), ("gl", "Jadwal Global")):
             wb = muat(sheet)
             self.assertEqual(wb.sheetnames, [nama], sheet)
@@ -102,11 +97,11 @@ class HasilExcel(unittest.TestCase):
         self.assertEqual(adm["A2"].value, s.period_text())
         self.assertEqual(adm["B7"].value, "Sadewa")
         self.assertEqual(adm["C7"].value, "Pagi")
-        self.assertEqual(adm["T7"].value, 12)                            # total shift: angka biasa
-        pita = [adm.cell(row=4, column=c).value for c in range(3, 17)]   # pita bulan C4:P4
+        self.assertEqual(adm["T7"].value, 12)
+        pita = [adm.cell(row=4, column=c).value for c in range(3, 17)]
         self.assertEqual(pita.count("NOVEMBER"), 1)
         self.assertEqual(pita.count("DESEMBER"), 1)
-        self.assertEqual(adm["C5"].value, "Jum")                         # 20 Nov 2026 = Jumat
+        self.assertEqual(adm["C5"].value, "Jum")
         self.assertEqual(adm["C6"].value, 20)
 
     @unittest.skipIf(openpyxl is None, "openpyxl tidak terpasang")
@@ -121,7 +116,6 @@ class HasilExcel(unittest.TestCase):
 
     @unittest.skipIf(openpyxl is None, "openpyxl tidak terpasang")
     def test_semua_sheet_lengkap_dengan_rumus_dan_dropdown(self):
-        """'Semua Sheet' = tiga sheet seperti jadwal_kerja.xlsx, rumus dan dropdown utuh."""
         s = Schedule.from_payload(payload())
         data = excel.build_workbook(s, "all")
         self.assertTrue(zipfile.is_zipfile(io.BytesIO(data)))
@@ -129,7 +123,6 @@ class HasilExcel(unittest.TestCase):
         self.assertEqual(wb.sheetnames, ["Config", "Administrator", "Jadwal Global"])
         self.assertEqual(wb.active.title, "Config")
         cfg_ws, adm, gl = wb["Config"], wb["Administrator"], wb["Jadwal Global"]
-        # jumlah rumus sama dengan file contoh jadwal_kerja.xlsx (4 divisi: 5+6+3+7 staff)
         self.assertEqual([len(daftar_rumus(w)) for w in (cfg_ws, adm, gl)], [3, 498, 558])
         self.assertEqual(cfg_ws["C4"].value, 20)
         self.assertEqual(cfg_ws["D4"].value, "November")
@@ -142,15 +135,13 @@ class HasilExcel(unittest.TestCase):
         self.assertEqual(adm["C7"].value, "Pagi")
         self.assertEqual(adm["Q7"].value, "=COUNTIF($C7:$P7,Q$5)")
         self.assertEqual(adm["T7"].value, "=SUM(Q7:S7)")
-        self.assertEqual(adm["C13"].value, "=COUNTIF(C$7:C$11,$A13)")      # JUMLAH STAFF baris Pagi
+        self.assertEqual(adm["C13"].value, "=COUNTIF(C$7:C$11,$A13)")
         self.assertTrue(str(gl["C7"].value).startswith("=IF(Administrator!"))
         self.assertEqual(gl["C6"].value, "=Administrator!C6")
-        # dropdown shift di 4 divisi + 3 dropdown di Config (tanggal, bulan, tahun)
         dv = adm.data_validations.dataValidation
         self.assertEqual(len(dv), 4)
         self.assertTrue(all("Malam" in d.formula1 for d in dv))
         self.assertEqual(len(cfg_ws.data_validations.dataValidation), 3)
-        # nilai cache ada (penting untuk aplikasi pembaca dokumen di HP)
         wv = openpyxl.load_workbook(io.BytesIO(data), data_only=True)
         self.assertEqual(wv["Administrator"]["A2"].value, s.period_text())
         self.assertEqual(wv["Jadwal Global"]["C7"].value, "Pagi")
@@ -177,6 +168,7 @@ class HasilExcel(unittest.TestCase):
         self.assertTrue(image.render(s, "adm").startswith(b"\x89PNG"))
 
 
+# Tes shift malam dan sel kosong
 class ShiftMalamDanKosong(unittest.TestCase):
     def test_nama_shift_malam(self):
         self.assertEqual(cfg.SHIFTS["R"][0], "Malam")
@@ -189,7 +181,6 @@ class ShiftMalamDanKosong(unittest.TestCase):
                 self.assertEqual(st.shifts, "-" * 14)
             self.assertEqual([d.count(c, 0) for c in cfg.SHIFT_ORDER], [0, 0, 0, 0])
             self.assertEqual(d.totals(d.staff[0]), {c: 0 for c in cfg.SHIFT_ORDER})
-        # data kosong tetap bisa disimpan lagi apa adanya
         self.assertEqual(Schedule.from_payload(s.to_payload()).to_payload(), s.to_payload())
 
     def test_kode_ngawur_tetap_ditolak(self):
@@ -209,7 +200,6 @@ class ShiftMalamDanKosong(unittest.TestCase):
             d["hours"] = {"P": "", "S": "", "R": "", "L": "Tidak bertugas"}
         s = Schedule.from_payload(p)
         self.assertEqual(s.divisions[0].hours, {"P": "", "S": "", "R": "", "L": "Tidak bertugas"})
-        # jam yang tidak dikirim sama sekali memakai bawaan (kosong, Libur = Tidak bertugas)
         del p["divisions"][0]["hours"]
         self.assertEqual(Schedule.from_payload(p).divisions[0].hours["L"], "Tidak bertugas")
         self.assertEqual(Schedule.from_payload(p).divisions[0].hours["P"], "")
@@ -219,10 +209,10 @@ class ShiftMalamDanKosong(unittest.TestCase):
         p = payload_kosong()
         for d in p["divisions"]:
             d["hours"] = {"P": "", "S": "", "R": "", "L": "Tidak bertugas"}
-        gl = muat("gl", p)["Jadwal Global"]                 # file Jadwal Global saja
-        self.assertIn(gl["T5"].value, (None, ""))                 # JAM KERJA baris Pagi: kosong, bukan 0
-        self.assertEqual(gl["T8"].value, "Tidak bertugas")        # baris Libur
-        rumus = str(muat("all", p)["Jadwal Global"]["T5"].value)   # file Semua Sheet: rumus tetap aman
+        gl = muat("gl", p)["Jadwal Global"]
+        self.assertIn(gl["T5"].value, (None, ""))
+        self.assertEqual(gl["T8"].value, "Tidak bertugas")
+        rumus = str(muat("all", p)["Jadwal Global"]["T5"].value)
         self.assertTrue(rumus.startswith('=IF(Administrator!'), rumus)
 
     def test_png_dan_excel_data_kosong(self):
@@ -238,15 +228,16 @@ class ShiftMalamDanKosong(unittest.TestCase):
         for sheet in ("adm", "all"):
             adm = muat(sheet, payload_kosong())["Administrator"]
             self.assertIn(adm["B7"].value, ("Sadewa",))
-            for kol in "CDEFGHIJKLMNOP":                      # semua sel shift baris pertama kosong
+            for kol in "CDEFGHIJKLMNOP":
                 self.assertIn(adm[f"{kol}7"].value, (None, ""), (sheet, kol))
             teks = " ".join(str(c.value) for row in adm.iter_rows() for c in row if c.value)
             self.assertIn("Malam", teks)
             self.assertNotIn("Sore", teks)
-        dv = [d.formula1 for d in adm.data_validations.dataValidation]      # file Semua Sheet
+        dv = [d.formula1 for d in adm.data_validations.dataValidation]
         self.assertTrue(any("Malam" in (x or "") for x in dv), dv)
 
 
+# Tes gambar PNG
 class HasilPNG(unittest.TestCase):
     def test_png_kedua_sheet(self):
         from PIL import Image
@@ -263,8 +254,8 @@ class HasilPNG(unittest.TestCase):
         self.assertIsNotNone(image._font_path(True))
 
 
+# Balasan HTTP untuk tes
 class Balasan:
-    """Hasil satu permintaan HTTP ke server uji."""
 
     def __init__(self, resp, data):
         self.status_code, self.headers, self.data = resp.status, resp.msg, data
@@ -273,8 +264,8 @@ class Balasan:
         return json.loads(self.data.decode("utf-8"))
 
 
+# Tes API server HTTP
 class ApiServer(unittest.TestCase):
-    """Server asli (bawaan Python) di port acak pada folder sementara."""
 
     def setUp(self):
         from jadwal import server as aplikasi
@@ -317,8 +308,8 @@ class ApiServer(unittest.TestCase):
         r = self.get("/")
         self.assertEqual(r.status_code, 200)
         self.assertIn(b"spinner", r.data)
-        self.assertIn(b"location.replace('/app')", r.data)       # pindah tanpa masuk riwayat
-        self.assertIn(b"LOADING_MS = 4000", r.data)              # wajib tampil 4 detik
+        self.assertIn(b"location.replace('/app')", r.data)
+        self.assertIn(b"LOADING_MS = 2000", r.data)
         r = self.get("/app")
         self.assertEqual(r.status_code, 200)
         self.assertIn(b"/api/export/", r.data)
@@ -348,7 +339,6 @@ class ApiServer(unittest.TestCase):
             self.assertEqual(r.status_code, 200, (jenis, sheet))
             self.assertIn(nama, r.headers["Content-Disposition"])
             self.assertTrue(r.data.startswith(awal))
-            # file hanya dikirim ke browser: server tidak boleh menyimpan salinan di mana pun
             self.assertEqual(list(Path(self.tmp.name).iterdir()), [], (jenis, sheet))
             self.assertFalse((cfg.BASE_DIR / "output").exists(), (jenis, sheet))
 
@@ -364,12 +354,12 @@ class ApiServer(unittest.TestCase):
             self.aplikasi.droid.ON_ANDROID, self.aplikasi.droid.save_to_downloads = asli
         self.assertEqual(r.get_json(), {"saved": "jadwal_kerja.xlsx", "folder": "Download"})
         self.assertEqual(r2.get_json()["saved"], "jadwal_20nov-3des_2026_global.png")
-        self.assertIn("application/json", r.headers["Content-Type"])      # bukan unduhan lewat browser
+        self.assertIn("application/json", r.headers["Content-Type"])
         self.assertIsNone(r.headers["Content-Disposition"])
         self.assertEqual([t[0] for t in tersimpan], ["jadwal_kerja.xlsx", "jadwal_20nov-3des_2026_global.png"])
         self.assertTrue(tersimpan[0][1].startswith(b"PK"))
         self.assertEqual(tersimpan[1][2], "image/png")
-        self.assertEqual(list(Path(self.tmp.name).iterdir()), [])         # tidak ada salinan di folder aplikasi
+        self.assertEqual(list(Path(self.tmp.name).iterdir()), [])
 
     def test_png_semua_sheet_ditolak(self):
         r = self.post("/api/export/png", json={**payload(), "sheet": "all"})
@@ -383,7 +373,6 @@ class ApiServer(unittest.TestCase):
             r = self.post("/api/export/xlsx", json={**payload(), "sheet": sheet})
             wb = openpyxl.load_workbook(io.BytesIO(r.data))
             self.assertEqual(wb.sheetnames, nama, sheet)
-        # sheet tak dikenal -> Administrator (seperti sebelumnya)
         r = self.post("/api/export/xlsx", json={**payload(), "sheet": "config"})
         self.assertEqual(openpyxl.load_workbook(io.BytesIO(r.data)).sheetnames, ["Administrator"])
 
@@ -402,22 +391,22 @@ class ApiServer(unittest.TestCase):
         self.assertEqual(r.get_json()["error"], "File terlalu besar.")
 
     def test_keluar_hanya_di_android(self):
-        self.assertEqual(self.post("/api/exit", json={}).get_json(), {"ok": False})   # browser: halaman yang urus
+        self.assertEqual(self.post("/api/exit", json={}).get_json(), {"ok": False})
         diminta, dipanggil = [], threading.Event()
         asli = (self.aplikasi.droid.ON_ANDROID, self.aplikasi.droid.exit_app)
         self.aplikasi.droid.ON_ANDROID = True
         self.aplikasi.droid.exit_app = lambda: (diminta.append(1), dipanggil.set())
         try:
             r = self.post("/api/exit", json={})
-            self.assertTrue(dipanggil.wait(5))        # dipanggil server SETELAH balasan terkirim
+            self.assertTrue(dipanggil.wait(5))
         finally:
             self.aplikasi.droid.ON_ANDROID, self.aplikasi.droid.exit_app = asli
         self.assertEqual(r.get_json(), {"ok": True})
         self.assertEqual(diminta, [1])
 
 
+# Tes paket dan berkas Android
 class PaketAndroid(unittest.TestCase):
-    """Pengaturan build Android harus konsisten dengan kode."""
 
     @classmethod
     def setUpClass(cls):
@@ -440,7 +429,7 @@ class PaketAndroid(unittest.TestCase):
             self.assertIn(nama, req)
 
     def test_penyimpanan_downloads_butuh_android_10(self):
-        self.assertGreaterEqual(int(self.nilai("android.minapi")), 29)        # MediaStore.Downloads
+        self.assertGreaterEqual(int(self.nilai("android.minapi")), 29)
 
     def test_versi_dan_ikon(self):
         self.assertRegex(self.nilai("version"), r"^\d+\.\d+\.\d+$")
@@ -455,7 +444,6 @@ class PaketAndroid(unittest.TestCase):
         self.assertTrue((cfg.WEB_DIR / "loading.html").is_file())
 
     def test_hanya_satu_skrip_di_luar_folder(self):
-        """Folder utama rapi: skrip .py hanya main.py (wajib bernama itu untuk python-for-android)."""
         skrip = sorted(f.name for f in cfg.BASE_DIR.glob("*.py"))
         self.assertEqual(skrip, ["main.py"])
 
@@ -466,7 +454,6 @@ class PaketAndroid(unittest.TestCase):
             self.assertIn(kata, wf)
 
     def test_nomor_versi_naik_dengan_carry(self):
-        """v1.0.9 -> v1.1.0, v1.9.9 -> v2.0.0 (tiap angka maksimal 9)."""
         import shutil
         import subprocess
         if shutil.which("bash") is None:
@@ -480,10 +467,9 @@ class PaketAndroid(unittest.TestCase):
 
         kasus = [("", "1.0.0"), ("v1.0.0", "1.0.1"), ("v1.0.8", "1.0.9"), ("v1.0.9", "1.1.0"),
                  ("v1.1.9", "1.2.0"), ("v1.8.9", "1.9.0"), ("v1.9.8", "1.9.9"), ("v1.9.9", "2.0.0"),
-                 ("v2.0.0", "2.0.1"), ("v2.9.9", "3.0.0"), ("v1.0.10", "1.1.0")]      # tag manual di luar pola
+                 ("v2.0.0", "2.0.1"), ("v2.9.9", "3.0.0"), ("v1.0.10", "1.1.0")]
         for tag, harapan in kasus:
             self.assertEqual(berikut(tag)[0], harapan, tag)
-        # rangkaian panjang dari awal: urut benar, tanpa angka >9, kode versi selalu naik
         tag, urut, kode_lama = "", [], 0
         for _ in range(1000):
             versi, kode = berikut(tag)
@@ -511,6 +497,7 @@ class PaketAndroid(unittest.TestCase):
             importlib.reload(cfg)
 
 
+# Tes pemilihan port
 class PilihPort(unittest.TestCase):
     def test_port_5000_dilewati(self):
         from jadwal import server as aplikasi
@@ -519,6 +506,36 @@ class PilihPort(unittest.TestCase):
     def test_port_default(self):
         self.assertEqual(cfg.DEFAULT_PORT, 8888)
         self.assertIn(5000, cfg.BLOCKED_PORTS)
+
+
+
+# Tes performa: startup ringan dan PNG tidak dikompres berlebihan
+class PerformaRingan(unittest.TestCase):
+    def test_server_tidak_memuat_modul_berat_saat_start(self):
+        import subprocess
+        import sys
+        from pathlib import Path
+
+        kode = ("import sys, jadwal.server; "
+                "print(','.join(m for m in ('PIL', 'xlsxwriter', 'jadwal.excel', 'jadwal.image', 'jadwal.importer') "
+                "if m in sys.modules))")
+        root = Path(__file__).resolve().parent.parent
+        hasil = subprocess.run([sys.executable, "-c", kode], cwd=root, capture_output=True, text=True, check=True)
+        self.assertEqual(hasil.stdout.strip(), "")
+
+    def test_png_memakai_kompresi_cepat_dan_hasilnya_valid(self):
+        import io
+
+        from PIL import Image
+
+        from jadwal import image
+        from jadwal.schedule import Schedule
+        from tests.sample import payload
+
+        self.assertIn(image.PNG_COMPRESS, range(1, 8))
+        data = image.render(Schedule.from_payload(payload()), "gl")
+        self.assertEqual(data[:8], b"\x89PNG\r\n\x1a\n")
+        self.assertGreater(Image.open(io.BytesIO(data)).size[0], 1000)
 
 
 if __name__ == "__main__":

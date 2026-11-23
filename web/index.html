@@ -7,34 +7,38 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
-/* CATATAN: semua font-size ditulis calc(Npx*var(--u)). Nilai --u dihitung JS (fungsi lock) supaya
-   ukuran teks SAMA di Chrome, WebView/Acode, dll. walau masing-masing menskalakan teks berbeda.
-   Ukuran teks akhir = TS (di JS) x angka px di CSS. Tulis font-size baru dengan pola yang sama. */
+/* Variabel warna dan ukuran */
 :root{--bg:#f6f8fc;--ink:#0f1b4c;--mute:#5b6785;--line:#dfe6f5;--pri:#2f66f2;--soft:#eaf0fe;
 --P:#bdd7ee;--Pt:#1f4e79;--S:#ffe699;--St:#7f6000;--R:#f6b26b;--Rt:#7f3f00;--L:#ededed;--Lt:#7f7f7f;
 --dP:#5b9bd5;--dS:#e6b800;--dR:#ed7d31;--dL:#a6a6a6;--tn:1px;--md:2px;--u:.8;--ub:.8}
+/* Dasar halaman */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 *{box-sizing:border-box;margin:0}
 body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:calc(13px*var(--u));line-height:1.45;font-feature-settings:"tnum";-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--ink);padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 #app{max-width:480px;margin:auto;padding:0 14px}
+/* Header aplikasi dan tombol Menu */
 header{margin:0 -14px 10px;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;background:#fff;box-shadow:0 1px 6px #0b16460f;display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:5}
 .logo{width:32px;height:32px;display:grid;place-items:center;flex:none}
 header b{font-size:calc(16.5px*var(--u));font-weight:700;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .badge{font-size:calc(10px*var(--u));font-weight:700;color:var(--pri);background:var(--soft);padding:2px 8px;border-radius:99px;letter-spacing:.3px}
 .mn{margin-left:auto;border:0;background:none;color:var(--ink);min-height:40px;min-width:40px;display:grid;place-items:center}
+/* Teks dasar dan form */
 h1{font-size:calc(20px*var(--u));font-weight:700;letter-spacing:-.3px;line-height:1.2;margin:10px 0 3px}
 h2{font-size:calc(15px*var(--u));font-weight:700;margin:16px 0 2px}
 .sub{color:var(--mute);font-size:calc(12.5px*var(--u));margin-bottom:12px}
 button,input,select{font:inherit;color:inherit}svg{flex:none}
-.lb{display:flex;align-items:center;gap:6px;color:var(--mute);font-weight:600;font-size:calc(10.5px*var(--u));letter-spacing:.4px;text-transform:uppercase}
+/* Badge Sesuai kalender */
 .ok{display:inline-flex;align-items:center;gap:5px;background:#d9f5e3;color:#13803f;font-weight:600;font-size:calc(11px*var(--u));padding:3px 9px;border-radius:99px}.ok.no{background:#fde1e4;color:#b4232f}
+/* Tombol umum */
 .btn{border:0;background:var(--pri);color:#fff;font-weight:600;font-size:calc(12.5px*var(--u));border-radius:9px;padding:0 12px;min-height:38px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
-.btn.w{width:100%}.btn.sm{min-height:30px;padding:0 10px;font-size:calc(11.5px*var(--u));border-radius:8px;gap:4px;margin-top:2px}.btn.dg{background:#fde8ea;color:#b4232f}.btn.gn{background:#15803d}.btn.gy{background:#e5e7eb;color:#374151}
+.btn.w{width:100%}.btn.dg{background:#fde8ea;color:#b4232f}.btn.gn{background:#15803d}.btn.gy{background:#e5e7eb;color:#374151}
+/* Tab Settings, Administrator, Print Jadwal */
 .tb{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:4px}
 .tb button{width:100%;min-width:0;border:0;background:none;min-height:42px;padding:0;font-weight:600;color:var(--mute);display:flex;align-items:center;justify-content:center;gap:5px;position:relative;font-size:calc(clamp(11px,3.3vw,12px)*var(--u));line-height:1;white-space:nowrap}
 .tb svg{display:block;flex:none}.tb span{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .tb button.on{color:var(--pri)}.tb button.on::after{content:"";position:absolute;left:18%;right:18%;bottom:0;height:2px;border-radius:2px;background:var(--pri)}
-/* Kelola Divisi: header (judul + ringkasan + garis pembatas) dan kartu divisi dengan avatar inisial staff */
+
+/* Tab Administrator: daftar divisi */
 .hda{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:18px 0 14px;padding-bottom:14px;border-bottom:1px solid #cfd8ec}
 .hda h2{margin:0;font-size:calc(19px*var(--u));font-weight:700;letter-spacing:-.02em;line-height:1.2;color:#1f2a44}
 .hda span{background:#e3f4f2;color:#14625d;font-size:calc(10.5px*var(--u));font-weight:700;letter-spacing:.5px;text-transform:uppercase;border-radius:99px;padding:4px 10px;white-space:nowrap}
@@ -46,57 +50,55 @@ button,input,select{font:inherit;color:inherit}svg{flex:none}
 .dv .av{display:flex;align-items:center}.dv .av em{font-style:normal;font-size:calc(12px*var(--u));color:var(--mute);margin-left:10px}
 .dv .a{width:26px;height:26px;border-radius:50%;background:var(--c);color:var(--k);border:2px solid #fff;display:grid;place-items:center;font-size:calc(10px*var(--u));font-weight:700;margin-left:-8px}.dv .a:first-child{margin-left:0}.dv .a.p{background:#eef1f8;color:#4a5673}
 .dv .go{width:32px;height:32px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 1px #e6ebf6;display:grid;place-items:center;color:var(--k);flex:none}
+/* Warna per divisi */
 .BAR{--t:#eef4ff;--b:#cfe0fb;--c:#d5e5fc;--k:#1f5fd0}.FLOOR{--t:#edf9f3;--b:#c9ebdc;--c:#d1f0e1;--k:#119468}
 .CASHIER{--t:#f6f0fe;--b:#e0d5f7;--c:#e6dcf9;--k:#6b3fc8}.KITCHEN{--t:#fff6ec;--b:#f8e1c6;--c:#fde6cc;--k:#dd7710}
-.lg{display:flex;gap:4px;justify-content:space-between;background:#f0f4fc;border:1px solid var(--line);border-radius:10px;padding:8px 6px}
-.chip{display:inline-flex;align-items:center;gap:5px;background:#fff;border:1px solid var(--line);border-radius:99px;padding:4px 9px;font-size:calc(11px*var(--u));font-weight:600}
+/* Titik warna shift */
 .dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--dP)}.dot.sS{background:var(--dS)}.dot.sR{background:var(--dR)}.dot.sL{background:var(--dL)}
+/* Halaman divisi: breadcrumb dan pilih divisi */
 .crumb{display:flex;align-items:center;gap:8px;color:var(--pri);font-weight:600;font-size:calc(12px*var(--u));line-height:1;margin:2px 0 12px}
 .crumb a{color:var(--pri);text-decoration:none;display:flex;align-items:center;min-height:24px}.crumb svg{display:block}.crumb i{font-style:normal;color:var(--mute)}.crumb span{color:var(--ink)}.crumb em{width:1px;height:13px;background:var(--line)}
 .seg{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;padding:3px;margin-bottom:12px}
 .seg button{flex:1;min-width:0;padding:0 2px;border:0;background:none;min-height:34px;border-radius:8px;font-weight:600;color:var(--mute);font-size:calc(11px*var(--u));letter-spacing:.3px;text-transform:uppercase}
 .seg button.on{background:var(--pri);color:#fff}
+/* Tab Print Jadwal: judul dan tombol aksi */
 .kh{display:flex;align-items:center;gap:8px;font-size:calc(15px*var(--u));font-weight:700}.kh em{margin-left:auto;font-style:normal;color:var(--mute);font-size:calc(12.5px*var(--u));font-weight:500}
 .ab{display:flex;gap:8px;margin-top:10px}.ab .btn{flex:1}
 .ab.cp{justify-content:center;margin-top:16px}.ab.cp .btn{flex:1 1 0;min-width:0;min-height:32px;padding:0 4px;font-size:calc(10px*var(--u));letter-spacing:.3px;border-radius:8px;gap:4px;white-space:nowrap}.ab.cp .btn svg{width:12px;height:12px;flex:none}
-.wk{display:flex;gap:6px;margin:10px 0}
-.wk button{flex:1;min-height:36px;border-radius:99px;border:1px solid var(--line);background:#fff;color:var(--mute);font-weight:600;font-size:calc(11px*var(--u));display:flex;align-items:center;justify-content:center;gap:5px}
-.wk button.on{background:var(--pri);border-color:var(--pri);color:#fff}
-.sr{display:grid;grid-template-columns:minmax(58px,1.5fr) repeat(7,minmax(0,1fr));background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:7px;overflow:hidden}
-.sr>*{border-left:1px solid var(--line)}.sr>:first-child{border:0}
-.nm{padding:6px 4px 6px 9px;display:flex;align-items:center;flex-wrap:wrap;gap:0 2px;align-content:center;font-weight:700;font-size:calc(12.5px*var(--u))}
-.nm button{border:0;background:none;color:#6b7a9c;min-height:30px;min-width:28px;display:grid;place-items:center}
-.cl{border:0;background:none;padding:7px 0;display:flex;flex-direction:column;align-items:center;gap:1px;font-size:calc(10px*var(--u));font-weight:500;color:var(--ink)}
-.cl b{font-size:calc(12px*var(--u));font-weight:600;margin-bottom:4px}
-.pill{border-radius:99px;font-size:calc(9.5px*var(--u));font-weight:700;padding:3px 0;width:calc(100% - 4px);text-align:center}
+/* Warna shift */
 .sP{background:var(--P);color:var(--Pt)}.sS{background:var(--S);color:var(--St)}.sR{background:var(--R);color:var(--Rt)}.sL{background:var(--L);color:var(--Lt)}
 .we,.we b{color:#c00000}
+/* Legenda jam kerja */
 .lh{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:#f0f4fc;border:1px solid var(--line);border-radius:10px;padding:8px 6px;margin-top:4px}
 .lh div{display:flex;gap:5px;font-size:calc(11px*var(--u));line-height:1.25}.lh div span{color:var(--mute);font-size:calc(9.5px*var(--u));display:block}.lh .dot{margin-top:3px}
+/* Tabel dasar */
 table{border-collapse:separate;border-spacing:0;width:100%;font-size:calc(12px*var(--u));text-align:center}
 td,th{padding:6px 2px;border-bottom:1px solid var(--line)}th{color:var(--mute);font-weight:600}
-td.lb2{text-align:left;font-weight:600;padding-left:8px}td.z{background:#fde1e4;color:#b4232f;font-weight:700}
-.cd{background:#fff;border:1px solid var(--line);border-radius:10px;padding:4px;margin:8px 0}
+/* Nav bawah: Ringkasan, Home, Jadwal Global */
 nav{position:fixed;bottom:0;left:0;right:0;z-index:10;background:#fff;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
 nav div{max-width:480px;margin:auto;display:flex}
 nav button{flex:1;border:0;background:none;color:var(--mute);font-size:calc(11px*var(--u));font-weight:500;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative}
 nav button.on{color:var(--pri);font-weight:600}nav button.on::after{content:"";position:absolute;left:18%;right:18%;bottom:3px;height:2px;border-radius:2px;background:var(--pri)}
+/* Tab Settings: tanggal, bulan, tahun */
 .cfg{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 0;margin-top:8px}
-.cfg label,.cfg .ro{padding:0 8px;text-align:center;font-size:calc(10.5px*var(--u));color:var(--mute);font-weight:600;display:flex;flex-direction:column;gap:4px;text-transform:uppercase;letter-spacing:.3px}
+.cfg label{padding:0 8px;text-align:center;font-size:calc(10.5px*var(--u));color:var(--mute);font-weight:600;display:flex;flex-direction:column;gap:4px;text-transform:uppercase;letter-spacing:.3px}
 .cfg input,.cfg select{width:100%;min-width:0;min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 18px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235b6785' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center;-webkit-appearance:none;appearance:none;text-align:center;text-align-last:center;color:var(--ink);font-size:calc(13px*var(--u));text-transform:none;letter-spacing:0;font-weight:500}
-.cfg .ro b{font-size:calc(13px*var(--u));color:var(--ink);text-transform:none;letter-spacing:0;min-height:22px}.cfg .ro:last-child{grid-column:span 2}
+/* Popup bawah */
 #shade{position:fixed;inset:0;background:#0b164688;display:none;z-index:20}
 #sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:#fff;border-radius:16px 16px 0 0;padding:16px 14px calc(16px + env(safe-area-inset-bottom));max-width:480px;margin:auto;transform:translateY(110%);transition:transform .2s;max-height:80vh;overflow:auto}
 #sheet.open{transform:none}#sheet h3{font-size:calc(15px*var(--u));font-weight:700;margin-bottom:10px}
-#sheet .o{display:grid;grid-template-columns:1fr 1fr;gap:8px}#sheet .o .pill{padding:10px 0;width:100%;font-size:calc(13px*var(--u));border:0}#sheet .o small{display:block;font-weight:500;font-size:calc(11px*var(--u))}
 #sheet input{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:0 10px;min-height:40px;margin-bottom:10px}
+/* Daftar tombol Hapus Staff */
 .dl{display:grid;gap:6px}
+/* Fokus keyboard dan gerak berkurang */
 :focus-visible{outline:2px solid var(--pri);outline-offset:2px}
 @media(prefers-reduced-motion:reduce){#sheet{transition:none}}
+/* Tab Settings: kartu Hari dan Check */
 .cfg2{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px}
 .tl{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:0;display:flex;flex-direction:column;align-items:stretch;overflow:hidden}
 .tl small{font-size:calc(10.5px*var(--u));color:var(--mute);font-weight:600;text-transform:uppercase;letter-spacing:.3px;text-align:center;padding:8px 6px;background:#fff;border-bottom:1px solid var(--line)}.tl b,.tl .ok{margin:10px auto;text-align:center}.tl b{font-size:calc(17px*var(--u));font-weight:700;min-height:24px}
-/* tabel ala Excel (preview Print Jadwal & tab Jadwal Global) */
+
+/* Tabel jadwal ala Excel */
 .xs{overflow:auto;-webkit-overflow-scrolling:touch;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .xw{width:max-content}
 .g{margin:0 -14px;--ox:0px}.g .xw{padding:0 14px 6px}
@@ -111,7 +113,8 @@ table.xt{border-collapse:separate;border-spacing:0;table-layout:fixed;width:auto
 .xt .sk{position:sticky;left:calc(var(--ox) + 10px);display:inline-block;padding-left:10px}
 .xt td.ed{position:relative;cursor:pointer}.xt td.fz.ed{position:sticky}
 .xt .ds{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;cursor:pointer;font-size:calc(16px*var(--u))}
-/* Banner periode: tanggal awal & akhir dihubungkan garis berisi durasi; kolom kiri & kanan sama lebar agar tag tepat di tengah; ikon kalender (kiri atas) & terminal >_ (kanan atas) berwarna sama dengan judul; tahun di tengah bawah, satu sumbu dengan judul */
+
+/* Banner periode jadwal */
 .pk{margin:-10px -14px 14px;padding:12px 14px 16px;background:#1f2a44;color:#fff;border-bottom:3px solid #1b7f79}
 .pk-t{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;color:#aeb9d6;font-size:calc(11px*var(--u));font-weight:600;letter-spacing:.6px}
 .pk-t span{text-transform:uppercase;white-space:nowrap}.pk-t i{display:grid;place-items:center;line-height:0}.pk-t i:first-child{justify-self:start}.pk-t i:last-child{justify-self:end}
@@ -123,7 +126,8 @@ table.xt{border-collapse:separate;border-spacing:0;table-layout:fixed;width:auto
 .pk-l{justify-self:stretch;position:relative;display:flex;justify-content:center;align-items:center;min-height:24px;
 background:radial-gradient(circle at 3px 50%,#4fd1c5 3px,#0000 3.5px),radial-gradient(circle at calc(100% - 3px) 50%,#4fd1c5 3px,#0000 3.5px),linear-gradient(#ffffff3d,#ffffff3d) 0 50%/100% 1px no-repeat}
 .pk-l em{font-style:normal;font-size:calc(10.5px*var(--u));font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:#1f2a44;border:1px solid #ffffff3d;border-radius:99px;padding:3px 10px;white-space:nowrap}
-/* Ringkasan */
+
+/* Tab Ringkasan: pilih tanggal */
 .rd{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;box-shadow:0 1px 3px #0b16460a}
 .rd-h{padding:12px 14px 10px;font-size:calc(15px*var(--u));font-weight:700;letter-spacing:-.2px}
 .rd-s{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}.rd-s::-webkit-scrollbar{display:none}
@@ -132,50 +136,50 @@ background:radial-gradient(circle at 3px 50%,#4fd1c5 3px,#0000 3.5px),radial-gra
 .rd-s button b{font-size:calc(15px*var(--u));color:var(--ink);font-weight:700}
 .rd-s button.on{background:var(--pri);border-color:var(--pri);color:#fff}.rd-s button.on b{color:#fff}
 .rd-s button.we:not(.on),.rd-s button.we:not(.on) b{color:#c00000}
+/* Tab Ringkasan: kartu divisi per hari */
 .dc{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 3px #0b16460a}
 .dc-h{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--t);border-bottom:1px solid var(--b)}
 .dc-h i{width:28px;height:28px;border-radius:50%;background:var(--c);color:var(--k);display:grid;place-items:center;flex:none}
 .dc-h b{font-size:calc(14px*var(--u));font-weight:700;letter-spacing:.2px}.dc-h span{margin-left:auto;color:var(--mute);font-size:calc(11px*var(--u));font-weight:500;text-transform:uppercase;letter-spacing:.4px}
 .dc-r{display:grid;grid-template-columns:108px 1fr 40px;align-items:stretch}.dc-r+.dc-r{border-top:1px solid var(--line)}
 .dc-s{display:flex;align-items:center;gap:7px;padding:9px 8px 9px 12px;background:#fafbfe;border-right:1px solid var(--line)}.dc-s b{display:block;font-size:calc(12.5px*var(--u));font-weight:600;line-height:1.2}.dc-s small{display:block;color:var(--mute);font-size:calc(10.5px*var(--u))}
-.dc-n{display:flex;align-items:center;padding:9px 8px 9px 10px;font-size:calc(12.5px*var(--u));line-height:1.4}.dc-n.no{color:#b4232f;font-weight:600}
+.dc-n{display:flex;align-items:center;padding:9px 8px 9px 10px;font-size:calc(12.5px*var(--u));line-height:1.4}
 .dc-c{align-self:center;justify-self:center;font-style:normal;min-width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:var(--soft);color:var(--pri);font-size:calc(12px*var(--u));font-weight:700}.dc-c.no{background:#fde1e4;color:#b4232f}
-/* judul seksi */
+
+/* Judul seksi Print Jadwal */
 .sh{display:flex;align-items:center;gap:12px;margin:14px 0 12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
 .sh i{width:40px;height:40px;border-radius:12px;background:var(--soft);color:var(--pri);display:grid;place-items:center;flex:none}
 .sh b{display:block;font-size:calc(16px*var(--u));font-weight:700;letter-spacing:-.2px;line-height:1.25}.sh span{display:block;color:var(--mute);font-size:calc(12px*var(--u));line-height:1.4;margin-top:2px}
+/* Popup tersimpan dan tombol X */
 .sph{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}#sheet .sph h3{margin:0;min-width:0}
 .spx{flex:none;width:32px;height:32px;border:0;border-radius:50%;background:var(--bg);color:var(--mute);display:grid;place-items:center}
+/* Toast */
 #toast{position:fixed;left:50%;bottom:calc(76px + env(safe-area-inset-bottom));transform:translate(-50%,10px);max-width:86vw;padding:9px 16px;border-radius:99px;background:#0f1b4ce6;color:#fff;font-size:calc(12.5px*var(--u));font-weight:600;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:30}
 #toast.on{opacity:1;transform:translate(-50%,0)}
-/* ===== Animasi tekan tombol =====
-   Kelas .pr dipasang lewat JS (bagian "Animasi tekan tombol" di bawah) saat jari menyentuh tombol. --ps = skala saat ditekan (bisa diganti per jenis tombol).
-   Melepas tombol memantul balik (cubic-bezier dengan overshoot); menekan masuk cepat (.09s). Riak digambar di #rp. */
+
+/* Animasi tekan tombol */
 button,a[onclick],td.ed{-webkit-tap-highlight-color:transparent}
-button,a[onclick]{--ps:.93;transition:transform .32s cubic-bezier(.34,1.56,.64,1),filter .2s,background-color .2s,box-shadow .2s}
-button.pr,a.pr{transform:scale(var(--ps));filter:brightness(.9);transition-duration:.09s;transition-timing-function:ease-out}
-.btn.pr{box-shadow:inset 0 2px 8px #0b164640}
-.btn.dg.pr,.btn.gy.pr{filter:brightness(.95)}
-.dv{--ps:.97}.dv.pr{filter:brightness(.96)}
+button,a[onclick]{--ps:.97;transition:transform .32s cubic-bezier(.34,1.56,.64,1),background-color .2s}
+button.pr,a.pr{transform:scale(var(--ps));transition-duration:.09s;transition-timing-function:ease-out}
 .dv .go{transition:transform .3s cubic-bezier(.34,1.56,.64,1),background-color .2s,color .2s}
-/* ketukan kartu langsung pindah halaman (~0,1 dtk), jadi efek panah dibuat cepat (.1s) dan berupa isi warna + geser + membesar */
+
 .dv.pr .go{transform:translateX(6px) scale(1.1);background:var(--k);color:#fff;transition-duration:.1s;transition-timing-function:ease-out}
-.tb button,.seg button,.wk button{--ps:.95}
 .tb button:first-child{border-radius:9px 0 0 9px}.tb button:last-child{border-radius:0 9px 9px 0}
-nav button{--ps:.9}.rd-s button{--ps:.9}.pill{--ps:.92}
 .mn{border-radius:50%;--ps:.82}.mn.pr{background:var(--soft)}
-.nm button{border-radius:8px;--ps:.8}.crumb a{border-radius:6px;--ps:.9}
-/* Ikon X simetris: diputar 90° tampak sama dengan diam, jadi diputar 45° (X berubah jadi +) supaya putarannya terlihat; tekan masuk cepat, lepas memantul */
+.crumb a{border-radius:6px}
+
 .spx{--ps:.82}.spx svg{transition:transform .34s cubic-bezier(.34,1.56,.64,1)}
-.spx.pr{background:#fde1e4;color:#b4232f;filter:none}.spx.pr svg{transform:rotate(45deg);transition-duration:.12s;transition-timing-function:ease-out}
+.spx.pr{background:#fde1e4;color:#b4232f}.spx.pr svg{transform:rotate(45deg);transition-duration:.12s;transition-timing-function:ease-out}
 .xt td.ed.pr{filter:brightness(.9)}
+/* Kilau menyapu */
 #rp{position:fixed;inset:0;z-index:40;pointer-events:none;overflow:hidden}
 #rp span{position:absolute;overflow:hidden;isolation:isolate;opacity:1;transform-origin:center;transition:opacity .3s ease,transform .09s ease-out}
 #rp span.out{opacity:0}
-#rp i{position:absolute;border-radius:50%;transform:scale(0);animation:rp .5s cubic-bezier(.2,.7,.3,1) forwards}
-@keyframes rp{to{transform:scale(1)}}
+#rp i{position:absolute;top:0;bottom:0;left:0;width:60%;background:linear-gradient(90deg,transparent,var(--c),transparent);animation:sw .6s cubic-bezier(.3,.6,.3,1) forwards}
+@keyframes sw{from{transform:translateX(-110%) skewX(-20deg)}to{transform:translateX(190%) skewX(-20deg)}}
 @media(prefers-reduced-motion:reduce){button.pr,a.pr,.spx.pr svg,.dv.pr .go{transform:none}#rp{display:none}}
-/* ===== Import Excel (Settings) ===== */
+
+/* Kartu Import Excel di Settings */
 .imp{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;display:flex;flex-direction:column;gap:10px}
 .imp-h{display:flex;gap:10px;align-items:center}.imp-h>i{flex:none;width:38px;height:38px;border-radius:10px;background:var(--soft);color:var(--pri);display:grid;place-items:center}
 .imp-h .nmf{min-width:0}.imp-h b{display:block;font-size:calc(13.5px*var(--u))}.imp-h small{display:block;color:var(--mute);font-size:calc(11px*var(--u));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -190,11 +194,13 @@ nav button{--ps:.9}.rd-s button{--ps:.9}.pill{--ps:.92}
 .imp-st{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.imp-st div{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 4px;text-align:center}
 .imp-st b{display:block;font-size:calc(16px*var(--u));font-weight:700}.imp-st b em{font-style:normal;font-size:calc(11px*var(--u));color:var(--mute);font-weight:600}.imp-st small{font-size:calc(9.5px*var(--u));color:var(--mute);text-transform:uppercase;letter-spacing:.3px;font-weight:600}
 .imp .seg{margin:0}.imp .xs{border:1px solid var(--line);border-radius:10px}
+/* Tabel pratinjau import */
 .it{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:calc(10.5px*var(--u))}
 .it th,.it td{height:30px;min-width:33px;text-align:center;padding:0 2px;border-bottom:1px solid var(--line);font-weight:600}
 .it th{background:var(--bg);color:var(--mute);font-size:calc(9px*var(--u));line-height:1.15;height:34px}.it th b{display:block;font-size:calc(11px*var(--u));color:var(--ink)}
 .it th.we,.it th.we b{color:#c00000}.it tr:last-child td{border-bottom:0}.it td.e{color:#b9c1d6;font-weight:400}
 .it .n{position:sticky;left:0;z-index:1;background:#fff;text-align:left;padding:0 8px;min-width:86px;max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-right:1px solid var(--line)}.it th.n{background:var(--bg);z-index:2;color:var(--mute)}
+/* Legenda dan tombol Import Excel */
 .imp-lg{display:flex;gap:6px;flex-wrap:wrap}.imp-lg span{border-radius:99px;padding:3px 9px;font-size:calc(10px*var(--u));font-weight:700}
 .imp-b{display:flex;gap:8px}.imp-b .btn{flex:1}.imp-b .btn:last-child{flex:1.6}
 </style>
@@ -204,6 +210,7 @@ nav button{--ps:.9}.rd-s button{--ps:.9}.pill{--ps:.92}
 <nav><div id="nav"></div></nav>
 <div id="shade"></div><div id="sheet" role="dialog" aria-modal="true"></div><div id="toast" role="status"></div>
 <script>
+/* Ikon SVG */
 const I={cal:'<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/>',term:'<rect x="3" y="4.5" width="18" height="15" rx="3"/><path d="m7.5 10 3 2.5-3 2.5M13 15h3.5"/>',
 chk:'<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17M9 15l2 2 4-4"/>',
 gear:'<path d="M19.08 10.23 L21.68 10.47 L21.68 13.53 L19.08 13.77 L18.26 15.76 L19.93 17.76 L17.76 19.93 L15.76 18.26 L13.77 19.08 L13.53 21.68 L10.47 21.68 L10.23 19.08 L8.24 18.26 L6.24 19.93 L4.07 17.76 L5.74 15.76 L4.92 13.77 L2.32 13.53 L2.32 10.47 L4.92 10.23 L5.74 8.24 L4.07 6.24 L6.24 4.07 L8.24 5.74 L10.23 4.92 L10.47 2.32 L13.53 2.32 L13.77 4.92 L15.76 5.74 L17.76 4.07 L19.93 6.24 L18.26 8.24Z"/><circle cx="12" cy="12" r="3"/>',
@@ -217,81 +224,95 @@ KITCHEN:'<path d="M7 20v-5a4 4 0 0 1-1-7.7A4 4 0 0 1 12 5a4 4 0 0 1 6 2.3A4 4 0 
 up:'<path d="M12 16V4M7 9l5-5 5 5M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4"/>',
 xls:'<path d="M6 3h8l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM14 3v4h4M9.5 12l5 5M14.5 12l-5 5"/>',
 warn:'<path d="M12 4 2.8 19.5h18.4zM12 10v4.5M12 17.2v.1"/>'};
+/* Helper ikon dan logo bola biliar */
 const ico=(n,s=20)=>`<svg width="${Math.round(s*.7)}" height="${Math.round(s*.7)}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
 const BALL='<svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14.5" fill="#111827"/><ellipse cx="10.5" cy="9.5" rx="5.2" ry="3" transform="rotate(-35 10.5 9.5)" fill="#fff" opacity=".2"/><circle cx="16" cy="16" r="6.6" fill="#fff"/><text x="16" y="19.6" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="9.5" fill="#111827">8</text></svg>';
+/* Data shift, bulan, dan nama hari */
 const SH={P:['Pagi','09.00–17.00'],S:['Siang','11.30–19.30'],R:['Malam','16.30–00.30'],L:['Libur','Tidak bertugas'],'-':['','Kosong']};
 const MON=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sept','Okt','Nov','Des'],MONL=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'],DAY=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
-const rows=s=>s.split(',').map(n=>({n,s:Array(14).fill('-')}));  /* semua sel shift awalnya kosong ('-') */
+/* Data awal divisi dan staff */
+const rows=s=>s.split(',').map(n=>({n,s:Array(14).fill('-')}));
 const D={BAR:{t:'Bar',st:rows('Sadewa,Ana,Cecel,Iman,Rifky')},
 FLOOR:{t:'Floor',st:rows('Apen,Rosi,Silvi,Nindya,Dinar,Carmel')},
 CASHIER:{t:'Cashier',st:rows('Leli,Ririn,Ike')},
 KITCHEN:{t:'Kitchen',st:rows('Kitchen 1,Kitchen 2,Kitchen 3,Kitchen 4,Kitchen 5,Kitchen 6,Kitchen 7')}};
+/* State layar */
 const S={pr:'adm',view:'config',tab:'admin',div:'FLOOR',wk:0,sel:0,start:'2026-11-20'};
 Object.values(D).forEach(d=>d.h={P:'',S:'',R:'',L:'Tidak bertugas'});
+/* Helper DOM dan escape HTML */
 const $=s=>document.querySelector(s),esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/* Helper tanggal periode */
 const days=()=>{const b=new Date(S.start+'T00:00');return[...Array(14)].map((_,i)=>{const d=new Date(b);d.setDate(b.getDate()+i);return{d,n:DAY[d.getDay()],x:d.getDate(),we:d.getDay()%6==0}})};
 const f=d=>d.getDate()+' '+MON[d.getMonth()],rng=(a,b)=>a.getMonth()==b.getMonth()?a.getDate()+'–'+f(b):f(a)+'–'+f(b);
 const cnt=(k,i)=>{const c={P:0,S:0,R:0,L:0};D[k].st.forEach(p=>{const x=p.s[i];if(x in c)c[x]++});return c};
 const KS=[...'PSRL'];
-/* Di atribut onclick="..." nama close() berarti document.close() (bawaan browser, tidak melakukan apa-apa), bukan fungsi ini.
-   Karena itu tombol di dalam popup memanggil closeSheet(); close() hanya dipakai dari kode script. */
+
+/* Popup bawah: buka dan tutup */
 function closeSheet(){$('#sheet').classList.remove('open');$('#shade').style.display='none'}
 function close(){closeSheet()}
 function open(h){$('#sheet').innerHTML=h;$('#sheet').classList.add('open');$('#shade').style.display='block'}
 $('#shade').onclick=close;$('#lg').innerHTML=BALL;$('#mn').innerHTML=ico('menu',26);
-/* ===== Tombol kembali / gestur geser kembali =====
-   BK = tumpukan halaman sebelumnya. Pindah ke halaman lain (go) menaruh halaman sekarang di BK; pindah ke Home mengosongkannya.
-   Kembali: tutup popup dulu -> halaman sebelumnya -> kalau sudah di Home, 2x kembali dalam 2 detik = keluar aplikasi.
-   Di Android, pendengar tombol kembali (jadwal/droid.py) memanggil window.__back; di browser dipakai riwayat (popstate). */
+
+/* Navigasi antar tab */
 const pageKey=()=>S.view=='config'?'config:'+S.tab:S.view,HOME='config:admin';
 const snap=()=>({view:S.view,tab:S.tab,pr:S.pr,div:S.div,wk:S.wk,sel:S.sel});
 const BK=[];
 function go(v,o={}){const from=snap(),k0=pageKey();close();Object.assign(S,{view:v},o);const k1=pageKey();
 if(k1!=k0){if(k1==HOME)BK.length=0;else BK.push(from)}draw();scrollTo(0,0)}
+/* Toast dan keluar aplikasi */
 let _tt;function toast(m,ms=2000){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('on'),ms)}
 async function exitApp(){try{const j=await(await fetch('/api/exit',{method:'POST'})).json();if(j.ok)return}catch(e){}history.go(-2)}
+/* Tombol kembali Android dan browser */
 let _bt=0,_bl=0;
 function onBack(){
-const now=Date.now();if(now-_bl<200)return;_bl=now;   /* satu tekan kembali kadang sampai 2x: yang kedua diabaikan */
+const now=Date.now();if(now-_bl<200)return;_bl=now;
 if($('#sheet').classList.contains('open')){close();return}
 if(BK.length){Object.assign(S,BK.pop());draw();scrollTo(0,0);return}
 if(pageKey()!=HOME){Object.assign(S,{view:'config',tab:'admin'});draw();scrollTo(0,0);return}
 const n=Date.now();if(n-_bt<2000){exitApp();return}
 _bt=n;toast('Tap again to close the app')}
 window.__back=onBack;
-/* Jebakan riwayat hanya untuk browser. Di Android WebView ("; wv)" di user agent) tombol kembali sudah ditangani droid.py -> window.__back,
-   dan riwayat WebView dibersihkan di sana; jebakan di sini malah bisa memicu onBack kedua kali. */
+
 if(!/; wv\)/.test(navigator.userAgent)){history.replaceState({jd:0},'');history.pushState({jd:1},'');
 addEventListener('popstate',e=>{if(e.state&&e.state.jd===0){onBack();history.pushState({jd:1},'')}})}
+/* Tombol Menu di header */
 $('#mn').onclick=()=>open(`<h3>Menu</h3><div style="display:grid;gap:8px"><button class="btn w" onclick="go('home')">Ringkasan</button><button class="btn w" onclick="go('config')">Home</button><button class="btn w" onclick="go('global')">Jadwal Global</button></div>`);
-function pick(i,j){const p=D[S.div].st[i],d=days()[j];open(`<h3>${esc(p.n)} · ${d.n} ${d.x} ${MON[d.d.getMonth()]}</h3><div class="o">${KS.map(c=>`<button class="pill s${c}" onclick="setS(${i},${j},'${c}')">${SH[c][0]}<small>${D[S.div].h[c]}</small></button>`).join('')}</div>`)}
+/* Simpan dan gambar ulang tab */
 function rx(){persist();close();const o=$('.xs'),l=o?o.scrollLeft:0,t=o?o.scrollTop:0,y=scrollY;draw();const n=$('.xs');if(n){n.scrollLeft=l;n.scrollTop=t}scrollTo(0,y)}
 function setS(i,j,c){D[S.div].st[i].s[j]=c;rx()}
+/* Popup Jam kerja */
 function hrs(q){const v=D[S.div].h[q],m=v.match(/(\d{1,2})[.:](\d{2})\s*[–-]\s*(\d{1,2})[.:](\d{2})/),p=n=>String(n).padStart(2,'0');
 open(`<h3>Jam kerja ${SH[q][0]}</h3>`+(q=='L'?`<input type="text" id="h1" value="${esc(v)}">`:`<div style="display:flex;gap:8px"><input type="time" id="h1" value="${m?p(m[1])+':'+m[2]:'09:00'}"><input type="time" id="h2" value="${m?p(m[3])+':'+m[4]:'17:00'}"></div>`)+`<div style="display:flex;gap:8px;margin-top:10px"><button class="btn" style="flex:1" onclick="saveH('${q}')">Simpan</button><button class="btn dg" onclick="clrH('${q}')">Kosongkan</button></div>`)}
 function clrH(q){D[S.div].h[q]='';rx()}
 function saveH(q){const a=$('#h1').value,b=$('#h2')?$('#h2').value:'';if(!a||(q!='L'&&!b))return;D[S.div].h[q]=q=='L'?a.trim():a.replace(':','.')+'–'+b.replace(':','.');rx()}
+/* Popup Tambah dan Ubah staff */
 function staff(i){const p=i<0?{n:''}:D[S.div].st[i];open(`<h3>${i<0?'Tambah staff':'Ubah staff'}</h3><input type="text" id="nm" value="${esc(p.n)}" placeholder="Nama staff" autocomplete="off"><div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="saveS(${i})">Simpan</button>${i<0?'':`<button class="btn dg" onclick="delS(${i})">Hapus</button>`}</div>`);$('#nm').focus()}
 function saveS(i){const n=$('#nm').value.trim();if(!n)return;if(i<0)D[S.div].st.push({n,s:Array(14).fill('-')});else D[S.div].st[i].n=n;rx()}
 function delS(i){D[S.div].st.splice(i,1);rx()}
-/* Reset jadwal divisi: kosongkan semua sel shift staff + jam kerja Pagi/Siang/Malam (Libur kembali ke teks bawaan); nama staff tetap */
+
+/* Tombol Reset Jadwal */
 function rstAsk(){open(`<h3>Reset jadwal ${esc(D[S.div].t)}?</h3><p class="sub">Semua shift dan jam kerja divisi ini dikosongkan.</p><div style="display:flex;gap:8px"><button class="btn dg" style="flex:1" onclick="rstDiv()">Reset</button><button class="btn" style="flex:1" onclick="closeSheet()">Batal</button></div>`)}
 function rstDiv(){const d=D[S.div];d.st.forEach(p=>{p.s=Array(14).fill('-')});d.h={P:'',S:'',R:'',L:'Tidak bertugas'};rx()}
+/* Tombol Hapus Staff */
 function delList(){const l=D[S.div].st;open(`<h3>Hapus staff</h3>${l.length?`<div class="dl">${l.map((p,i)=>`<button class="btn dg w" onclick="delAsk(${i})">${esc(p.n)}</button>`).join('')}</div>`:'<p class="sub">Belum ada staff.</p>'}`)}
 function delAsk(i){open(`<h3>Hapus ${esc(D[S.div].st[i].n)}?</h3><p class="sub">Jadwal staff ini ikut terhapus.</p><div style="display:flex;gap:8px"><button class="btn dg" style="flex:1" onclick="delS(${i})">Ya, hapus</button><button class="btn" style="flex:1" onclick="closeSheet()">Batal</button></div>`)}
+/* Popup Ubah periode */
 function per(){open(`<h3>Ubah periode</h3><label for="sd" class="mut" style="font-size:calc(13px*var(--u));color:var(--mute)">Tanggal mulai (14 hari)</label><input type="date" id="sd" value="${S.start}" style="margin-top:6px"><button class="btn w" onclick="S.start=$('#sd').value||S.start;S.sel=todayIdx();closeSheet();draw()">Simpan periode</button>`)}
-const chips=()=>`<div class="lg">${KS.map(c=>`<span class="chip"><i class="dot s${c}"></i>${SH[c][0]}</span>`).join('')}</div>`;
+/* Legenda jam kerja */
 const hours=k=>`<div class="lh">${KS.map(c=>`<div><i class="dot s${c}"></i><b style="font-weight:600">${SH[c][0]}<span>${D[k].h[c]?'('+D[k].h[c]+')':''}</span></b></div>`).join('')}</div>`;
-/* Banner periode: baris atas = teks PERIODE JADWAL tepat di tengah (satu sumbu dengan tag 14 HARI) + ikon di pojok, tahun di tengah bawah; di bawahnya hari/tanggal/bulan kiri & kanan dihubungkan garis berisi tag durasi. Nama hari merah = Sabtu/Minggu */
+
+/* Banner periode jadwal */
 function periodFull(){const a=days(),s=a[0].d,e=a[13].d,y=s.getFullYear()==e.getFullYear()?e.getFullYear():s.getFullYear()+' – '+e.getFullYear();
 return`<section class="pk"><div class="pk-t"><i>${ico('cal',24)}</i><span>Periode jadwal</span><i>${ico('term',24)}</i></div><div class="pk-d"><small${a[0].we?' class="w"':''}>${DAYL[s.getDay()]}</small><i></i><small${a[13].we?' class="w"':''}>${DAYL[e.getDay()]}</small><strong>${s.getDate()}</strong><span class="pk-l"><em>14 hari</em></span><strong>${e.getDate()}</strong><span class="pk-mo">${MON[s.getMonth()]}</span><b class="pk-y">${y}</b><span class="pk-mo">${MON[e.getMonth()]}</span></div></section>`}
-function periodMini(){return periodFull()}
-/* ===== Model tabel ala Excel: satu sumber untuk preview, Excel, dan PNG ===== */
+
+/* Warna shift untuk tabel */
 const SC={P:['#bdd7ee','#1f4e79'],S:['#ffe699','#7f6000'],R:['#f6b26b','#7f3f00'],L:['#ededed','#7f7f7f'],'-':['#ffffff','#000000']},
 NAVY='#1f2a44',TEAL='#1b7f79',SL1='#44546a',SL2='#5f7392',RED='#c00000',LN='#7f7f7f',
 hh=s=>s.replace(/\s*–\s*/,' – ');
 const mspans=a=>{const o=[];a.forEach((x,i)=>{const m=x.d.getMonth(),l=o[o.length-1];if(l&&l.m==m)l.n++;else o.push({m,i,n:1})});return o};
+/* Judul periode tabel */
 function ptxt(){const a=days(),s=a[0].d,e=a[13].d;return'Periode: '+DAYL[s.getDay()]+', '+s.getDate()+' '+MONL[s.getMonth()]+(s.getFullYear()!=e.getFullYear()?' '+s.getFullYear():'')+' – '+DAYL[e.getDay()]+', '+e.getDate()+' '+MONL[e.getMonth()]+' '+e.getFullYear()+'  (14 hari)'}
+/* Model tabel jadwal ala Excel */
 function model(kind,only,ed){
 const adm=kind=='adm',a=days(),cells=[],H=[],W=[30,92,...Array(14).fill(46),...(adm?[42,42,42,56,42]:[12,48,48,48,48])];
 const add=(r,c,t,o)=>cells.push({r,c,rs:1,cs:1,t:String(t),bg:'#fff',fg:'#000',b:0,fs:10.5,al:'c',...o});
@@ -331,12 +352,13 @@ KS.forEach((q,i)=>{const[bg,fg]=SC[q];add(r+1+i,17,SH[q][0],{cs:2,bg,fg,b:1,al:'
 fr(r,17,r+4,20);r+=rows}
 });
 return{W,H,cells,ed:!!ed}}
+/* Render tabel jadwal */
 const bd=(x,T,M)=>x.nb?'':(x.nr?'':`border-right:${x.fr?M:T} solid ${LN};`)+`border-bottom:${x.fb?M:T} solid ${LN};`+(x.fl?`border-left:${M} solid ${LN};`:'')+(x.ft?`border-top:${M} solid ${LN};`:'');
-/* label "JUMLAH STAFF PER SHIFT" memakai --ub (diukur terpisah di dalam .bl) */
+
 function bar(x,T,M){const s=`background:${x.bg};color:${x.fg};font-weight:${x.b?700:400};`;
 return`<td colspan="2" class="fz sp bx" style="${s}font-size:calc(${x.fs}px*var(--ub));left:var(--ox);${bd({...x,nr:1},T,M)}"><span class="bl">${esc(x.t)}</span></td><td colspan="${x.cs-2}" style="${s}${bd({...x,fl:0},T,M)}"></td>`}
 const edx=(M,x)=>{if(!M.ed||!x.ed)return['','',''];const o=x.ed;return[' ed',o.t=='n'?` onclick="staff(${o.i})"`:o.t=='h'?` onclick="hrs('${o.q}')"`:'',o.t=='s'?`<select class="ds" aria-label="Pilih shift" onchange="setS(${o.i},${o.j},this.value)">${[...KS,'-'].map(c=>`<option value="${c}"${c==o.v?' selected':''}>${c=='-'?'Kosong':SH[c][0]}</option>`).join('')}</select>`:'']};
-/* FS: di layar pakai calc(px*--u); untuk ekspor Excel (stk=false) tetap px biasa */
+
 function xt(M,stk){const T1=stk?'var(--tn)':'1px',T2=stk?'var(--md)':'2px',FS=stk?(v=>`calc(${v}px*var(--u))`):(v=>v+'px'),by={},occ=new Set(),NC=M.W.length,TW=M.W.reduce((p,q)=>p+q,0);
 M.cells.forEach(x=>{(by[x.r]=by[x.r]||{})[x.c]=x;for(let i=0;i<x.rs;i++)for(let j=0;j<x.cs;j++)if(i||j)occ.add((x.r+i)+','+(x.c+j))});
 let h=`<table class="xt" style="width:${TW}px"><colgroup>${M.W.map(w=>`<col width="${w}" style="width:${w}px">`).join('')}</colgroup>`;
@@ -351,13 +373,17 @@ else if(!occ.has(r+','+c))h+='<td class="e"></td>'}
 h+='</tr>'});
 return h+'</table>'}
 const xv=(kind,cls,only)=>`<div class="xs ${cls}"><div class="xw">${xt(model(kind,only,!!only),true)}</div></div>`;
+/* Simpan file lewat browser */
 function save(b,n){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.style.display='none';document.body.appendChild(a);a.click();setTimeout(()=>{a.remove();URL.revokeObjectURL(a.href)},1500)}
-/* ===== Terhubung ke server lokal (jadwal/server.py): simpan otomatis + export Excel/PNG dibuat oleh Python ===== */
+
+/* Kirim dan muat data ke server */
 const payload=()=>({start:S.start,divisions:Object.keys(D).map(k=>({key:k,title:D[k].t,hours:D[k].h,staff:D[k].st.map(p=>({name:p.n,shifts:p.s.join('')}))}))});
 let _sv;function persist(){clearTimeout(_sv);_sv=setTimeout(()=>{fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload())}).catch(()=>{})},400)}
 async function loadState(){try{const r=await fetch('/api/state');if(!r.ok)return;const p=await r.json();if(p&&/^\d{4}-\d{2}-\d{2}$/.test(p.start))S.start=p.start;(p.divisions||[]).forEach(v=>{const d=D[v.key];if(!d)return;d.st=v.staff.map(x=>({n:x.name,s:[...x.shifts]}));d.h=Object.assign(d.h,v.hours)})}catch(e){}}
-/* Popup (gaya sama dengan Reset jadwal) setelah file tersimpan ke Downloads di aplikasi Android */
+
+/* Popup file tersimpan */
 function savedPop(title,name){open(`<div class="sph"><h3>${esc(title)}</h3><button class="spx" type="button" aria-label="Tutup" onclick="closeSheet()">${ico('x',24)}</button></div><p class="sub" style="margin:0 0 2px;line-height:1.5;overflow-wrap:anywhere">Tersimpan di folder Download: <b>${esc(name)}</b></p>`)}
+/* Tombol Download Excel dan Save PNG */
 async function exportFile(kind){const bs=()=>document.querySelectorAll('.ab .btn');bs().forEach(b=>b.disabled=true);
 try{const r=await fetch('/api/export/'+kind,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload(),sheet:S.pr})});
 if(!r.ok){let m='Server menolak permintaan ('+r.status+').';try{m=(await r.json()).error||m}catch(e){}throw new Error(m)}
@@ -367,40 +393,51 @@ save(await r.blob(),name)}
 catch(e){open('<h3>Gagal membuat file</h3><p style="margin:8px 0 0;line-height:1.5">'+esc(String(e.message||e))+'</p>')}
 finally{bs().forEach(b=>b.disabled=false)}}
 const xls=()=>exportFile('xlsx'),png=()=>exportFile('png');
+/* Tab Print Jadwal */
 const PR=[['adm','Administrator'],['gl','Jadwal Global'],['all','Semua Sheet']];
 const prAll=()=>`<div class="pv" style="padding:14px 14px 4px"><div class="kh">Semua Sheet</div><p class="sub" style="margin:8px 0 10px;line-height:1.5">Satu file Excel (<b>jadwal_kerja.xlsx</b>) berisi 3 Sheet: <b>Config</b>, <b>Administrator</b>, dan <b>Jadwal Global</b>. Rumus dan Dropdown Shift tetap ada, jadi bisa diedit di komputer.</p></div>`;
 function prBody(){const all=S.pr=='all';return`<div class="seg" style="margin-top:14px">${PR.map(([k,l])=>`<button class="${S.pr==k?'on':''}" onclick="go('config',{pr:'${k}'})">${l}</button>`).join('')}</div>${all?prAll():xv(S.pr,'pv')}<div class="ab"><button class="btn" onclick="xls()">${ico('dl',20)}Download Excel</button>${all?'':`<button class="btn" onclick="png()">${ico('img',20)}Save PNG</button>`}</div>`}
+/* Tab Settings, Administrator, Print Jadwal */
 const tabs=()=>`<div class="tb">${[['config','gear','Settings'],['admin','usr','Administrator'],['print','prn','Print Jadwal']].map(([k,i,l])=>`<button class="${S.tab==k?'on':''}" onclick="go('config',{tab:'${k}'})">${ico(i,19)}<span>${l}</span></button>`).join('')}</div>`;
+/* Judul seksi */
 const sh=(i,t,d)=>`<div class="sh"><i>${ico(i,26)}</i><div><b>${t}</b><span>${d}</span></div></div>`;
-/* Inisial avatar otomatis dari nama staff: 1 kata = 1 huruf, 2+ kata = huruf awal 2 kata pertama (mis. "Kitchen 1" = K1). Maks. 3 avatar, sisanya +N */
+
+/* Tab Administrator: kartu divisi */
 const ini=n=>{const w=String(n||'').trim().split(/\s+/).filter(Boolean);return w.length?esc(w.slice(0,2).map(x=>[...x][0]).join('').toUpperCase()):'•'};
 const avs=k=>{const s=D[k].st;return s.slice(0,3).map(p=>`<span class="a">${ini(p.n)}</span>`).join('')+(s.length>3?`<span class="a p">+${s.length-3}</span>`:'')};
 const hdA=()=>{const n=Object.keys(D).length,t=Object.values(D).reduce((a,d)=>a+d.st.length,0);return`<div class="hda"><h2>Kelola Divisi</h2><span>${n} DIVISI · ${t} STAFF</span></div>`};
+/* Nama hari lengkap */
 const DAYL=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+/* Tab Settings: tanggal periode */
 function cfgBody(){const[y,m,d]=S.start.split('-').map(Number);return`<div class="cfg"><label>Tanggal<select id="cd" onchange="cfgSet()">${[...Array(31)].map((_,i)=>`<option value="${i+1}"${i+1==d?' selected':''}>${i+1}</option>`).join('')}</select></label><label>Bulan<select id="cm" onchange="cfgSet()">${MONL.map((n,i)=>`<option value="${i+1}"${i+1==m?' selected':''}>${n}</option>`).join('')}</select></label><label>Tahun<select id="cy" onchange="cfgSet()">${Array.from({length:Math.max(2040,y)-Math.min(2025,y)+1},(_,i)=>Math.min(2025,y)+i).map(v=>`<option value="${v}"${v==y?' selected':''}>${v}</option>`).join('')}</select></label></div><div class="cfg2"><div class="tl"><small>Hari</small><b id="ch">${DAYL[new Date(y,m-1,d).getDay()]}</b></div><div class="tl"><small>Check</small><span class="ok" id="ck">${ico('ok',16)}Sesuai kalender</span></div></div>${impBox()}`}
 function cfgSet(){const d=+$('#cd').value,m=+$('#cm').value,y=+$('#cy').value,t=new Date(y,m-1,d),v=t.getFullYear()==y&&t.getMonth()==m-1&&t.getDate()==d;
 $('#ck').className='ok'+(v?'':' no');$('#ck').innerHTML=v?ico('ok',16)+'Sesuai kalender':'Tanggal tidak valid';
 if(v){S.start=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;$('#ch').textContent=DAYL[t.getDay()];$('.pk').outerHTML=periodFull();S.sel=todayIdx();persist()}}
+/* Isi tiap tab */
 const V={
+/* Tab Ringkasan */
 home(){const a=days(),x=a[S.sel];return`<div class="rd"><div class="rd-h">${DAYL[x.d.getDay()]}, ${x.x} ${MONL[x.d.getMonth()]} ${x.d.getFullYear()}</div><div class="rd-s">${[0,1].map(g=>`<div class="rd-g">${a.slice(g*7,g*7+7).map((y,i)=>{const n=g*7+i;return`<button class="${n==S.sel?'on':''}${y.we?' we':''}" onclick="go('home',{sel:${n}})">${y.n}<b>${y.x}</b></button>`}).join('')}</div>`).join('')}</div></div>
 ${Object.keys(D).map(k=>`<section class="dc ${k}"><div class="dc-h"><i>${ico(k,19)}</i><b>${D[k].t}</b><span>${D[k].st.length} staff</span></div>${KS.map(c=>{const n=D[k].st.filter(p=>p.s[S.sel]==c).map(p=>esc(p.n));return`<div class="dc-r"><div class="dc-s"><i class="dot s${c}"></i><div><b>${SH[c][0]}</b>${c=='L'||!D[k].h[c]?'':`<small>${hh(D[k].h[c])}</small>`}</div></div><div class="dc-n">${n.join(', ')||'–'}</div><em class="dc-c">${n.length}</em></div>`}).join('')}</section>`).join('')}`},
+/* Tab Home: Settings, Administrator, Print Jadwal */
 config(){let b;if(S.tab=='config')b=cfgBody();
 else if(S.tab=='print')b=prBody();
 else b=`${hdA()}<div class="dvs">${Object.keys(D).map(k=>`<button class="dv ${k}" onclick="go('div',{div:'${k}',wk:0})"><i>${ico(k,34)}</i><span class="tx"><b>${esc(D[k].t)}</b><span class="av">${avs(k)}<em>${D[k].st.length} STAFF</em></span></span><em class="go">${ico('chev',22)}</em></button>`).join('')}</div>`;
 return`${periodFull()}${tabs()}${b}`},
-div(){const k=S.div,t=D[k].t;return`${periodMini()}<div class="crumb"><a href="#" onclick="go('config',{tab:'admin'});return false" aria-label="Home">${ico('home',22)}</a><em></em><a href="#" onclick="go('config',{tab:'admin'});return false">Administrator</a><i>/</i><span>${t}</span></div>
+/* Halaman divisi */
+div(){const k=S.div,t=D[k].t;return`${periodFull()}<div class="crumb"><a href="#" onclick="go('config',{tab:'admin'});return false" aria-label="Home">${ico('home',22)}</a><em></em><a href="#" onclick="go('config',{tab:'admin'});return false">Administrator</a><i>/</i><span>${t}</span></div>
 <div class="seg">${Object.keys(D).map(x=>`<button class="${x==k?'on':''}" onclick="go('div',{div:'${x}'})">${D[x].t}</button>`).join('')}</div>
 ${xv('adm','pv',k)}
 <div class="ab cp"><button class="btn gn" onclick="staff(-1)">${ico('plus',20)}TAMBAH STAFF</button><button class="btn gy" onclick="rstAsk()">${ico('rst',20)}RESET JADWAL</button><button class="btn dg" onclick="delList()">${ico('minus',20)}HAPUS STAFF</button></div>`},
+/* Tab Jadwal Global */
 global(){return xv('gl','g')}};
+/* Gambar halaman dan nav bawah */
 function draw(){$('#main').innerHTML=V[S.view]();const q=$('.rd-s');if(q)q.scrollLeft=Math.floor(S.sel/7)*q.clientWidth;const cur=S.view=='home'?'home':S.view=='global'?'global':'config';
 $('#nav').innerHTML=[['home','sum','Ringkasan'],['config','home','Home'],['global','cal','Jadwal Global']].map(([k,i,l])=>`<button class="${k==cur?'on':''}" onclick="go('${k}')">${ico(i,26)}${l}</button>`).join('');lock()}
+/* Garis tabel tipis sesuai layar */
 function bw(){const d=devicePixelRatio||1,p=n=>((n+.01)/d).toFixed(3)+'px',r=document.documentElement.style;r.setProperty('--tn',p(1));r.setProperty('--md',p(2))}
 bw();addEventListener('resize',bw);
-/* ===== Kunci skala teks =====
-   Chrome, WebView (Acode), dll. bisa menskalakan teks dengan faktor berbeda (ukuran layout px tetap sama, hanya teks yang berubah).
-   kOf() mengukur faktor itu (lebar teks uji di DOM dibanding canvas, yang tidak ikut diskalakan), lalu lock() mengompensasi lewat
-   --u (teks umum & tabel) dan --ub (label "JUMLAH STAFF PER SHIFT"), sehingga ukuran akhir selalu TS x angka px di CSS. */
+
+/* Kunci skala teks */
 const TS=.8;
 function kOf(h){const p=document.createElement('span'),t='mmmmmmmmmmmmmmmm',F='20px Arial,Helvetica,sans-serif';
 p.textContent=t;p.style.cssText='font:'+F+';font-feature-settings:normal;letter-spacing:0;white-space:nowrap;visibility:hidden';
@@ -412,17 +449,17 @@ const h=document.createElement('div');m.appendChild(h);const k=kOf(h);h.remove()
 const r=document.documentElement.style,u=TS/k,b=$('.bl');
 r.setProperty('--u',u.toFixed(4));r.setProperty('--ub',(b?TS/kOf(b):u).toFixed(4))}
 addEventListener('resize',lock);
-/* ===== Penanda tanggal Ringkasan: otomatis = hari ini (berganti saat tengah malam). Hari ini di luar periode (kurang/lebih) -> hari pertama ===== */
+
+/* Penanda tanggal hari ini */
 const ymd=d=>d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
 const todayIdx=()=>{const n=ymd(new Date()),i=days().findIndex(x=>ymd(x.d)==n);return i<0?0:i};
 let _today=ymd(new Date());
 function tickDay(){const t=ymd(new Date());if(t==_today)return;_today=t;S.sel=todayIdx();if(S.view=='home')draw()}
 setInterval(tickDay,20000);addEventListener('focus',tickDay);document.addEventListener('visibilitychange',()=>{if(!document.hidden)tickDay()});
+/* Mulai aplikasi */
 loadState().finally(()=>{S.sel=todayIdx();draw()});
-/* ===== Import Excel (menu Settings) =====
-   Alur: pilih file -> POST /api/import (server hanya MEMBACA, tidak menyimpan apa pun) -> pratinjau -> Terapkan.
-   Terapkan memakai jalur yang sama dengan loadState() lalu persist(), jadi setelah itu semua sel shift, tanggal, dan jam bisa diubah seperti biasa.
-   Semua teks dari file lewat esc() sebelum masuk HTML. */
+
+/* Kartu Import Excel di Settings */
 let IM={st:'idle'};const IMX=350*1024,imL={P:'P',S:'S',R:'M',L:'L'};
 const impBox=()=>`<section class="imp" id="imp">${impIn()}</section>`,impDraw=()=>{const e=$('#imp');if(e)e.innerHTML=impIn()};
 const impDays=s=>{const b=new Date(s+'T00:00');return[...Array(14)].map((_,i)=>{const d=new Date(b);d.setDate(b.getDate()+i);return{n:DAY[d.getDay()],x:d.getDate(),we:d.getDay()%6==0}})};
@@ -450,7 +487,7 @@ async function impPick(inp){const f=inp.files&&inp.files[0];if(!f)return;
 if(!/\.xlsx$/i.test(f.name)){IM={st:'err',msg:'File harus berformat .xlsx (Excel). Pilih file hasil Download Excel dari aplikasi ini.'};return impDraw()}
 if(f.size>IMX){IM={st:'err',msg:'File terlalu besar (maksimal '+IMX/1024+' KB). Pastikan ini file jadwal.'};return impDraw()}
 IM={st:'load',name:f.name};impDraw();
-try{const b=new Uint8Array(await f.arrayBuffer());let t='';for(let i=0;i<b.length;i+=32768)t+=String.fromCharCode.apply(null,b.subarray(i,i+32768));
+try{const b=new Uint8Array(f.arrayBuffer?await f.arrayBuffer():await new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=()=>no(new Error('File tidak bisa dibaca.'));r.readAsArrayBuffer(f)}));let t='';for(let i=0;i<b.length;i+=32768)t+=String.fromCharCode.apply(null,b.subarray(i,i+32768));
 const r=await fetch('/api/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:f.name,data:btoa(t)})});
 let j={};try{j=await r.json()}catch(e){}
 if(!r.ok||!j.payload)throw new Error(j.error||'File tidak bisa dibaca.');
@@ -459,40 +496,36 @@ catch(e){IM={st:'err',msg:e instanceof TypeError?'Tidak bisa terhubung ke aplika
 impDraw()}
 function impTab(k){IM.tab=k;impDraw()}
 function impReset(go){IM={st:'idle'};impDraw();if(go){const e=$('#imf');if(e)e.click()}}
-/* sama dengan isi loadState(): ganti staff/shift/jam divisi yang ada di data */
+
 function impSet(p){S.start=p.start;p.divisions.forEach(v=>{const d=D[v.key];if(!d)return;d.st=v.staff.map(x=>({n:x.name,s:[...x.shifts]}));if(v.hours)Object.assign(d.h,v.hours)});S.sel=todayIdx()}
 function impApply(){if(IM.st!='prev')return;const t=impTot(),n=IM.payload.divisions.length;
 const bk=JSON.stringify(payload());impSet(IM.payload);IM={st:'done',bk,sum:n+' divisi · '+t.s+' staff · '+t.f+' shift terisi'};persist();draw()}
 function impUndo(){if(IM.st!='done'||!IM.bk)return;impSet(JSON.parse(IM.bk));IM={st:'idle'};persist();draw()}
-/* ===== Animasi tekan tombol =====
-   .pr dipasang saat jari menyentuh (pointerdown) dan dilepas paling cepat PRMIN ms kemudian, supaya animasi tetap terlihat walau ketukan sangat singkat
-   (WebView sering tidak sempat menampilkan :active). Riak digambar di #rp (di luar tombol) supaya tidak terhapus ketika halaman digambar ulang setelah klik.
-   Tombol baru di halaman mana pun otomatis ikut: cukup <button> atau <a onclick>, atau sel tabel td.ed. */
+
+/* Animasi tekan tombol */
 const PRS='button,a[onclick],td.ed',PRMIN=180,RP=document.body.appendChild(Object.assign(document.createElement('div'),{id:'rp'}));
 let _pr=null;
 const prLum=c=>{const m=c.match(/[\d.]+/g)||[];return m.length>3&&+m[3]<.3?1:(.299*m[0]+.587*m[1]+.114*m[2])/255};
-function prRipple(el,x,y){
+function prSweep(el){
 if(matchMedia('(prefers-reduced-motion:reduce)').matches)return null;
 const r=el.getBoundingClientRect();if(!r.width||!r.height)return null;
-const cs=getComputedStyle(el),w=document.createElement('span'),c=document.createElement('i'),k=(cs.color.match(/[\d.]+/g)||[0,0,0]),dk=prLum(cs.backgroundColor)<.55;
-const d=2*Math.max(Math.hypot(x-r.left,y-r.top),Math.hypot(r.right-x,y-r.top),Math.hypot(x-r.left,r.bottom-y),Math.hypot(r.right-x,r.bottom-y));
-w.style.cssText=`left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;border-radius:${cs.borderRadius}`;
-c.style.cssText=`width:${d}px;height:${d}px;left:${x-r.left-d/2}px;top:${y-r.top-d/2}px;background:rgba(${k[0]},${k[1]},${k[2]},${dk?.32:.14})`;
-w.appendChild(c);RP.appendChild(w);
-const s=parseFloat(cs.getPropertyValue('--ps'));if(s&&s<1){w.offsetWidth;w.style.transform='scale('+s+')'}   /* ikut mengecil bersama tombol */
+const cs=getComputedStyle(el),w=document.createElement('span'),k=(cs.color.match(/[\d.]+/g)||[0,0,0]),col=prLum(cs.backgroundColor)<.55?'rgba(255,255,255,.55)':'rgba('+k[0]+','+k[1]+','+k[2]+',.2)';
+w.style.cssText=`left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;border-radius:${cs.borderRadius};--c:${col}`;
+w.appendChild(document.createElement('i'));RP.appendChild(w);
+const s=parseFloat(cs.getPropertyValue('--ps'));if(s&&s<1){w.offsetWidth;w.style.transform='scale('+s+')'}
 return w}
 function prDown(e){
 if(e.pointerType=='mouse'&&e.button)return;
 const el=e.target.closest&&e.target.closest(PRS);if(!el||el.disabled)return;
 prUp(true);el.classList.add('pr');
-_pr={el,x:e.clientX,y:e.clientY,t:Date.now(),rw:prRipple(el,e.clientX,e.clientY),tm:setTimeout(()=>prUp(),1500)}}   /* 1,5 dtk: jaga-jaga pointerup tidak datang (mis. daftar pilihan bawaan <select> terbuka) */
+_pr={el,x:e.clientX,y:e.clientY,t:Date.now(),rw:prSweep(el),tm:setTimeout(()=>prUp(),1500)}}
 function prUp(now){
 const p=_pr;if(!p)return;_pr=null;clearTimeout(p.tm);
 const end=()=>{p.el.classList.remove('pr');if(p.rw){p.rw.style.transform='';p.rw.classList.add('out');setTimeout(()=>p.rw.remove(),400)}},w=now?0:PRMIN-(Date.now()-p.t);
 w>0?setTimeout(end,w):end()}
 document.addEventListener('pointerdown',prDown,{passive:true});
 document.addEventListener('pointerup',()=>prUp(),{passive:true});
-document.addEventListener('pointercancel',()=>prUp(true),{passive:true});   /* mulai menggulir -> batalkan */
+document.addEventListener('pointercancel',()=>prUp(true),{passive:true});
 document.addEventListener('pointermove',e=>{if(_pr&&Math.hypot(e.clientX-_pr.x,e.clientY-_pr.y)>14)prUp(true)},{passive:true});
 addEventListener('blur',()=>prUp(true));document.addEventListener('contextmenu',()=>prUp(true));
 </script>
