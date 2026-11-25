@@ -521,7 +521,8 @@ class PopupSimpan(unittest.TestCase):
         self.assertIn("x:'<path", self.html)
 
     def test_judul_sesuai_jenis_file(self):
-        self.assertIn("savedPop(kind=='png'?'Save PNG':'Download Excel',j.saved)", self.html)
+        self.assertIn("const EXP={xlsx:'Download Excel',png:'Save PNG',pdf:'Save PDF'};", self.html)
+        self.assertIn("savedPop(EXP[kind],j.saved)", self.html)
 
     def test_toast_lama_tidak_dipakai_untuk_hasil_simpan(self):
         self.assertNotIn("toast('Tersimpan", self.html)

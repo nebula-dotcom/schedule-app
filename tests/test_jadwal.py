@@ -219,7 +219,7 @@ class ShiftMalamDanKosong(unittest.TestCase):
         from PIL import Image
         s = Schedule.from_payload(payload_kosong())
         for kind in ("adm", "gl"):
-            Image.open(io.BytesIO(image.render(s, kind))).load()
+            Image.open(io.BytesIO(image.render(s, kind, scale=1))).load()
         for sheet in ("adm", "gl", "all"):
             self.assertTrue(zipfile.is_zipfile(io.BytesIO(excel.build_workbook(s, sheet))), sheet)
 
@@ -243,7 +243,7 @@ class HasilPNG(unittest.TestCase):
         from PIL import Image
         s = Schedule.from_payload(payload())
         for kind in ("adm", "gl"):
-            png = image.render(s, kind)
+            png = image.render(s, kind, scale=3)
             im = Image.open(io.BytesIO(png))
             self.assertEqual(im.format, "PNG")
             self.assertGreater(im.size[0], 2000)
@@ -274,6 +274,8 @@ class ApiServer(unittest.TestCase):
         base = Path(self.tmp.name)
         self._asli = (cfg.DATA_DIR, cfg.STATE_FILE)
         cfg.DATA_DIR, cfg.STATE_FILE = base, base / "state.json"
+        self._skala = image.SCALE
+        image.SCALE = 2
         self.server = aplikasi.make_server("127.0.0.1", 0)
         self.port = self.server.server_address[1]
         threading.Thread(target=self.server.serve_forever, daemon=True).start()
@@ -281,6 +283,7 @@ class ApiServer(unittest.TestCase):
     def tearDown(self):
         self.server.shutdown()
         self.server.server_close()
+        image.SCALE = self._skala
         cfg.DATA_DIR, cfg.STATE_FILE = self._asli
         self.tmp.cleanup()
 
@@ -334,7 +337,9 @@ class ApiServer(unittest.TestCase):
                 ("xlsx", "gl", "jadwal_20nov-3des_2026_global.xlsx", b"PK"),
                 ("xlsx", "all", "jadwal_kerja.xlsx", b"PK"),
                 ("png", "adm", "jadwal_20nov-3des_2026_admin.png", b"\x89PNG"),
-                ("png", "gl", "jadwal_20nov-3des_2026_global.png", b"\x89PNG")):
+                ("png", "gl", "jadwal_20nov-3des_2026_global.png", b"\x89PNG"),
+                ("pdf", "adm", "jadwal_20nov-3des_2026_admin.pdf", b"%PDF-"),
+                ("pdf", "gl", "jadwal_20nov-3des_2026_global.pdf", b"%PDF-")):
             r = self.post(f"/api/export/{jenis}", json={**payload(), "sheet": sheet})
             self.assertEqual(r.status_code, 200, (jenis, sheet))
             self.assertIn(nama, r.headers["Content-Disposition"])
@@ -350,21 +355,27 @@ class ApiServer(unittest.TestCase):
         try:
             r = self.post("/api/export/xlsx", json={**payload(), "sheet": "all"})
             r2 = self.post("/api/export/png", json={**payload(), "sheet": "gl"})
+            r3 = self.post("/api/export/pdf", json={**payload(), "sheet": "adm"})
         finally:
             self.aplikasi.droid.ON_ANDROID, self.aplikasi.droid.save_to_downloads = asli
         self.assertEqual(r.get_json(), {"saved": "jadwal_kerja.xlsx", "folder": "Download"})
         self.assertEqual(r2.get_json()["saved"], "jadwal_20nov-3des_2026_global.png")
+        self.assertEqual(r3.get_json()["saved"], "jadwal_20nov-3des_2026_admin.pdf")
         self.assertIn("application/json", r.headers["Content-Type"])
         self.assertIsNone(r.headers["Content-Disposition"])
-        self.assertEqual([t[0] for t in tersimpan], ["jadwal_kerja.xlsx", "jadwal_20nov-3des_2026_global.png"])
+        self.assertEqual([t[0] for t in tersimpan], ["jadwal_kerja.xlsx", "jadwal_20nov-3des_2026_global.png",
+                                                     "jadwal_20nov-3des_2026_admin.pdf"])
         self.assertTrue(tersimpan[0][1].startswith(b"PK"))
         self.assertEqual(tersimpan[1][2], "image/png")
+        self.assertEqual(tersimpan[2][2], "application/pdf")
+        self.assertTrue(tersimpan[2][1].startswith(b"%PDF-"))
         self.assertEqual(list(Path(self.tmp.name).iterdir()), [])
 
-    def test_png_semua_sheet_ditolak(self):
-        r = self.post("/api/export/png", json={**payload(), "sheet": "all"})
-        self.assertEqual(r.status_code, 400)
-        self.assertIn("error", r.get_json())
+    def test_png_dan_pdf_semua_sheet_ditolak(self):
+        for jenis, label in (("png", "Save PNG"), ("pdf", "Save PDF")):
+            r = self.post(f"/api/export/{jenis}", json={**payload(), "sheet": "all"})
+            self.assertEqual(r.status_code, 400)
+            self.assertEqual(r.get_json()["error"], f"{label} hanya untuk Administrator atau Jadwal Global.")
 
     @unittest.skipIf(openpyxl is None, "openpyxl tidak terpasang")
     def test_export_excel_sesuai_pilihan(self):
@@ -382,7 +393,7 @@ class ApiServer(unittest.TestCase):
         r = self.post("/api/export/xlsx", json=p)
         self.assertEqual(r.status_code, 422)
         self.assertIn("error", r.get_json())
-        self.assertEqual(self.post("/api/export/pdf", json=payload()).status_code, 404)
+        self.assertEqual(self.post("/api/export/docx", json=payload()).status_code, 404)
         self.assertEqual(self.post("/api/export/xlsx", data="halo").status_code, 422)
 
     def test_isi_terlalu_besar_ditolak(self):
@@ -533,7 +544,7 @@ class PerformaRingan(unittest.TestCase):
         from tests.sample import payload
 
         self.assertIn(image.PNG_COMPRESS, range(1, 8))
-        data = image.render(Schedule.from_payload(payload()), "gl")
+        data = image.render(Schedule.from_payload(payload()), "gl", scale=2)
         self.assertEqual(data[:8], b"\x89PNG\r\n\x1a\n")
         self.assertGreater(Image.open(io.BytesIO(data)).size[0], 1000)
 

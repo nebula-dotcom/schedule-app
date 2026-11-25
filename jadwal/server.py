@@ -17,6 +17,7 @@ from .schedule import Schedule, ScheduleError
 XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 SHEETS = {"adm": "admin", "gl": "global"}
 ALL_NAME = "jadwal_kerja"
+EXPORT_LABELS = {"png": "Save PNG", "pdf": "Save PDF"}
 MAX_BODY = 512 * 1024
 PAGES = {"/": "loading.html", "/app": "index.html"}
 EXPORT_PATH = re.compile(r"^/api/export/([^/]+)$")
@@ -143,22 +144,15 @@ class Handler(BaseHTTPRequestHandler):
 
     # Rute POST /api/export/xlsx dan /api/export/png
     def _export(self, kind: str):
-        if kind not in ("xlsx", "png"):
+        if kind not in ("xlsx", *EXPORT_LABELS):
             raise HttpError(404, "Jenis file tidak dikenal.")
         body = self._read_json()
         sched = Schedule.from_payload(body)
         sheet = body.get("sheet") if body.get("sheet") in (*SHEETS, "all") else "adm"
-        if kind == "png" and sheet == "all":
-            raise HttpError(400, "Save PNG hanya untuk Administrator atau Jadwal Global.")
+        if kind != "xlsx" and sheet == "all":
+            raise HttpError(400, f"{EXPORT_LABELS[kind]} hanya untuk Administrator atau Jadwal Global.")
 
-        if kind == "xlsx":
-            from . import excel
-
-            data, mime = excel.build_workbook(sched, sheet), XLSX_MIME
-        else:
-            from . import image
-
-            data, mime = image.render(sched, sheet), "image/png"
+        data, mime = build_export(kind, sched, sheet)
         name = f"{ALL_NAME}.xlsx" if sheet == "all" else f"{sched.file_stem()}_{SHEETS[sheet]}.{kind}"
 
         if droid.ON_ANDROID:
@@ -172,6 +166,21 @@ class Handler(BaseHTTPRequestHandler):
             return self._json({"ok": False})
         self._json({"ok": True})
         droid.exit_app()
+
+
+# Bangun isi file ekspor; modul berat dimuat saat dibutuhkan
+def build_export(kind: str, sched: Schedule, sheet: str):
+    if kind == "xlsx":
+        from . import excel
+
+        return excel.build_workbook(sched, sheet), XLSX_MIME
+    if kind == "png":
+        from . import image
+
+        return image.render(sched, sheet), "image/png"
+    from . import pdf
+
+    return pdf.render(sched, sheet), "application/pdf"
 
 
 # Buat server HTTP
