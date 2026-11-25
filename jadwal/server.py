@@ -17,7 +17,7 @@ from .schedule import Schedule, ScheduleError
 XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 SHEETS = {"adm": "admin", "gl": "global"}
 ALL_NAME = "jadwal_kerja"
-EXPORT_LABELS = {"png": "Save PNG", "pdf": "Save PDF"}
+EXPORT_LABELS = {"png": "Save PNG", "pdf": "PDF - A4"}
 MAX_BODY = 512 * 1024
 PAGES = {"/": "loading.html", "/app": "index.html"}
 EXPORT_PATH = re.compile(r"^/api/export/([^/]+)$")
@@ -152,8 +152,11 @@ class Handler(BaseHTTPRequestHandler):
         if kind != "xlsx" and sheet == "all":
             raise HttpError(400, f"{EXPORT_LABELS[kind]} hanya untuk Administrator atau Jadwal Global.")
 
-        data, mime = build_export(kind, sched, sheet)
+        orient = "landscape" if body.get("orient") == "landscape" else "portrait"
+        data, mime = build_export(kind, sched, sheet, orient)
         name = f"{ALL_NAME}.xlsx" if sheet == "all" else f"{sched.file_stem()}_{SHEETS[sheet]}.{kind}"
+        if kind == "pdf" and sheet == "adm" and orient == "landscape":
+            name = name.replace(".pdf", "_2lembar.pdf")
 
         if droid.ON_ANDROID:
             droid.save_to_downloads(name, data, mime)
@@ -169,7 +172,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 # Bangun isi file ekspor; modul berat dimuat saat dibutuhkan
-def build_export(kind: str, sched: Schedule, sheet: str):
+def build_export(kind: str, sched: Schedule, sheet: str, orient: str = "portrait"):
     if kind == "xlsx":
         from . import excel
 
@@ -180,7 +183,7 @@ def build_export(kind: str, sched: Schedule, sheet: str):
         return image.render(sched, sheet), "image/png"
     from . import pdf
 
-    return pdf.render(sched, sheet), "application/pdf"
+    return pdf.render(sched, sheet, orient), "application/pdf"
 
 
 # Buat server HTTP

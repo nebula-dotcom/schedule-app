@@ -125,17 +125,14 @@ class PdfVektor(unittest.TestCase):
                 panjang = int(re.search(rb"/Length (\d+)", obj).group(1))
                 self.assertEqual(obj[awal + panjang:awal + panjang + 10], b"\nendstream")
 
-    def test_satu_halaman_ukuran_sesuai_tabel(self):
-        sched = jadwal()
-        model = layout.build_model(sched, "gl")
-        objs = baca_pdf(pdf.render(sched, "gl"))
-        lebar = (sum(model["W"]) + 2 * image.PAD) * pdf.UNIT
-        tinggi = (sum(model["H"][i] for i in range(model["n_rows"])) + 2 * image.PAD) * pdf.UNIT
-        box = [float(v) for v in re.search(rb"/MediaBox \[([^\]]+)\]", objs[3]).group(1).split()]
-        self.assertEqual(box[:2], [0, 0])
-        self.assertAlmostEqual(box[2], lebar, places=2)
-        self.assertAlmostEqual(box[3], tinggi, places=2)
-        self.assertIn(b"/Count 1", objs[2])
+    def test_ukuran_a4_dan_jumlah_halaman(self):
+        for kind, arah, ukuran, halaman in (("adm", "portrait", [595.28, 841.89], 1),
+                                            ("adm", "landscape", [841.89, 595.28], 2),
+                                            ("gl", "portrait", [841.89, 595.28], 1)):
+            objs = baca_pdf(pdf.render(jadwal(), kind, arah))
+            box = re.search(rb"/MediaBox \[([^\]]+)\]", objs[3]).group(1).split()
+            self.assertEqual([float(v) for v in box[2:]], ukuran)
+            self.assertIn(f"/Count {halaman}".encode(), objs[2])
 
     def test_teks_ada_di_aliran_konten(self):
         isi = isi_aliran(baca_pdf(pdf.render(jadwal(), "adm"))[4])

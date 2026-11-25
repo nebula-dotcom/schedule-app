@@ -384,22 +384,25 @@ async function loadState(){try{const r=await fetch('/api/state');if(!r.ok)return
 
 /* Popup file tersimpan */
 function savedPop(title,name){open(`<div class="sph"><h3>${esc(title)}</h3><button class="spx" type="button" aria-label="Tutup" onclick="closeSheet()">${ico('x',24)}</button></div><p class="sub" style="margin:0 0 2px;line-height:1.5;overflow-wrap:anywhere">Tersimpan di folder Download: <b>${esc(name)}</b></p>`)}
-/* Tombol Download Excel, Save PNG, dan Save PDF */
-const EXP={xlsx:'Download Excel',png:'Save PNG',pdf:'Save PDF'};
-async function exportFile(kind){const bs=()=>document.querySelectorAll('.ab .btn');bs().forEach(b=>b.disabled=true);
+/* Tombol Download Excel, Save PNG, dan PDF - A4 */
+const EXP={xlsx:'Download Excel',png:'Save PNG',pdf:'PDF - A4'};
+async function exportFile(kind,orient){const bs=()=>document.querySelectorAll('.ab .btn');bs().forEach(b=>b.disabled=true);
 open(`<h3>${EXP[kind]}</h3><div class="imp-ld"><span class="spn"></span>Menyiapkan file, mohon tunggu…</div>`);
-try{const r=await fetch('/api/export/'+kind,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload(),sheet:S.pr})});
+try{const r=await fetch('/api/export/'+kind,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload(),sheet:S.pr,orient})});
 if(!r.ok){let m='Server menolak permintaan ('+r.status+').';try{m=(await r.json()).error||m}catch(e){}throw new Error(m)}
 if((r.headers.get('Content-Type')||'').includes('application/json')){const j=await r.json();savedPop(EXP[kind],j.saved);return}
 const name=(/filename="?([^";]+)"?/.exec(r.headers.get('Content-Disposition')||'')||[])[1]||('jadwal.'+kind);
 save(await r.blob(),name);closeSheet()}
 catch(e){open('<h3>Gagal membuat file</h3><p style="margin:8px 0 0;line-height:1.5">'+esc(String(e.message||e))+'</p>')}
 finally{bs().forEach(b=>b.disabled=false)}}
-const xls=()=>exportFile('xlsx'),png=()=>exportFile('png'),pdf=()=>exportFile('pdf');
+const xls=()=>exportFile('xlsx'),png=()=>exportFile('png');
+/* Administrator memilih arah kertas; Jadwal Global selalu mendatar */
+function pdf(){if(S.pr!='adm')return exportFile('pdf','landscape');
+open(`<div class="sph"><h3>PDF - A4</h3><button class="spx" type="button" aria-label="Tutup" onclick="closeSheet()">${ico('x',24)}</button></div><div style="display:grid;gap:8px"><button class="btn w" onclick="exportFile('pdf','portrait')">Potrait (1 lembar)</button><button class="btn w" onclick="exportFile('pdf','landscape')">Landscape (2 lembar)</button></div>`)}
 /* Tab Print Jadwal */
 const PR=[['adm','Administrator'],['gl','Jadwal Global'],['all','Semua Sheet']];
 const prAll=()=>`<div class="pv" style="padding:14px 14px 4px"><div class="kh">Semua Sheet</div><p class="sub" style="margin:8px 0 10px;line-height:1.5">Satu file Excel (<b>jadwal_kerja.xlsx</b>) berisi 3 Sheet: <b>Config</b>, <b>Administrator</b>, dan <b>Jadwal Global</b>. Rumus dan Dropdown Shift tetap ada, jadi bisa diedit di komputer.</p></div>`;
-function prBody(){const all=S.pr=='all';return`<div class="seg" style="margin-top:14px">${PR.map(([k,l])=>`<button class="${S.pr==k?'on':''}" onclick="go('config',{pr:'${k}'})">${l}</button>`).join('')}</div>${all?prAll():xv(S.pr,'pv')}<div class="ab"><button class="btn" onclick="xls()">${ico('dl',20)}Download Excel</button>${all?'':`<button class="btn" onclick="png()">${ico('img',20)}Save PNG</button>`}</div>${all?'':`<div class="ab"><button class="btn" onclick="pdf()">${ico('pdf',20)}Save PDF</button></div>`}`}
+function prBody(){const all=S.pr=='all';return`<div class="seg" style="margin-top:14px">${PR.map(([k,l])=>`<button class="${S.pr==k?'on':''}" onclick="go('config',{pr:'${k}'})">${l}</button>`).join('')}</div>${all?prAll():xv(S.pr,'pv')}<div class="ab"><button class="btn" onclick="xls()">${ico('dl',20)}Download Excel</button>${all?'':`<button class="btn" onclick="png()">${ico('img',20)}Save PNG</button>`}</div>${all?'':`<div class="ab"><button class="btn" onclick="pdf()">${ico('pdf',20)}PDF - A4</button></div>`}`}
 /* Tab Settings, Administrator, Print Jadwal */
 const tabs=()=>`<div class="tb">${[['config','gear','Settings'],['admin','usr','Administrator'],['print','prn','Print Jadwal']].map(([k,i,l])=>`<button class="${S.tab==k?'on':''}" onclick="go('config',{tab:'${k}'})">${ico(i,19)}<span>${l}</span></button>`).join('')}</div>`;
 /* Judul seksi */

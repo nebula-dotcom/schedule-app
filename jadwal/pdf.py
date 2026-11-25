@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import struct
 import zlib
 
@@ -15,6 +16,11 @@ UNIT = 0.75
 
 # Lebar huruf cadangan Helvetica
 FALLBACK_WIDTH = 556
+
+# A4 tegak dalam poin, jarak tepi 1 cm, batas pelebaran sel
+A4 = (595.28, 841.89)
+EDGE = 72 / 2.54
+MAX_STRETCH = 1.4
 
 
 # Font satu gaya: data TTF dan lebar karakter
@@ -191,26 +197,54 @@ def assemble(objects: list) -> bytes:
     return bytes(out)
 
 
-# Buat PDF vektor jadwal; kind "adm" atau "gl"
-def render(sched: Schedule, kind: str) -> bytes:
-    model = build_model(sched, kind)
-    xs = offsets(model["W"])
-    ys = offsets([model["H"][i] for i in range(model["n_rows"])])
-    page_w = (xs[-1] + 2 * PAD) * UNIT
-    page_h = (ys[-1] + 2 * PAD) * UNIT
+# Lebar dan tinggi tabel dalam poin, tanpa bantalan
+def ink_size(model: dict) -> tuple:
+    return sum(model["W"]) * UNIT, sum(model["H"][i] for i in range(model["n_rows"])) * UNIT
+
+
+# Isi satu halaman A4 di tengah; fill melebarkan sel sampai tepi (huruf tidak gepeng)
+def a4_content(model: dict, faces: tuple, page_w: float, page_h: float, scale: float, fill: bool) -> bytes:
+    fx = fy = 1
+    if fill:
+        w, h = ink_size(model)
+        fx = min((page_w - 2 * EDGE) / (w * scale), MAX_STRETCH)
+        fy = min((page_h - 2 * EDGE) / (h * scale), MAX_STRETCH)
+        model = {**model, "W": [v * fx for v in model["W"]],
+                 "H": {i: model["H"][i] * fy for i in range(model["n_rows"])}}
+    w, h = ink_size(model)
+    pad = PAD * UNIT
+    tx = (page_w - w * scale) / 2 - pad * scale
+    ty = (page_h - h * scale) / 2 - pad * scale
+    head = f"q {scale:.5f} 0 0 {scale:.5f} {num(tx)} {num(ty)} cm\n".encode()
+    return head + page_content(model, faces, h + 2 * pad) + b"\nQ"
+
+
+# Buat PDF A4: "adm" tegak (1 lembar) atau mendatar (2 lembar), "gl" selalu mendatar
+def render(sched: Schedule, kind: str, orient: str = "portrait") -> bytes:
+    two = kind == "adm" and orient == "landscape"
+    page_w, page_h = (A4[1], A4[0]) if two or kind == "gl" else A4
+    parts = [sched]
+    if two:
+        half = (len(sched.divisions) + 1) // 2
+        parts = []
+        for group in (sched.divisions[:half], sched.divisions[half:]):
+            part = copy.copy(sched)
+            part.divisions = group
+            parts.append(part)
+    models = [build_model(part, kind) for part in parts]
+    scale = min(min((page_w - 2 * EDGE) / w, (page_h - 2 * EDGE) / h) for w, h in map(ink_size, models))
     faces = (Face(False), Face(True))
-    content = page_content(model, faces, page_h)
-    first = 5
+    count = len(models)
+    first = 3 + 2 * count
     regular = font_objects(faces[0], first)
     bold = font_objects(faces[1], first + len(regular))
-    objects = [
-        b"<< /Type /Catalog /Pages 2 0 R >>",
-        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        (f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {num(page_w)} {num(page_h)}] "
-         f"/Resources << /Font << /F1 {first} 0 R /F2 {first + len(regular)} 0 R >> >> /Contents 4 0 R >>").encode(),
-        stream(content),
-        *regular,
-        *bold,
-    ]
-    objects.append(b"<< /Title (Jadwal Kerja) /Producer (Jadwal Kerja) >>")
+    kids = " ".join(f"{3 + 2 * i} 0 R" for i in range(count))
+    objects = [b"<< /Type /Catalog /Pages 2 0 R >>",
+               f"<< /Type /Pages /Kids [{kids}] /Count {count} >>".encode()]
+    for i, model in enumerate(models):
+        objects.append((f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {num(page_w)} {num(page_h)}] "
+                        f"/Resources << /Font << /F1 {first} 0 R /F2 {first + len(regular)} 0 R >> >> "
+                        f"/Contents {4 + 2 * i} 0 R >>").encode())
+        objects.append(stream(a4_content(model, faces, page_w, page_h, scale, not two)))
+    objects += [*regular, *bold, b"<< /Title (Jadwal Kerja) /Producer (Jadwal Kerja) >>"]
     return assemble(objects)

@@ -372,7 +372,7 @@ class ApiServer(unittest.TestCase):
         self.assertEqual(list(Path(self.tmp.name).iterdir()), [])
 
     def test_png_dan_pdf_semua_sheet_ditolak(self):
-        for jenis, label in (("png", "Save PNG"), ("pdf", "Save PDF")):
+        for jenis, label in (("png", "Save PNG"), ("pdf", "PDF - A4")):
             r = self.post(f"/api/export/{jenis}", json={**payload(), "sheet": "all"})
             self.assertEqual(r.status_code, 400)
             self.assertEqual(r.get_json()["error"], f"{label} hanya untuk Administrator atau Jadwal Global.")
