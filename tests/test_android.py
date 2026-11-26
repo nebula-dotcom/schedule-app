@@ -563,15 +563,36 @@ class PatchJavaTerkompilasi(unittest.TestCase):
         "android/app/Activity.java": "package android.app; public class Activity extends android.content.Context "
                                      "{ public android.view.Window getWindow(){return null;} }",
         "android/view/Window.java": "package android.view; public class Window "
-                                    "{ public void setBackgroundDrawable(android.graphics.drawable.Drawable d){} }",
+                                    "{ public View getDecorView(){return null;} "
+                                    "public void setBackgroundDrawable(android.graphics.drawable.Drawable d){} }",
+        "android/view/ViewParent.java": "package android.view; public interface ViewParent {}",
+        "android/view/View.java": "package android.view; public class View { public View(android.content.Context c){} "
+                                  "public android.content.Context getContext(){return null;} public void setBackgroundColor(int c){} "
+                                  "public void setClickable(boolean b){} public ViewParent getParent(){return null;} }",
+        "android/view/ViewGroup.java": "package android.view; public class ViewGroup extends View implements ViewParent "
+                                       "{ public ViewGroup(android.content.Context c){super(c);} "
+                                       "public static class LayoutParams { public LayoutParams(int w,int h){} } "
+                                       "public void addView(View v, LayoutParams p){} public void removeView(View v){} }",
+        "android/widget/FrameLayout.java": "package android.widget; public class FrameLayout extends android.view.ViewGroup "
+                                           "{ public FrameLayout(android.content.Context c){super(c);} "
+                                           "public static class LayoutParams extends android.view.ViewGroup.LayoutParams "
+                                           "{ public LayoutParams(int w,int h){super(w,h);} } }",
+        "android/os/Looper.java": "package android.os; public class Looper { public static Looper getMainLooper(){return null;} }",
+        "android/os/Handler.java": "package android.os; public class Handler { public Handler(Looper l){} "
+                                   "public boolean post(Runnable r){return true;} "
+                                   "public boolean postDelayed(Runnable r,long ms){return true;} }",
+        "android/webkit/JavascriptInterface.java": "package android.webkit; import java.lang.annotation.*; "
+                                                   "@Retention(RetentionPolicy.RUNTIME) @Target(ElementType.METHOD) "
+                                                   "public @interface JavascriptInterface {}",
         "android/graphics/drawable/Drawable.java": "package android.graphics.drawable; public class Drawable {}",
         "android/graphics/drawable/ColorDrawable.java": "package android.graphics.drawable; "
                                                         "public class ColorDrawable extends Drawable { public ColorDrawable(int c){} }",
         "android/webkit/WebSettings.java": "package android.webkit; public class WebSettings { public String getUserAgentString(){return \"\";} "
                                            "public void setUserAgentString(String s){} public void setJavaScriptEnabled(boolean b){} }",
-        "android/webkit/WebView.java": "package android.webkit; public class WebView { public WebView(android.content.Context c){} "
-                                       "public android.content.Context getContext(){return null;} public void setBackgroundColor(int c){} "
-                                       "public WebSettings getSettings(){return null;} public void loadUrl(String u){} }",
+        "android/webkit/WebView.java": "package android.webkit; public class WebView extends android.view.ViewGroup "
+                                       "{ public WebView(android.content.Context c){super(c);} "
+                                       "public WebSettings getSettings(){return null;} public void loadUrl(String u){} "
+                                       "public void addJavascriptInterface(Object o, String n){} }",
     }
     ASLI = ("package org.kivy.android;\nimport android.app.Activity;\nimport android.webkit.WebView;\n"
             "public class PythonActivity extends Activity {\n  public static PythonActivity mActivity; public WebView mWebView;\n"
