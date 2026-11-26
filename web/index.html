@@ -204,19 +204,28 @@ button.pr,a.pr{transform:scale(var(--ps));transition-duration:.09s;transition-ti
 .imp-lg{display:flex;gap:6px;flex-wrap:wrap}.imp-lg span{border-radius:99px;padding:3px 9px;font-size:calc(10px*var(--u));font-weight:700}
 .imp-b{display:flex;gap:8px}.imp-b .btn{flex:1}.imp-b .btn:last-child{flex:1.6}
 /* Tema terang, aksen, sakelar tema, dot shift */
-:root[data-theme=light]{--bg:#faf3f6;--ink:#000000;--mute:#654453;--line:#ede7ea;--soft:#ede7ea;--card:#fff;--alt:#faf3f6;--pt:#7e5668;--we:#c00000;--live:#1fbf4a;--pk:#4e343f;color-scheme:light}
-.btn,.seg button.on,.rd-s button.on,.rd-s button.on b{color:#000}.btn.gn{color:#fff}.btn.dg{color:#b4232f}.btn.gy{color:#374151}
+:root[data-theme=light]{--bg:#f6f8fc;--ink:#0f1b4c;--mute:#5b6785;--line:#dfe6f5;--pri:#2f66f2;--soft:#eaf0fe;--card:#fff;--alt:#f0f4fc;--pt:#2f66f2;--we:#c00000;--live:#1fbf4a;--pk:#1f2a44;color-scheme:light}
+/* Lightmode: sisa warna disamakan dengan versi BACKUP */
+[data-theme=light] .dc-s{background:#fafbfe}[data-theme=light] .dv .a.p{background:#eef1f8;color:#4a5673}
+[data-theme=light] .dc-c:not(.no){color:var(--pri);background:var(--soft)}
+.btn,.seg button.on,.rd-s button.on,.rd-s button.on b{color:#000}[data-theme=light] .btn,[data-theme=light] .seg button.on,[data-theme=light] .rd-s button.on,[data-theme=light] .rd-s button.on b{color:#fff}.btn.gn{color:#fff}.btn.dg{color:#b4232f}.btn.gy{color:#374151}
 nav button.on,.tb button.on,.crumb,.crumb a,.badge{color:var(--pt)}nav button.on::after,.tb button.on::after{background:var(--pt)}
-.pv,.g .xw{background:#fff}
+.pv:not(.pi),.g .xw{background:#fff}   /* pratinjau tabel tetap putih ala Excel; kartu info (.pi) ikut tema */
 .dc-c:not(.no){color:var(--k);background:var(--c)}
 :root .BAR{--t:#87d1ff1f;--b:#87d1ff40;--c:#87d1ff29;--k:#87d1ff}:root .FLOOR{--t:#7dff951f;--b:#7dff9540;--c:#7dff9529;--k:#7dff95}:root .CASHIER{--t:#dcafc31f;--b:#dcafc340;--c:#dcafc329;--k:#dcafc3}:root .KITCHEN{--t:#ffbc5e1f;--b:#ffbc5e40;--c:#ffbc5e29;--k:#ffbc5e}
-[data-theme=light] .BAR{--t:#eef8ff;--b:#addfff;--c:#addfff;--k:#000}[data-theme=light] .FLOOR{--t:#eefff1;--b:#abffb7;--c:#abffb7;--k:#000}[data-theme=light] .CASHIER{--t:#faf3f6;--b:#cc8eaa66;--c:#cc8eaa66;--k:#000}[data-theme=light] .KITCHEN{--t:#fff6ea;--b:#ffd194;--c:#ffd194;--k:#000}
+[data-theme=light] .BAR{--t:#eef4ff;--b:#cfe0fb;--c:#d5e5fc;--k:#1f5fd0}[data-theme=light] .FLOOR{--t:#edf9f3;--b:#c9ebdc;--c:#d1f0e1;--k:#119468}[data-theme=light] .CASHIER{--t:#f6f0fe;--b:#e0d5f7;--c:#e6dcf9;--k:#6b3fc8}[data-theme=light] .KITCHEN{--t:#fff6ec;--b:#f8e1c6;--c:#fde6cc;--k:#dd7710}
 :root:not([data-theme=light]) .logo{border-radius:50%;box-shadow:0 0 0 1px #666}
-.tg{margin-left:auto;flex:none;width:46px;height:44px;padding:0;border:0;background:none;display:grid;place-items:center}
-.tg .pl{position:relative;display:block;width:46px;height:23px;border-radius:99px;background:#2b2b2b;color:#fff;box-shadow:inset 0 1px 3px #000,0 0 0 1px #ffffff26;transition:background .25s}
-.tg svg{position:absolute;top:4.5px;width:14px;height:14px;transition:opacity .25s}.tg .sn{left:5px;opacity:0}.tg .mo{right:5px}
-.tg .kn{position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fafafa;box-shadow:0 1px 3px #0006;transition:transform .25s,background .25s}
-[data-theme=light] .tg .pl{background:#efefef;color:#222;box-shadow:inset 0 1px 3px #0003,0 1px 2px #0002}[data-theme=light] .tg .kn{background:#333;transform:translateX(23px)}[data-theme=light] .tg .sn{opacity:1}[data-theme=light] .tg .mo{opacity:0}
+.tg,.tg *{-webkit-tap-highlight-color:transparent}   /* tanpa highlight sentuh WebView/Chrome */
+.tg{margin-left:auto;flex:none;position:relative;display:block;width:54px;height:28px;padding:0;border:0;border-radius:99px;background:none;-webkit-appearance:none;appearance:none;outline:0!important;box-shadow:none!important;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.tg::before{content:"";position:absolute;inset:-8px -6px}   /* area ketuk diperluas, tidak terlihat */
+.tg:focus,.tg:focus-visible,.tg:active{outline:0!important;background:none!important;box-shadow:none!important}   /* tidak ada kotak fokus/tekan; kalaupun ada, bentuknya = pil toggle */
+.tg .pl{position:relative;display:block;width:54px;height:28px;border-radius:99px;background:linear-gradient(180deg,#141414,#2e2e2e);color:#fff;box-shadow:inset 0 2px 5px #000c,inset 0 -1px 1px #ffffff1a,0 0 0 1px #ffffff26;transition:background .25s,transform .12s}
+.tg:active .pl{transform:scale(.94)}   /* efek tekan hanya mengikuti bentuk toggle */
+.tg svg{position:absolute;top:6.5px;width:15px;height:15px;transition:opacity .25s}.tg .sn{left:7px;opacity:0}.tg .mo{right:7px}
+.tg .kn{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#ececec 55%,#cdcdcd);box-shadow:0 2px 4px #0009,inset 0 -1px 2px #0002;transition:transform .25s,background .25s}
+[data-theme=light] .tg .pl{background:linear-gradient(180deg,#e2e2e2,#fafafa);color:#222;box-shadow:inset 0 2px 5px #0003,inset 0 -1px 1px #fff,0 1px 2px #0002}
+[data-theme=light] .tg .kn{background:radial-gradient(circle at 35% 30%,#555,#2a2a2a 55%,#161616);transform:translateX(26px);box-shadow:0 2px 4px #0006}
+[data-theme=light] .tg .sn{opacity:1}[data-theme=light] .tg .mo{opacity:0}
 .slot{align-self:center;justify-self:center}.live{display:block;width:8px;height:8px;border-radius:50%;background:var(--live);animation:blink ease-in-out infinite}
 @keyframes blink{0%,100%{opacity:1;box-shadow:0 0 0 0 #22c55e99}50%{opacity:.2;box-shadow:0 0 0 4px #22c55e00}}
 /* Rapikan sisa warna terang di mode gelap */
@@ -232,7 +241,7 @@ nav button.on,.tb button.on,.crumb,.crumb a,.badge{color:var(--pt)}nav button.on
 </style>
 </head>
 <body>
-<div id="app"><header><div class="logo" id="lg"></div><b>California Pool &amp; Cafe</b><span class="badge">ADMIN</span><button type="button" class="tg" id="tg" aria-label="Ganti tema"><span class="pl"><svg class="sn" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="5" stroke-width="2"/><circle cx="12" cy="12" r="9.5" stroke-width="3.5" pathLength="16" stroke-dasharray=".3 .7"/></svg><svg class="mo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11 4.5A8 8 0 1 0 19.5 16A7.2 7.2 0 0 1 11 4.5Z"/><path d="M17 2.5Q17 6 20.5 6Q17 6 17 9.5Q17 6 13.5 6Q17 6 17 2.5ZM21 9Q21 11.5 23.5 11.5Q21 11.5 21 14Q21 11.5 18.5 11.5Q21 11.5 21 9Z"/></svg><span class="kn"></span></span></button></header><main id="main"></main></div>
+<div id="app"><header><div class="logo" id="lg"></div><b>California Pool &amp; Cafe</b><span class="badge">ADMIN</span><button type="button" class="tg" id="tg" aria-label="Ganti tema"><span class="pl"><svg class="sn" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="5.5" stroke-width="1.8"/><circle cx="12" cy="12" r="9.5" stroke-width="3" pathLength="24" stroke-dasharray=".3 .7"/></svg><svg class="mo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11 4.5A8 8 0 1 0 19.5 16A7.2 7.2 0 0 1 11 4.5Z"/><path d="M17 2.5Q17 6 20.5 6Q17 6 17 9.5Q17 6 13.5 6Q17 6 17 2.5ZM21 9Q21 11.5 23.5 11.5Q21 11.5 21 14Q21 11.5 18.5 11.5Q21 11.5 21 9Z"/></svg><span class="kn"></span></span></button></header><main id="main"></main></div>
 <nav><div id="nav"></div></nav>
 <div id="shade"></div><div id="sheet" role="dialog" aria-modal="true"></div><div id="toast" role="status"></div>
 <script>
@@ -303,7 +312,7 @@ window.__back=onBack;
 if(!/; wv\)/.test(navigator.userAgent)){history.replaceState({jd:0},'');history.pushState({jd:1},'');
 addEventListener('popstate',e=>{if(e.state&&e.state.jd===0){onBack();history.pushState({jd:1},'')}})}
 /* Sakelar tema, disimpan di server aplikasi */
-$('#tg').onclick=async()=>{const r=document.documentElement,t=r.dataset.theme=='light'?'dark':'light';r.dataset.theme=t;
+$('#tg').onclick=async()=>{$('#tg').blur();const r=document.documentElement,t=r.dataset.theme=='light'?'dark':'light';r.dataset.theme=t;
 try{const x=await fetch('/api/theme',{method:'PUT',body:JSON.stringify({theme:t}),keepalive:true});if(!x.ok)throw 0}catch(e){toast('Tema gagal disimpan')}};
 /* Simpan dan gambar ulang tab */
 function rx(){persist();close();const o=$('.xs'),l=o?o.scrollLeft:0,t=o?o.scrollTop:0,y=scrollY;draw();const n=$('.xs');if(n){n.scrollLeft=l;n.scrollTop=t}scrollTo(0,y)}
@@ -428,7 +437,7 @@ function pdf(){if(S.pr!='adm')return exportFile('pdf','landscape');
 open(`<div class="sph"><h3>PDF - A4</h3><button class="spx" type="button" aria-label="Tutup" onclick="closeSheet()">${ico('x',24)}</button></div><div style="display:grid;gap:8px"><button class="btn w" onclick="exportFile('pdf','portrait')">Potrait (1 lembar)</button><button class="btn w" onclick="exportFile('pdf','landscape')">Landscape (2 lembar)</button></div>`)}
 /* Tab Print Jadwal */
 const PR=[['adm','Administrator'],['gl','Jadwal Global'],['all','Semua Sheet']];
-const prAll=()=>`<div class="pv" style="padding:14px 14px 4px"><div class="kh">Semua Sheet</div><p class="sub" style="margin:8px 0 10px;line-height:1.5">Satu file Excel (<b>jadwal_kerja.xlsx</b>) berisi 3 Sheet: <b>Config</b>, <b>Administrator</b>, dan <b>Jadwal Global</b>. Rumus dan Dropdown Shift tetap ada, jadi bisa diedit di komputer.</p></div>`;
+const prAll=()=>`<div class="pv pi" style="padding:14px 14px 4px"><div class="kh">Semua Sheet</div><p class="sub" style="margin:8px 0 10px;line-height:1.5">Satu file Excel (<b>jadwal_kerja.xlsx</b>) berisi 3 Sheet: <b>Config</b>, <b>Administrator</b>, dan <b>Jadwal Global</b>. Rumus dan Dropdown Shift tetap ada, jadi bisa diedit di komputer.</p></div>`;
 function prBody(){const all=S.pr=='all';return`<div class="seg" style="margin-top:14px">${PR.map(([k,l])=>`<button class="${S.pr==k?'on':''}" onclick="go('config',{pr:'${k}'})">${l}</button>`).join('')}</div>${all?prAll():xv(S.pr,'pv')}<div class="ab"><button class="btn" onclick="xls()">${ico('dl',20)}Download Excel</button>${all?'':`<button class="btn" onclick="png()">${ico('img',20)}Save PNG</button>`}</div>${all?'':`<div class="ab"><button class="btn" onclick="pdf()">${ico('pdf',20)}PDF - A4</button></div>`}`}
 /* Tab Settings, Administrator, Print Jadwal */
 const tabs=()=>`<div class="tb">${[['config','gear','Settings'],['admin','usr','Administrator'],['print','prn','Print Jadwal']].map(([k,i,l])=>`<button class="${S.tab==k?'on':''}" onclick="go('config',{tab:'${k}'})">${ico(i,19)}<span>${l}</span></button>`).join('')}</div>`;

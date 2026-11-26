@@ -9,6 +9,15 @@ _PRIVATE = os.environ.get("ANDROID_PRIVATE")
 DATA_DIR = Path(_PRIVATE) / "data" if _PRIVATE else BASE_DIR / "data"
 STATE_FILE = DATA_DIR / "state.json"
 
+
+# Tema tersimpan (theme.txt); bawaan gelap
+def read_theme() -> str:
+    try:
+        saved = (DATA_DIR / "theme.txt").read_text(encoding="utf-8").strip()
+    except OSError:
+        saved = ""
+    return "light" if saved == "light" else "dark"
+
 # Port server
 DEFAULT_PORT = 8888
 BLOCKED_PORTS = {5000}

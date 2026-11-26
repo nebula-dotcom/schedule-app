@@ -14,6 +14,7 @@ LOADING_HTML = """<!DOCTYPE html>
 <title>Jadwal Kerja</title>
 <style>
 html,body{height:100%;margin:0;background:#121212}
+html.t-light,html.t-light body{background:#f6f8fc}
 body{display:flex;align-items:center;justify-content:center;overflow:hidden}
 
 /* From Uiverse.io by AqFox */
@@ -31,6 +32,10 @@ body{display:flex;align-items:center;justify-content:center;overflow:hidden}
  100%{transform:rotate(45deg) rotateX(-385deg) rotateY(385deg)}
 }
 </style>
+<script>
+/* Tema tersimpan dari patch Java lewat user-agent; tanpa penanda tetap gelap */
+if(navigator.userAgent.indexOf('JadwalTema/light')>=0)document.documentElement.className='t-light';
+</script>
 </head>
 <body>
 <div class="spinner"><div></div><div></div><div></div><div></div><div></div><div></div></div>
@@ -54,8 +59,26 @@ ROOT = Path(__file__).resolve().parent.parent
 
 # Patch latar WebView
 LATAR_JAVA = "0xFF121212"
+LATAR_JAVA_TERANG = "0xFFF6F8FC"
 JAVA_TANDA = "/* jadwal: latar WebView */"
 WEBVIEW_BARU = re.compile(r"(?P<lhs>[A-Za-z_][\w.]*)\s*=\s*new\s+WebView\s*\([^;]*\)\s*;")
+
+# Kode Java: baca tema tersimpan, atur latar WebView dan jendela, beri penanda tema di user-agent
+LATAR_KODE = (
+    "{ boolean __jt = false; "
+    "try { java.io.File __jf = new java.io.File(@L@.getContext().getFilesDir(), \"data/theme.txt\"); "
+    "if (__jf.isFile()) { "
+    "java.io.BufferedReader __jr = new java.io.BufferedReader(new java.io.FileReader(__jf)); "
+    "try { String __jl = __jr.readLine(); if (__jl != null && \"light\".equals(__jl.trim())) { __jt = true; } } "
+    "finally { __jr.close(); } } } catch (Exception __je) { } "
+    "int __jc = __jt ? @TERANG@ : @GELAP@; "
+    "@L@.setBackgroundColor(__jc); "
+    "if (@L@.getContext() instanceof android.app.Activity) { "
+    "((android.app.Activity) @L@.getContext()).getWindow().setBackgroundDrawable("
+    "new android.graphics.drawable.ColorDrawable(__jc)); } "
+    "@L@.getSettings().setUserAgentString(@L@.getSettings().getUserAgentString() "
+    "+ (__jt ? \" JadwalTema/light\" : \" JadwalTema/dark\")); } "
+)
 
 
 # Sisipkan latar WebView di PythonActivity.java
@@ -66,7 +89,8 @@ def patch_java(text: str) -> str:
     if len(cocok) != 1:
         return text
     m = cocok[0]
-    return text[:m.end()] + f" {m.group('lhs')}.setBackgroundColor({LATAR_JAVA}); {JAVA_TANDA}" + text[m.end():]
+    kode = LATAR_KODE.replace("@L@", m.group("lhs")).replace("@TERANG@", LATAR_JAVA_TERANG).replace("@GELAP@", LATAR_JAVA)
+    return text[:m.end()] + " " + kode + JAVA_TANDA + text[m.end():]
 
 
 # Patch tombol kembali
@@ -168,7 +192,7 @@ def apply_back_button(dist_dir: Path) -> None:
 # Pasang latar WebView
 def apply_webview_background(dist_dir: Path) -> None:
     files = activity_files(dist_dir)
-    if patch_activity_files(files, patch_java, JAVA_TANDA, "[hook] latar WebView #121212 dipasang di {java}"):
+    if patch_activity_files(files, patch_java, JAVA_TANDA, "[hook] latar WebView (ikut tema tersimpan) dipasang di {java}"):
         return
     print("[hook] PERINGATAN: pembuatan WebView di PythonActivity.java (file bawaan p4a di folder dist, bukan file "
           "proyek ini) tidak ditemukan/ganda -- latar WebView hanya diatur lewat droid.py setelah Python jalan, "

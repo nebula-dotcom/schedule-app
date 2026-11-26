@@ -1,7 +1,12 @@
 import importlib.util
 import re
+import shutil
+import subprocess
+import sys
+import tempfile
 import threading
 import time
+import types
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -105,6 +110,8 @@ class WarnaSeragam(unittest.TestCase):
 
     def setUp(self):
         self.dasar = self._cari(r":root\{--bg:" + self.HEX, self._baca("web", "index.html"), "web/index.html (--bg)")
+        self.terang = self._cari(r"\[data-theme=light\]\{--bg:" + self.HEX, self._baca("web", "index.html"),
+                                 "web/index.html (--bg tema terang)")
 
     def test_loading_html(self):
         warna = self._cari(r"html,body\{[^}]*background:" + self.HEX, self._baca("web", "loading.html"), "web/loading.html")
@@ -116,6 +123,11 @@ class WarnaSeragam(unittest.TestCase):
         spec.loader.exec_module(hook)
         warna = self._cari(r"html,body\{[^}]*background:" + self.HEX, hook.render_loading(), "p4a/hook.py (LOADING_HTML)")
         self.assertEqual(warna, self.dasar, "p4a/hook.py (LOADING_HTML)")
+        html = hook.render_loading()
+        terang = self._cari(r"html\.t-light,html\.t-light body\{[^}]*background:" + self.HEX, html, "p4a/hook.py (LOADING_HTML terang)")
+        self.assertEqual(terang, self.terang, "p4a/hook.py (LOADING_HTML terang)")
+        self.assertIn("JadwalTema/light", html)
+        self.assertIn("t-light", html)
 
     def test_tema_android(self):
         untuk = {"values": ("windowBackground",), "values-v31": ("windowBackground", "windowSplashScreenBackground")}
@@ -132,6 +144,9 @@ class WarnaSeragam(unittest.TestCase):
         self.assertEqual("#" + hook.LATAR_JAVA[4:].lower(), self.dasar, "p4a/hook.py (LATAR_JAVA)")
         self.assertTrue(hook.LATAR_JAVA.upper().startswith("0XFF"), "latar WebView harus tidak transparan (alfa FF)")
         self.assertEqual(droid.LATAR_WEBVIEW.lower(), self.dasar, "jadwal/droid.py (LATAR_WEBVIEW)")
+        self.assertEqual("#" + hook.LATAR_JAVA_TERANG[4:].lower(), self.terang, "p4a/hook.py (LATAR_JAVA_TERANG)")
+        self.assertTrue(hook.LATAR_JAVA_TERANG.upper().startswith("0XFF"), "latar WebView terang harus tidak transparan")
+        self.assertEqual(droid.LATAR_WEBVIEW_TERANG.lower(), self.terang, "jadwal/droid.py (LATAR_WEBVIEW_TERANG)")
 
     def test_presplash(self):
         warna = self._cari(r"(?m)^android\.presplash_color\s*=\s*" + self.HEX, self._baca("buildozer.spec"),
@@ -179,11 +194,14 @@ class HookTema(unittest.TestCase):
                   "    PythonActivity.mActivity.mWebView = new WebView(PythonActivity.mActivity);\n"
                   "    mWebView.getSettings().setJavaScriptEnabled(true);\n  }\n}\n")
         out = hook.patch_java(sumber)
-        self.assertIn("PythonActivity.mActivity.mWebView.setBackgroundColor(0xFF121212);", out)
+        self.assertIn("PythonActivity.mActivity.mWebView.setBackgroundColor(__jc);", out)
+        self.assertIn("__jt ? 0xFFF6F8FC : 0xFF121212", out)
+        self.assertIn('"data/theme.txt"', out)
+        self.assertIn("JadwalTema/light", out)
         self.assertLess(out.index("setBackgroundColor"), out.index("getSettings"))
         self.assertEqual(hook.patch_java(out), out)
         lokal = hook.patch_java("void f(){ WebView w = new WebView(this); w.loadUrl(u); }")
-        self.assertIn("w.setBackgroundColor(0xFF121212);", lokal)
+        self.assertIn("w.setBackgroundColor(__jc);", lokal)
         for tidak_pasti in ("class A { void f(){} }",
                             "class A { void f(){ a = new WebView(x); b = new WebView(y); } }"):
             self.assertEqual(hook.patch_java(tidak_pasti), tidak_pasti)
@@ -262,7 +280,7 @@ class HookTema(unittest.TestCase):
             java.parent.mkdir(parents=True)
             java.write_text("class P { void f(){ mWebView = new WebView(this); } }", encoding="utf-8")
             hook.before_apk_build(SimpleNamespace(_dist=SimpleNamespace(dist_dir=str(dist))))
-            self.assertIn("mWebView.setBackgroundColor(0xFF121212);", java.read_text(encoding="utf-8"))
+            self.assertIn("mWebView.setBackgroundColor(__jc);", java.read_text(encoding="utf-8"))
             java.write_text("class P { boolean onKeyDown(int keyCode, KeyEvent event) { return false; } }", encoding="utf-8")
             hook.before_apk_build(SimpleNamespace(_dist=SimpleNamespace(dist_dir=str(dist))))
             self.assertIn("window.__back", java.read_text(encoding="utf-8"))
@@ -299,7 +317,7 @@ class HookTema(unittest.TestCase):
         a = hook.patch_file_chooser(hook.patch_java(self.JAVA_P))
         b = hook.patch_java(hook.patch_file_chooser(self.JAVA_P))
         for out in (a, b):
-            self.assertIn("setBackgroundColor(0xFF121212);", out)
+            self.assertIn("setBackgroundColor(__jc);", out)
             self.assertIn("onShowFileChooser", out)
             self.assertEqual(out.count("{"), out.count("}"))
             self.assertEqual(hook.patch_file_chooser(hook.patch_java(out)), out)
@@ -411,6 +429,146 @@ class AnimasiTekan(unittest.TestCase):
     def test_skala_tekan_seragam_dan_tombol_x_tetap_berputar(self):
         self.assertIn("button,a[onclick]{--ps:.97;", self.html)
         self.assertIn(".spx.pr svg{transform:rotate(45deg)", self.html)
+
+
+# Tema tersimpan dipakai bersama server dan droid
+class TemaTersimpan(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        patcher = mock.patch.object(cfg, "DATA_DIR", Path(self.tmp.name))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def _simpan(self, isi):
+        (Path(self.tmp.name) / "theme.txt").write_text(isi, encoding="utf-8")
+
+    def test_bawaan_gelap(self):
+        self.assertEqual(cfg.read_theme(), "dark")
+        self.assertEqual(droid.latar_tema(), droid.LATAR_WEBVIEW)
+
+    def test_terang_dan_nilai_asing(self):
+        self._simpan("light\n")
+        self.assertEqual(cfg.read_theme(), "light")
+        self.assertEqual(droid.latar_tema(), droid.LATAR_WEBVIEW_TERANG)
+        for isi in ("dark", "", "LIGHT", "ngawur"):
+            self._simpan(isi)
+            self.assertEqual(cfg.read_theme(), "dark", isi)
+            self.assertEqual(droid.latar_tema(), droid.LATAR_WEBVIEW, isi)
+
+    def test_server_memakai_fungsi_yang_sama(self):
+        from jadwal import server
+        self._simpan("light")
+        self.assertEqual(server.read_theme(), "light")
+
+
+# Penerapan latar WebView dan jendela sesuai tema
+class LatarSesuaiTema(unittest.TestCase):
+    class Warna:
+        @staticmethod
+        def parseColor(teks):
+            return int(teks[1:], 16)
+
+    class Jendela:
+        def __init__(self):
+            self.latar = None
+
+        def setBackgroundDrawable(self, d):
+            self.latar = d.nilai
+
+    class WebViewLatar:
+        def __init__(self):
+            self.latar, self.dipasang = None, 0
+
+        def setBackgroundColor(self, nilai):
+            self.latar, self.dipasang = nilai, self.dipasang + 1
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        for p in (mock.patch.object(cfg, "DATA_DIR", Path(self.tmp.name)),
+                  mock.patch.object(droid, "_latar", [None])):
+            p.start()
+            self.addCleanup(p.stop)
+
+        jendela = self.jendela = self.Jendela()
+
+        class ColorDrawable:
+            def __init__(self, nilai):
+                self.nilai = nilai
+
+        kelas = {"android.graphics.Color": self.Warna, "android.graphics.drawable.ColorDrawable": ColorDrawable}
+        palsu = types.SimpleNamespace(autoclass=lambda nama: kelas[nama])
+        aktivitas = types.SimpleNamespace(getWindow=lambda: jendela)
+        for p in (mock.patch.dict(sys.modules, {"jnius": palsu}), mock.patch.object(droid, "_activity", lambda: aktivitas)):
+            p.start()
+            self.addCleanup(p.stop)
+
+    def _tema(self, nama):
+        (Path(self.tmp.name) / "theme.txt").write_text(nama, encoding="utf-8")
+
+    def test_webview_dan_jendela_ikut_tema(self):
+        w = self.WebViewLatar()
+        droid._latar_tema(w, paksa=True)
+        self.assertEqual((w.latar, self.jendela.latar), (0x121212, 0x121212))
+        self._tema("light")
+        droid._latar_tema(w)
+        self.assertEqual((w.latar, self.jendela.latar), (0xF6F8FC, 0xF6F8FC))
+
+    def test_tidak_diulang_kalau_tema_sama(self):
+        w = self.WebViewLatar()
+        droid._latar_tema(w, paksa=True)
+        droid._latar_tema(w)
+        droid._latar_tema(w)
+        self.assertEqual(w.dipasang, 1)
+
+    def test_webview_baru_selalu_dipasang_lagi(self):
+        droid._latar_tema(self.WebViewLatar(), paksa=True)
+        w2 = self.WebViewLatar()
+        droid._latar_tema(w2, paksa=True)
+        self.assertEqual(w2.dipasang, 1)
+
+
+# Patch Java hasil hook harus bisa dikompilasi (dilewati bila javac tidak ada)
+@unittest.skipUnless(shutil.which("javac"), "javac tidak tersedia")
+class PatchJavaTerkompilasi(unittest.TestCase):
+    STUB = {
+        "android/content/Context.java": "package android.content; public class Context { public java.io.File getFilesDir(){return null;} }",
+        "android/app/Activity.java": "package android.app; public class Activity extends android.content.Context "
+                                     "{ public android.view.Window getWindow(){return null;} }",
+        "android/view/Window.java": "package android.view; public class Window "
+                                    "{ public void setBackgroundDrawable(android.graphics.drawable.Drawable d){} }",
+        "android/graphics/drawable/Drawable.java": "package android.graphics.drawable; public class Drawable {}",
+        "android/graphics/drawable/ColorDrawable.java": "package android.graphics.drawable; "
+                                                        "public class ColorDrawable extends Drawable { public ColorDrawable(int c){} }",
+        "android/webkit/WebSettings.java": "package android.webkit; public class WebSettings { public String getUserAgentString(){return \"\";} "
+                                           "public void setUserAgentString(String s){} public void setJavaScriptEnabled(boolean b){} }",
+        "android/webkit/WebView.java": "package android.webkit; public class WebView { public WebView(android.content.Context c){} "
+                                       "public android.content.Context getContext(){return null;} public void setBackgroundColor(int c){} "
+                                       "public WebSettings getSettings(){return null;} public void loadUrl(String u){} }",
+    }
+    ASLI = ("package org.kivy.android;\nimport android.app.Activity;\nimport android.webkit.WebView;\n"
+            "public class PythonActivity extends Activity {\n  public static PythonActivity mActivity; public WebView mWebView;\n"
+            "  private class UnpackFilesTask {\n    protected void onPostExecute(String r) {\n"
+            "      PythonActivity.mActivity.mWebView = new WebView(PythonActivity.mActivity);\n"
+            "      PythonActivity.mActivity.mWebView.getSettings().setJavaScriptEnabled(true);\n    }\n  }\n}\n")
+
+    def test_kode_java_hasil_patch_bisa_dikompilasi(self):
+        spec = importlib.util.spec_from_file_location("p4a_hook5", ROOT / "p4a" / "hook.py")
+        hook = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(hook)
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            for nama, isi in self.STUB.items():
+                (tmp / nama).parent.mkdir(parents=True, exist_ok=True)
+                (tmp / nama).write_text(isi, encoding="utf-8")
+            sumber = tmp / "org" / "kivy" / "android" / "PythonActivity.java"
+            sumber.parent.mkdir(parents=True)
+            sumber.write_text(hook.patch_java(self.ASLI), encoding="utf-8")
+            hasil = subprocess.run(["javac", "-Xlint:all", "-d", str(tmp / "out"), *map(str, tmp.rglob("*.java"))],
+                                   capture_output=True, text=True)
+            self.assertEqual(hasil.returncode, 0, hasil.stderr)
+            self.assertNotIn("warning", hasil.stderr.lower(), hasil.stderr)
 
 
 if __name__ == "__main__":

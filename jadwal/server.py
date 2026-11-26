@@ -25,11 +25,7 @@ EXPORT_PATH = re.compile(r"^/api/export/([^/]+)$")
 
 # Tema tersimpan; bawaan gelap
 def read_theme() -> str:
-    try:
-        saved = (cfg.DATA_DIR / "theme.txt").read_text(encoding="utf-8").strip()
-    except OSError:
-        saved = ""
-    return "light" if saved == "light" else "dark"
+    return cfg.read_theme()
 
 
 # Galat HTTP dengan kode status

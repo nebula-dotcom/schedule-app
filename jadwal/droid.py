@@ -5,18 +5,22 @@ import queue
 import threading
 import time
 
+from . import settings as cfg
+
 # Deteksi Android
 ON_ANDROID = "ANDROID_ARGUMENT" in os.environ
 
 # Konstanta tombol kembali dan latar WebView
 KEYCODE_BACK = 4
 LATAR_WEBVIEW = "#121212"
+LATAR_WEBVIEW_TERANG = "#f6f8fc"
 ACTION_UP = 1
 # State hook WebView dan antrean tugas
 _hooked = None
 _keep = []
 _tidy_job = None
 _last_back = [0]
+_latar = [None]
 _tasks = queue.Queue()
 _main_id = [None]
 
@@ -153,6 +157,23 @@ def _tidy(webview) -> None:
         webview.requestFocus()
 
 
+# Warna latar sesuai tema tersimpan
+def latar_tema() -> str:
+    return LATAR_WEBVIEW_TERANG if cfg.read_theme() == "light" else LATAR_WEBVIEW
+
+
+# Terapkan latar WebView dan jendela sesuai tema (thread utama)
+def _latar_tema(webview, paksa: bool = False) -> None:
+    warna = latar_tema()
+    if not paksa and _latar[0] == warna:
+        return
+    from jnius import autoclass
+    nilai = autoclass("android.graphics.Color").parseColor(warna)
+    webview.setBackgroundColor(nilai)
+    _activity().getWindow().setBackgroundDrawable(autoclass("android.graphics.drawable.ColorDrawable")(nilai))
+    _latar[0] = warna
+
+
 # Runnable perapian WebView
 def _tidy_runnable():
     global _tidy_job
@@ -168,6 +189,7 @@ def _tidy_runnable():
                 try:
                     if _hooked is not None:
                         _tidy(_hooked)
+                        _latar_tema(_hooked)
                 except Exception as err:
                     print("tidy_webview:", err)
 
@@ -210,8 +232,7 @@ def _hook_once() -> bool:
         @java_method("()V")
         def run(self):
             try:
-                from jnius import autoclass
-                webview.setBackgroundColor(autoclass("android.graphics.Color").parseColor(LATAR_WEBVIEW))
+                _latar_tema(webview, paksa=True)
             except Exception as err:
                 print("latar_webview:", err)
             listener = BackListener()
