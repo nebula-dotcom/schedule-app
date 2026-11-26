@@ -92,6 +92,11 @@ jobs:
           key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
           restore-keys: buildozer-${{ runner.os }}-
 
+      # Langkah hapus dist lama: p4a memakai ulang dist dari cache, yang Java-nya sudah dipatch versi lama
+      # sehingga patch baru di p4a/hook.py dilewati. Dist dibuat ulang; SDK, NDK, dan hasil kompilasi tetap di cache.
+      - name: Hapus dist lama dari cache
+        run: rm -rf .buildozer/android/platform/build-*/dists
+
       # Langkah nomor versi
       - name: Tentukan nomor versi berikutnya
         id: ver

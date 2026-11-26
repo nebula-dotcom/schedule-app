@@ -611,6 +611,17 @@ class LatarSesuaiTema(unittest.TestCase):
         self.assertEqual(w2.dipasang, 1)
 
 
+# Build CI harus memakai dist baru agar patch hook terbaru benar-benar masuk APK
+class DistSelaluBaru(unittest.TestCase):
+    def test_dist_dari_cache_dihapus_sebelum_build(self):
+        """Patch hook dilewati bila penandanya sudah ada, jadi dist lama dari cache tidak boleh dipakai ulang."""
+        alur = (ROOT / ".github" / "workflows" / "build.yml").read_text(encoding="utf-8")
+        hapus = "rm -rf .buildozer/android/platform/build-*/dists"
+        self.assertIn(hapus, alur)
+        self.assertLess(alur.index("actions/cache@"), alur.index(hapus))
+        self.assertLess(alur.index(hapus), alur.index("buildozer -v android release"))
+
+
 # Patch Java hasil hook harus bisa dikompilasi (dilewati bila javac tidak ada)
 @unittest.skipUnless(shutil.which("javac"), "javac tidak tersedia")
 class PatchJavaTerkompilasi(unittest.TestCase):
