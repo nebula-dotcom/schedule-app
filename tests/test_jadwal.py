@@ -177,7 +177,7 @@ def payload_izin_sakit():
     return p
 
 
-# Tes shift Izin dan Sakit (dihitung seperti Kosong)
+# Tes shift Izin dan Sakit (dihitung sebagai Libur)
 class IzinDanSakit(unittest.TestCase):
     def test_nama_dan_warna(self):
         self.assertEqual(cfg.SHIFTS["I"], ("Izin", "#d9d2e9", "#3b2f58"))
@@ -188,13 +188,14 @@ class IzinDanSakit(unittest.TestCase):
         self.assertEqual(s.divisions[0].staff[0].shifts, "IIIIIIKKKKKKPP")
         self.assertEqual(Schedule.from_payload(s.to_payload()).to_payload(), s.to_payload())
 
-    def test_tidak_masuk_rekap_dan_jumlah_staff(self):
+    def test_masuk_rekap_libur_dan_jumlah_staff(self):
         d = Schedule.from_payload(payload_izin_sakit()).divisions[0]
-        # staff 1: hanya 2 hari Pagi yang dihitung; Izin/Sakit seperti Kosong
-        self.assertEqual(d.totals(d.staff[0]), {"P": 2, "S": 0, "R": 0, "L": 0})
+        # staff 1: 2 hari Pagi; 6 Izin + 6 Sakit dihitung sebagai Libur di rekap
+        self.assertEqual(d.totals(d.staff[0]), {"P": 2, "S": 0, "R": 0, "L": 12})
+        # jumlah staff per shift: Izin/Sakit staff 1 dihitung Libur, staff 2 masuk Pagi
         for hari in range(12):
-            self.assertEqual([d.count(c, hari) for c in cfg.SHIFT_ORDER], [1, 0, 0, 0])
-        self.assertEqual(d.count("P", 12), 2)
+            self.assertEqual([d.count(c, hari) for c in cfg.SHIFT_ORDER], [1, 0, 0, 1])
+        self.assertEqual([d.count(c, 12) for c in cfg.SHIFT_ORDER], [2, 0, 0, 0])
 
     def test_tidak_ada_jam_kerja_untuk_izin_sakit(self):
         d = Schedule.from_payload(payload_izin_sakit()).divisions[0]
@@ -208,8 +209,47 @@ class IzinDanSakit(unittest.TestCase):
         izin, sakit = sel[(baris, 2)], sel[(baris, 8)]
         self.assertEqual((izin["t"], izin["bg"], izin["fg"]), ("Izin", "#d9d2e9", "#3b2f58"))
         self.assertEqual((sakit["t"], sakit["bg"], sakit["fg"]), ("Sakit", "#c6e0b4", "#375623"))
-        # rekap staff pertama: P=2, S=0, R=0, total=2, Libur=0
-        self.assertEqual([sel[(baris, c)]["t"] for c in range(16, 21)], ["2", "0", "0", "2", "0"])
+        # rekap staff pertama: P=2, S=0, R=0, total=2, Libur=12 (6 Izin + 6 Sakit)
+        self.assertEqual([sel[(baris, c)]["t"] for c in range(16, 21)], ["2", "0", "0", "2", "12"])
+
+    def test_baris_libur_jumlah_staff_per_shift_di_tabel(self):
+        from jadwal import layout
+        model = layout.build_model(Schedule.from_payload(payload_izin_sakit()), "adm")
+        sel = {(c["r"], c["c"]): c for c in model["cells"]}
+        n = len(Schedule.from_payload(payload_izin_sakit()).divisions[0].staff)
+        baris_libur = 3 + 3 + n + 4   # judul + header + staff, lalu judul tabel dan P/S/R
+        self.assertEqual(sel[(baris_libur, 0)]["t"], "Libur")
+        self.assertEqual([sel[(baris_libur, 2 + j)]["t"] for j in (0, 5, 6, 11, 12, 13)],
+                         ["1", "1", "1", "1", "0", "0"])
+
+    @unittest.skipIf(openpyxl is None, "openpyxl tidak terpasang")
+    def test_excel_rumus_jumlah_staff_libur_menghitung_izin_dan_sakit(self):
+        s = Schedule.from_payload(payload_izin_sakit())
+        n = len(s.divisions[0].staff)
+        ws = muat("all", payload_izin_sakit())["Administrator"]
+        baris = 3 + 3 + n + 4 + 1   # baris Excel (mulai dari 1) untuk Libur
+        self.assertEqual(ws.cell(row=baris, column=1).value, "Libur")
+        rumus = str(ws.cell(row=baris, column=3).value)
+        self.assertIn('"Izin"', rumus)
+        self.assertIn('"Sakit"', rumus)
+        # baris Pagi tidak ikut menghitung Izin/Sakit
+        self.assertNotIn('"Izin"', str(ws.cell(row=baris - 3, column=3).value))
+
+    def test_libur_asli_dan_izin_sakit_dijumlah(self):
+        p = payload_izin_sakit()
+        p["divisions"][0]["staff"][0]["shifts"] = "LLIIKKPPSSRR--"   # 2 Libur, 2 Izin, 2 Sakit
+        d = Schedule.from_payload(p).divisions[0]
+        self.assertEqual(d.totals(d.staff[0]), {"P": 2, "S": 2, "R": 2, "L": 6})
+
+    @unittest.skipIf(openpyxl is None, "openpyxl tidak terpasang")
+    def test_excel_rumus_libur_menghitung_izin_dan_sakit(self):
+        wb = muat("all", payload_izin_sakit())
+        ws = wb["Administrator"]
+        baris = 3 + 3 + 1   # baris Excel (mulai dari 1) staff pertama
+        rumus = str(ws.cell(row=baris, column=21).value)
+        self.assertIn("COUNTIF", rumus)
+        self.assertIn('"Izin"', rumus)
+        self.assertIn('"Sakit"', rumus)
 
     @unittest.skipIf(openpyxl is None, "openpyxl tidak terpasang")
     def test_excel_pilihan_dropdown_dan_warna(self):

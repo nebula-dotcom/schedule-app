@@ -352,10 +352,12 @@ class HalamanWeb(unittest.TestCase):
         self.assertIn("I:['#d9d2e9','#3b2f58']", self.html)
         self.assertIn("K:['#c6e0b4','#375623']", self.html)
 
-    def test_izin_sakit_tidak_masuk_hitungan_halaman(self):
-        # penghitung hanya mengenal P/S/R/L, jadi kode I/K otomatis tidak dihitung
+    def test_izin_sakit_dihitung_libur_di_halaman(self):
+        # penghitung hanya mengenal P/S/R/L; kode I/K (KA) ditambahkan ke Libur
         self.assertIn("const cnt=(k,i)=>{const c={P:0,S:0,R:0,L:0}", self.html)
-        self.assertIn("if(x in c)c[x]++", self.html)
+        self.assertEqual(self.html.count("else if(KA.includes(x))c.L++"), 2)   # cnt dan rekap
+        # tab Ringkasan: baris Libur memuat staff Libur, Izin, dan Sakit
+        self.assertIn("return x==c||(c=='L'&&KA.includes(x))", self.html)
 
     def test_pembaca_file_punya_cadangan_untuk_webview_lama(self):
         self.assertIn("new FileReader()", self.html)

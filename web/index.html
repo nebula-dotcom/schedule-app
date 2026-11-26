@@ -280,8 +280,8 @@ const $=s=>document.querySelector(s),esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;'
 /* Helper tanggal periode */
 const days=()=>{const b=new Date(S.start+'T00:00');return[...Array(14)].map((_,i)=>{const d=new Date(b);d.setDate(b.getDate()+i);return{d,n:DAY[d.getDay()],x:d.getDate(),we:d.getDay()%6==0}})};
 const f=d=>d.getDate()+' '+MON[d.getMonth()],rng=(a,b)=>a.getMonth()==b.getMonth()?a.getDate()+'–'+f(b):f(a)+'–'+f(b);
-const cnt=(k,i)=>{const c={P:0,S:0,R:0,L:0};D[k].st.forEach(p=>{const x=p.s[i];if(x in c)c[x]++});return c};
-const KS=[...'PSRL'],KA=[...'IK'];/* KA = Izin & Sakit: berwarna, tapi tidak dihitung (sama seperti Kosong) */
+const cnt=(k,i)=>{const c={P:0,S:0,R:0,L:0};D[k].st.forEach(p=>{const x=p.s[i];if(x in c)c[x]++;else if(KA.includes(x))c.L++});return c};
+const KS=[...'PSRL'],KA=[...'IK'];/* KA = Izin & Sakit: berwarna, dan dihitung sebagai Libur (rekap, jumlah staff per shift, Ringkasan) */
 
 /* Popup bawah: buka dan tutup */
 function closeSheet(){$('#sheet').classList.remove('open');$('#shade').style.display='none'}
@@ -364,7 +364,7 @@ add(r,0,t,{rs:2,cs:2,bg:TEAL,fg:'#fff',b:1,fs:11});
 mspans(a).forEach(m=>add(r,2+m.i,m.n<2?MON[m.m].toUpperCase():MONL[m.m].toUpperCase(),{cs:m.n,bg:m.m%2?SL2:SL1,fg:'#fff',b:1,fs:8.5}));
 a.forEach((d,j)=>{const o={...nv,bg:d.we?RED:NAVY};add(r+1,2+j,d.n,o);add(r+2,2+j,d.x,o)});
 add(r+2,0,'NO',nv);add(r+2,1,'NAMA',nv);
-st.forEach((p,i)=>{const y=r+3+i,c={P:0,S:0,R:0,L:0};p.s.forEach(x=>{if(x in c)c[x]++});
+st.forEach((p,i)=>{const y=r+3+i,c={P:0,S:0,R:0,L:0};p.s.forEach(x=>{if(x in c)c[x]++;else if(KA.includes(x))c.L++});/* Izin & Sakit ikut dihitung Libur di rekap */
 add(y,0,i+1);add(y,1,p.n,{al:'l',ed:{t:'n',i}});
 p.s.forEach((x,j)=>add(y,2+j,SH[x][0],{bg:SC[x][0],fg:SC[x][1],b:x!='L'?1:0,ed:{t:'s',i,j,v:x}}));
 if(adm){add(y,16,c.P);add(y,17,c.S);add(y,18,c.R);add(y,19,c.P+c.S+c.R,{bg:'#f2f2f2',b:1});add(y,20,c.L)}});
@@ -459,7 +459,7 @@ if(v){S.start=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;$
 const V={
 /* Tab Ringkasan */
 home(){const a=days(),x=a[S.sel];return`<div class="rd"><div class="rd-h">${DAYL[x.d.getDay()]}, ${x.x} ${MONL[x.d.getMonth()]} ${x.d.getFullYear()}</div><div class="rd-s">${[0,1].map(g=>`<div class="rd-g">${a.slice(g*7,g*7+7).map((y,i)=>{const n=g*7+i;return`<button class="${n==S.sel?'on':''}${y.we?' we':''}" onclick="go('home',{sel:${n}})">${y.n}<b>${y.x}</b></button>`}).join('')}</div>`).join('')}</div></div>
-${Object.keys(D).map(k=>`<section class="dc ${k}"><div class="dc-h"><i>${ico(k,19)}</i><b>${D[k].t}</b><span>${D[k].st.length} staff</span></div>${KS.map(c=>{const n=D[k].st.filter(p=>p.s[S.sel]==c).map(p=>esc(p.n));return`<div class="dc-r"><div class="dc-s"><i class="dot s${c}"></i><div><b>${SH[c][0]}</b>${c=='L'||!D[k].h[c]?'':`<small>${hh(D[k].h[c])}</small>`}</div></div><div class="dc-n">${n.join(', ')||'–'}</div><span class="slot">${n.length&&isLive(k,c,S.sel)?liveDot():''}</span><em class="dc-c">${n.length}</em></div>`}).join('')}</section>`).join('')}`},
+${Object.keys(D).map(k=>`<section class="dc ${k}"><div class="dc-h"><i>${ico(k,19)}</i><b>${D[k].t}</b><span>${D[k].st.length} staff</span></div>${KS.map(c=>{const n=D[k].st.filter(p=>{const x=p.s[S.sel];return x==c||(c=='L'&&KA.includes(x))}).map(p=>esc(p.n));return`<div class="dc-r"><div class="dc-s"><i class="dot s${c}"></i><div><b>${SH[c][0]}</b>${c=='L'||!D[k].h[c]?'':`<small>${hh(D[k].h[c])}</small>`}</div></div><div class="dc-n">${n.join(', ')||'–'}</div><span class="slot">${n.length&&isLive(k,c,S.sel)?liveDot():''}</span><em class="dc-c">${n.length}</em></div>`}).join('')}</section>`).join('')}`},
 /* Tab Home: Settings, Administrator, Print Jadwal */
 config(){let b;if(S.tab=='config')b=cfgBody();
 else if(S.tab=='print')b=prBody();

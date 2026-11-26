@@ -32,13 +32,16 @@ class Division:
     def label(self) -> str:
         return self.title.upper()
 
-    # Jumlah staff pada satu shift dan hari
+    # Jumlah staff pada satu shift dan hari (Libur sudah termasuk Izin dan Sakit)
     def count(self, code: str, day: int) -> int:
-        return sum(1 for s in self.staff if s.shifts[day] == code)
+        codes = {code, *cfg.ABSENT} if code == "L" else {code}
+        return sum(1 for s in self.staff if s.shifts[day] in codes)
 
-    # Rekap shift satu staff (Izin/Sakit tidak dihitung, sama seperti Kosong)
+    # Rekap shift satu staff (Izin dan Sakit ikut masuk hitungan Libur)
     def totals(self, staff: Staff) -> dict:
-        return {c: staff.shifts.count(c) for c in cfg.SHIFT_ORDER}
+        tot = {c: staff.shifts.count(c) for c in cfg.SHIFT_ORDER}
+        tot["L"] += sum(staff.shifts.count(c) for c in cfg.ABSENT)
+        return tot
 
 
 # Data jadwal satu periode

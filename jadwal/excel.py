@@ -387,7 +387,9 @@ def build_admin(book: Book, sched: Schedule, blocks, last_row, live=True):
                 pg.put(y, col, tot[code], f=lf(f"=COUNTIF($C{y1}:$P{y1},{letter}${hdr})"))
             pg.put(y, 19, tot["P"] + tot["S"] + tot["R"], f=lf(f"=SUM(Q{y1}:S{y1})"),
                    bg=cfg.TOTAL_BG, bold=True)
-            pg.put(y, 20, tot["L"], f=lf(f"=COUNTIF($C{y1}:$P{y1},U${hdr})"))
+            libur = f"=COUNTIF($C{y1}:$P{y1},U${hdr})" + "".join(
+                f'+COUNTIF($C{y1}:$P{y1},"{cfg.SHIFTS[c][0]}")' for c in cfg.ABSENT)
+            pg.put(y, 20, tot["L"], f=lf(libur))
 
         pg.put(e, 0, "JUMLAH STAFF PER SHIFT", cs=16, bg=cfg.SUM_BG, fg=cfg.SUM_FG, bold=True,
                align="left", indent=1)
@@ -402,7 +404,11 @@ def build_admin(book: Book, sched: Schedule, blocks, last_row, live=True):
                 z = div.count(code, k)
                 bad = z == 0 and code != "L"
                 col = xlsxwriter.utility.xl_col_to_name(2 + k)
-                pg.put(y, 2 + k, z, f=lf(f"=COUNTIF({col}${first}:{col}${last},$A{y + 1})"),
+                rng = f"{col}${first}:{col}${last}"
+                hitung = f"=COUNTIF({rng},$A{y + 1})"
+                if code == "L":
+                    hitung += "".join(f'+COUNTIF({rng},"{cfg.SHIFTS[c][0]}")' for c in cfg.ABSENT)
+                pg.put(y, 2 + k, z, f=lf(hitung),
                        bg=cfg.BAD_BG if bad else bg, fg=cfg.BAD_FG if bad else fg, bold=True)
             pg.put(y, 16, name, cs=3, bg=bg, fg=fg, bold=True, align="left", indent=1)
             pg.put(y, 19, fmt_hours(div.hours[code]), cs=2, bg=bg, fg=fg)
