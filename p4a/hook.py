@@ -41,6 +41,8 @@ if(navigator.userAgent.indexOf('JadwalTema/light')>=0)document.documentElement.c
 <div class="spinner"><div></div><div></div><div></div><div></div><div></div><div></div></div>
 <script>
 try{var n=performance.getEntriesByType('navigation')[0];if(n&&n.type==='back_forward')location.replace('http://127.0.0.1:@PORT@/app')}catch(e){}
+/* Beri tahu Java bahwa halaman pertama sudah tergambar: lapisan penutup boleh dilepas */
+try{requestAnimationFrame(function(){requestAnimationFrame(function(){if(window.JadwalSplash)JadwalSplash.ready()})})}catch(e){}
 </script>
 </body>
 </html>
@@ -63,6 +65,30 @@ LATAR_JAVA_TERANG = "0xFFF6F8FC"
 JAVA_TANDA = "/* jadwal: latar WebView */"
 WEBVIEW_BARU = re.compile(r"(?P<lhs>[A-Za-z_][\w.]*)\s*=\s*new\s+WebView\s*\([^;]*\)\s*;")
 
+# Lapisan penutup: kotak polos berwarna tema di atas WebView sampai halaman pertama tergambar
+SPLASH_JS = "JadwalSplash"
+SPLASH_MAKS_MS = 3000
+LAPISAN_KODE = (
+    "final android.webkit.WebView __jv = @L@; "
+    "final android.os.Handler __jh = new android.os.Handler(android.os.Looper.getMainLooper()); "
+    "final int __jk = __jc; "
+    # p4a mengatur latar WebView sendiri sesudah baris pembuatan; pasang ulang setelah onPostExecute selesai
+    "__jh.post(new Runnable() { public void run() { __jv.setBackgroundColor(__jk); } }); "
+    "if (__jv.getContext() instanceof android.app.Activity) { "
+    "android.view.View __jd = ((android.app.Activity) __jv.getContext()).getWindow().getDecorView(); "
+    "if (__jd instanceof android.view.ViewGroup) { "
+    "final android.view.View __jo = new android.view.View(__jv.getContext()); "
+    "__jo.setBackgroundColor(__jk); "
+    "__jo.setClickable(true); "
+    "final Runnable __jx = new Runnable() { public void run() { "
+    "if (__jo.getParent() instanceof android.view.ViewGroup) { "
+    "((android.view.ViewGroup) __jo.getParent()).removeView(__jo); } } }; "
+    "((android.view.ViewGroup) __jd).addView(__jo, new android.widget.FrameLayout.LayoutParams(-1, -1)); "
+    "__jv.addJavascriptInterface(new Object() { "
+    "@android.webkit.JavascriptInterface public void ready() { __jh.post(__jx); } }, \"@SPLASH@\"); "
+    "__jh.postDelayed(__jx, @MAKS@); } } "
+).replace("@SPLASH@", SPLASH_JS).replace("@MAKS@", str(SPLASH_MAKS_MS))
+
 # Kode Java: baca tema tersimpan, atur latar WebView dan jendela, beri penanda tema di user-agent
 LATAR_KODE = (
     "{ boolean __jt = false; "
@@ -77,7 +103,8 @@ LATAR_KODE = (
     "((android.app.Activity) @L@.getContext()).getWindow().setBackgroundDrawable("
     "new android.graphics.drawable.ColorDrawable(__jc)); } "
     "@L@.getSettings().setUserAgentString(@L@.getSettings().getUserAgentString() "
-    "+ (__jt ? \" JadwalTema/light\" : \" JadwalTema/dark\")); } "
+    "+ (__jt ? \" JadwalTema/light\" : \" JadwalTema/dark\")); "
+    + LAPISAN_KODE + "} "
 )
 
 

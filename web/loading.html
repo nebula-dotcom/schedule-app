@@ -83,6 +83,8 @@ html[data-theme=light],html[data-theme=light] body{background:#f6f8fc}
 /* Pindah ke aplikasi setelah loading */
 var LOADING_MS = 2000;
 setTimeout(function(){location.replace('/app')}, LOADING_MS);
+/* Beri tahu Java bahwa halaman sudah tergambar (lapisan penutup dilepas) */
+try{requestAnimationFrame(function(){requestAnimationFrame(function(){if(window.JadwalSplash)JadwalSplash.ready()})})}catch(e){}
 </script>
 </body>
 </html>

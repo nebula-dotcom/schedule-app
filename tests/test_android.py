@@ -206,6 +206,32 @@ class HookTema(unittest.TestCase):
                             "class A { void f(){ a = new WebView(x); b = new WebView(y); } }"):
             self.assertEqual(hook.patch_java(tidak_pasti), tidak_pasti)
 
+    def test_lapisan_penutup_dipasang_di_java(self):
+        hook = self._hook()
+        out = hook.patch_java(self.JAVA_P)
+        # kotak polos berwarna tema di decor view (tidak hilang saat p4a memanggil setContentView)
+        self.assertIn("getWindow().getDecorView()", out)
+        self.assertIn("__jo.setBackgroundColor(__jk);", out)
+        self.assertIn("final int __jk = __jc;", out)
+        # dilepas saat halaman memberi sinyal, dengan batas waktu agar tidak menutup selamanya
+        self.assertIn(f'}}, "{hook.SPLASH_JS}");', out)
+        self.assertIn("@android.webkit.JavascriptInterface public void ready()", out)
+        self.assertIn(f"postDelayed(__jx, {hook.SPLASH_MAKS_MS});", out)
+        self.assertGreater(hook.SPLASH_MAKS_MS, 0)
+        # latar WebView dipasang ulang setelah kode p4a sendiri selesai
+        self.assertIn("__jh.post(new Runnable() { public void run() { __jv.setBackgroundColor(__jk); } });", out)
+        # satu kali saja
+        self.assertEqual(out.count("addJavascriptInterface"), 1)
+        self.assertEqual(hook.patch_java(out), out)
+
+    def test_halaman_loading_memberi_sinyal_ke_java(self):
+        hook = self._hook()
+        for nama, html in (("p4a/hook.py (LOADING_HTML)", hook.render_loading()),
+                           ("web/loading.html", (ROOT / "web" / "loading.html").read_text(encoding="utf-8"))):
+            self.assertIn(f"{hook.SPLASH_JS}.ready()", html, nama)
+            self.assertIn("requestAnimationFrame", html, nama)
+            self.assertIn(f"window.{hook.SPLASH_JS}", html, nama)
+
     def test_tombol_kembali_onkeydown_p4a_diteruskan_ke_javascript(self):
         hook = self._hook()
         sumber = ("public class PythonActivity extends Activity {\n"
