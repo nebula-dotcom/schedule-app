@@ -26,7 +26,7 @@ icon.adaptive_foreground.filename = %(source.dir)s/assets/icon_fg.png
 icon.adaptive_background.filename = %(source.dir)s/assets/icon_bg.png
 presplash.filename = %(source.dir)s/assets/presplash.png
 # Warna layar pembuka
-android.presplash_color = #f6f8fc
+android.presplash_color = #121212
 
 # Bootstrap WebView dan port server
 p4a.bootstrap = webview

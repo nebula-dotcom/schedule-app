@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
 /* Variabel warna dan ukuran */
-:root{--bg:#f6f8fc;--ink:#0f1b4c;--mute:#5b6785;--line:#dfe6f5;--pri:#2f66f2;--soft:#eaf0fe;
+:root{--bg:#121212;--ink:#ffffff;--mute:#ffffffa8;--line:#343032;--pri:#cc8eaa;--soft:#cc8eaa29;--card:#211d1f;--alt:#252525;--pt:#dcafc3;--we:#ff8080;--live:#7dff95;--pk:#211d1f;color-scheme:dark;
 --P:#bdd7ee;--Pt:#1f4e79;--S:#ffe699;--St:#7f6000;--R:#f6b26b;--Rt:#7f3f00;--L:#ededed;--Lt:#7f7f7f;
 --dP:#5b9bd5;--dS:#e6b800;--dR:#ed7d31;--dL:#a6a6a6;--tn:1px;--md:2px;--u:.8;--ub:.8}
 /* Dasar halaman */
@@ -17,7 +17,7 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:calc(13px*var(--u));line-height:1.45;font-feature-settings:"tnum";-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--ink);padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 #app{max-width:480px;margin:auto;padding:0 14px}
 /* Header aplikasi dan tombol Menu */
-header{margin:0 -14px 10px;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;background:#fff;box-shadow:0 1px 6px #0b16460f;display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:5}
+header{margin:0 -14px 10px;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;background:var(--card);box-shadow:0 1px 6px #0b16460f;display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:5}
 .logo{width:32px;height:32px;display:grid;place-items:center;flex:none}
 header b{font-size:calc(16.5px*var(--u));font-weight:700;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .badge{font-size:calc(10px*var(--u));font-weight:700;color:var(--pri);background:var(--soft);padding:2px 8px;border-radius:99px;letter-spacing:.3px}
@@ -33,23 +33,23 @@ button,input,select{font:inherit;color:inherit}svg{flex:none}
 .btn{border:0;background:var(--pri);color:#fff;font-weight:600;font-size:calc(12.5px*var(--u));border-radius:9px;padding:0 12px;min-height:38px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
 .btn.w{width:100%}.btn.dg{background:#fde8ea;color:#b4232f}.btn.gn{background:#15803d}.btn.gy{background:#e5e7eb;color:#374151}
 /* Tab Settings, Administrator, Print Jadwal */
-.tb{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:4px}
+.tb{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:4px}
 .tb button{width:100%;min-width:0;border:0;background:none;min-height:42px;padding:0;font-weight:600;color:var(--mute);display:flex;align-items:center;justify-content:center;gap:5px;position:relative;font-size:calc(clamp(11px,3.3vw,12px)*var(--u));line-height:1;white-space:nowrap}
 .tb svg{display:block;flex:none}.tb span{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .tb button.on{color:var(--pri)}.tb button.on::after{content:"";position:absolute;left:18%;right:18%;bottom:0;height:2px;border-radius:2px;background:var(--pri)}
 
 /* Tab Administrator: daftar divisi */
 .hda{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:18px 0 14px;padding-bottom:14px;border-bottom:1px solid #cfd8ec}
-.hda h2{margin:0;font-size:calc(19px*var(--u));font-weight:700;letter-spacing:-.02em;line-height:1.2;color:#1f2a44}
+.hda h2{margin:0;font-size:calc(19px*var(--u));font-weight:700;letter-spacing:-.02em;line-height:1.2;color:var(--ink)}
 .hda span{background:#e3f4f2;color:#14625d;font-size:calc(10.5px*var(--u));font-weight:700;letter-spacing:.5px;text-transform:uppercase;border-radius:99px;padding:4px 10px;white-space:nowrap}
 .dvs{display:flex;flex-direction:column;gap:12px;margin:0 0 10px}
-.dv{display:flex;align-items:center;gap:14px;width:100%;min-height:84px;padding:14px;border:1px solid #e6ebf6;border-radius:18px;background:linear-gradient(135deg,var(--t),#fff 72%);box-shadow:0 1px 2px #0f1b4c0f,0 10px 24px -14px #0f1b4c40;text-align:left;color:var(--ink)}
+.dv{display:flex;align-items:center;gap:14px;width:100%;min-height:84px;padding:14px;border:1px solid #e6ebf6;border-radius:18px;background:linear-gradient(135deg,var(--t),var(--card) 72%);box-shadow:0 1px 2px #0f1b4c0f,0 10px 24px -14px #0f1b4c40;text-align:left;color:var(--ink)}
 .dv.FLOOR{--k:#0f7a58}.dv.KITCHEN{--k:#b45309}
-.dv i{width:52px;height:52px;border-radius:15px;background:#fff;color:var(--k);display:grid;place-items:center;flex:none;box-shadow:inset 0 0 0 1px var(--c),0 6px 12px -6px var(--k)}
+.dv i{width:52px;height:52px;border-radius:15px;background:var(--card);color:var(--k);display:grid;place-items:center;flex:none;box-shadow:inset 0 0 0 1px var(--c),0 6px 12px -6px var(--k)}
 .dv .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}.dv b{font-size:calc(16px*var(--u));font-weight:700;letter-spacing:-.01em}
 .dv .av{display:flex;align-items:center}.dv .av em{font-style:normal;font-size:calc(12px*var(--u));color:var(--mute);margin-left:10px}
-.dv .a{width:26px;height:26px;border-radius:50%;background:var(--c);color:var(--k);border:2px solid #fff;display:grid;place-items:center;font-size:calc(10px*var(--u));font-weight:700;margin-left:-8px}.dv .a:first-child{margin-left:0}.dv .a.p{background:#eef1f8;color:#4a5673}
-.dv .go{width:32px;height:32px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 1px #e6ebf6;display:grid;place-items:center;color:var(--k);flex:none}
+.dv .a{width:26px;height:26px;border-radius:50%;background:var(--c);color:var(--k);border:2px solid var(--card);display:grid;place-items:center;font-size:calc(10px*var(--u));font-weight:700;margin-left:-8px}.dv .a:first-child{margin-left:0}.dv .a.p{background:var(--alt);color:var(--mute)}
+.dv .go{width:32px;height:32px;border-radius:50%;background:var(--card);box-shadow:inset 0 0 0 1px #e6ebf6;display:grid;place-items:center;color:var(--k);flex:none}
 /* Warna per divisi */
 .BAR{--t:#eef4ff;--b:#cfe0fb;--c:#d5e5fc;--k:#1f5fd0}.FLOOR{--t:#edf9f3;--b:#c9ebdc;--c:#d1f0e1;--k:#119468}
 .CASHIER{--t:#f6f0fe;--b:#e0d5f7;--c:#e6dcf9;--k:#6b3fc8}.KITCHEN{--t:#fff6ec;--b:#f8e1c6;--c:#fde6cc;--k:#dd7710}
@@ -58,7 +58,7 @@ button,input,select{font:inherit;color:inherit}svg{flex:none}
 /* Halaman divisi: breadcrumb dan pilih divisi */
 .crumb{display:flex;align-items:center;gap:8px;color:var(--pri);font-weight:600;font-size:calc(12px*var(--u));line-height:1;margin:2px 0 12px}
 .crumb a{color:var(--pri);text-decoration:none;display:flex;align-items:center;min-height:24px}.crumb svg{display:block}.crumb i{font-style:normal;color:var(--mute)}.crumb span{color:var(--ink)}.crumb em{width:1px;height:13px;background:var(--line)}
-.seg{display:flex;background:#fff;border:1px solid var(--line);border-radius:10px;padding:3px;margin-bottom:12px}
+.seg{display:flex;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:3px;margin-bottom:12px}
 .seg button{flex:1;min-width:0;padding:0 2px;border:0;background:none;min-height:34px;border-radius:8px;font-weight:600;color:var(--mute);font-size:calc(11px*var(--u));letter-spacing:.3px;text-transform:uppercase}
 .seg button.on{background:var(--pri);color:#fff}
 /* Tab Print Jadwal: judul dan tombol aksi */
@@ -67,25 +67,25 @@ button,input,select{font:inherit;color:inherit}svg{flex:none}
 .ab.cp{justify-content:center;margin-top:16px}.ab.cp .btn{flex:1 1 0;min-width:0;min-height:32px;padding:0 4px;font-size:calc(10px*var(--u));letter-spacing:.3px;border-radius:8px;gap:4px;white-space:nowrap}.ab.cp .btn svg{width:12px;height:12px;flex:none}
 /* Warna shift */
 .sP{background:var(--P);color:var(--Pt)}.sS{background:var(--S);color:var(--St)}.sR{background:var(--R);color:var(--Rt)}.sL{background:var(--L);color:var(--Lt)}
-.we,.we b{color:#c00000}
+.we,.we b{color:var(--we)}
 /* Legenda jam kerja */
-.lh{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:#f0f4fc;border:1px solid var(--line);border-radius:10px;padding:8px 6px;margin-top:4px}
+.lh{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--alt);border:1px solid var(--line);border-radius:10px;padding:8px 6px;margin-top:4px}
 .lh div{display:flex;gap:5px;font-size:calc(11px*var(--u));line-height:1.25}.lh div span{color:var(--mute);font-size:calc(9.5px*var(--u));display:block}.lh .dot{margin-top:3px}
 /* Tabel dasar */
 table{border-collapse:separate;border-spacing:0;width:100%;font-size:calc(12px*var(--u));text-align:center}
 td,th{padding:6px 2px;border-bottom:1px solid var(--line)}th{color:var(--mute);font-weight:600}
 /* Nav bawah: Ringkasan, Home, Jadwal Global */
-nav{position:fixed;bottom:0;left:0;right:0;z-index:10;background:#fff;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:10;background:var(--card);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
 nav div{max-width:480px;margin:auto;display:flex}
 nav button{flex:1;border:0;background:none;color:var(--mute);font-size:calc(11px*var(--u));font-weight:500;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative}
 nav button.on{color:var(--pri);font-weight:600}nav button.on::after{content:"";position:absolute;left:18%;right:18%;bottom:3px;height:2px;border-radius:2px;background:var(--pri)}
 /* Tab Settings: tanggal, bulan, tahun */
-.cfg{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 0;margin-top:8px}
+.cfg{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 0;margin-top:8px}
 .cfg label{padding:0 8px;text-align:center;font-size:calc(10.5px*var(--u));color:var(--mute);font-weight:600;display:flex;flex-direction:column;gap:4px;text-transform:uppercase;letter-spacing:.3px}
-.cfg input,.cfg select{width:100%;min-width:0;min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 18px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235b6785' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center;-webkit-appearance:none;appearance:none;text-align:center;text-align-last:center;color:var(--ink);font-size:calc(13px*var(--u));text-transform:none;letter-spacing:0;font-weight:500}
+.cfg input,.cfg select{width:100%;min-width:0;min-height:38px;border:1px solid var(--line);border-radius:8px;padding:0 18px;background:var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235b6785' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 8px center;-webkit-appearance:none;appearance:none;text-align:center;text-align-last:center;color:var(--ink);font-size:calc(13px*var(--u));text-transform:none;letter-spacing:0;font-weight:500}
 /* Popup bawah */
 #shade{position:fixed;inset:0;background:#0b164688;display:none;z-index:20}
-#sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:#fff;border-radius:16px 16px 0 0;padding:16px 14px calc(16px + env(safe-area-inset-bottom));max-width:480px;margin:auto;transform:translateY(110%);transition:transform .2s;max-height:80vh;overflow:auto}
+#sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:var(--card);border-radius:16px 16px 0 0;padding:16px 14px calc(16px + env(safe-area-inset-bottom));max-width:480px;margin:auto;transform:translateY(110%);transition:transform .2s;max-height:80vh;overflow:auto}
 #sheet.open{transform:none}#sheet h3{font-size:calc(15px*var(--u));font-weight:700;margin-bottom:10px}
 #sheet input{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:0 10px;min-height:40px;margin-bottom:10px}
 /* Daftar tombol Hapus Staff */
@@ -94,15 +94,15 @@ nav button.on{color:var(--pri);font-weight:600}nav button.on::after{content:"";p
 :focus-visible{outline:2px solid var(--pri);outline-offset:2px}
 @media(prefers-reduced-motion:reduce){#sheet{transition:none}}
 /* Tab Settings: kartu Hari dan Check */
-.cfg2{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px}
+.cfg2{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px}
 .tl{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:0;display:flex;flex-direction:column;align-items:stretch;overflow:hidden}
-.tl small{font-size:calc(10.5px*var(--u));color:var(--mute);font-weight:600;text-transform:uppercase;letter-spacing:.3px;text-align:center;padding:8px 6px;background:#fff;border-bottom:1px solid var(--line)}.tl b,.tl .ok{margin:10px auto;text-align:center}.tl b{font-size:calc(17px*var(--u));font-weight:700;min-height:24px}
+.tl small{font-size:calc(10.5px*var(--u));color:var(--mute);font-weight:600;text-transform:uppercase;letter-spacing:.3px;text-align:center;padding:8px 6px;background:var(--card);border-bottom:1px solid var(--line)}.tl b,.tl .ok{margin:10px auto;text-align:center}.tl b{font-size:calc(17px*var(--u));font-weight:700;min-height:24px}
 
 /* Tabel jadwal ala Excel */
 .xs{overflow:auto;-webkit-overflow-scrolling:touch;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .xw{width:max-content}
 .g{margin:0 -14px;--ox:0px}.g .xw{padding:0 14px 6px}
-.pv{background:#fff;border:1px solid var(--line);border-radius:10px;max-height:72vh;margin-bottom:10px;--ox:0px}.pv .xw{padding:8px}
+.pv{background:var(--card);border:1px solid var(--line);border-radius:10px;max-height:72vh;margin-bottom:10px;--ox:0px}.pv .xw{padding:8px}
 table.xt{border-collapse:separate;border-spacing:0;table-layout:fixed;width:auto;text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:calc(10.5px*var(--u));line-height:1.1;color:#000;margin:0}
 .xt td{padding:0 3px;border:0;white-space:nowrap;overflow:hidden;text-overflow:clip;vertical-align:middle;box-sizing:border-box}
 .xt td.e{background:transparent}
@@ -115,7 +115,7 @@ table.xt{border-collapse:separate;border-spacing:0;table-layout:fixed;width:auto
 .xt .ds{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;cursor:pointer;font-size:calc(16px*var(--u))}
 
 /* Banner periode jadwal */
-.pk{margin:-10px -14px 14px;padding:12px 14px 16px;background:#1f2a44;color:#fff;border-bottom:3px solid #1b7f79}
+.pk{margin:-10px -14px 14px;padding:12px 14px 16px;background:var(--pk);color:#fff;border-bottom:3px solid #1b7f79}
 .pk-t{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;color:#aeb9d6;font-size:calc(11px*var(--u));font-weight:600;letter-spacing:.6px}
 .pk-t span{text-transform:uppercase;white-space:nowrap}.pk-t i{display:grid;place-items:center;line-height:0}.pk-t i:first-child{justify-self:start}.pk-t i:last-child{justify-self:end}
 .pk-y{font-size:calc(11px*var(--u));font-weight:600;letter-spacing:.6px;color:#aeb9d6;white-space:nowrap}
@@ -125,24 +125,24 @@ table.xt{border-collapse:separate;border-spacing:0;table-layout:fixed;width:auto
 .pk-mo{font-size:calc(13px*var(--u));font-weight:600;color:#dbe3f5;line-height:1.3}
 .pk-l{justify-self:stretch;position:relative;display:flex;justify-content:center;align-items:center;min-height:24px;
 background:radial-gradient(circle at 3px 50%,#4fd1c5 3px,#0000 3.5px),radial-gradient(circle at calc(100% - 3px) 50%,#4fd1c5 3px,#0000 3.5px),linear-gradient(#ffffff3d,#ffffff3d) 0 50%/100% 1px no-repeat}
-.pk-l em{font-style:normal;font-size:calc(10.5px*var(--u));font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:#1f2a44;border:1px solid #ffffff3d;border-radius:99px;padding:3px 10px;white-space:nowrap}
+.pk-l em{font-style:normal;font-size:calc(10.5px*var(--u));font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:var(--pk);border:1px solid #ffffff3d;border-radius:99px;padding:3px 10px;white-space:nowrap}
 
 /* Tab Ringkasan: pilih tanggal */
-.rd{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;box-shadow:0 1px 3px #0b16460a}
+.rd{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;box-shadow:0 1px 3px #0b16460a}
 .rd-h{padding:12px 14px 10px;font-size:calc(15px*var(--u));font-weight:700;letter-spacing:-.2px}
 .rd-s{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}.rd-s::-webkit-scrollbar{display:none}
 .rd-g{flex:0 0 100%;display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:2px 14px 14px;scroll-snap-align:start;scroll-snap-stop:always}
-.rd-s button{min-width:0;width:100%;min-height:54px;border:1px solid var(--line);background:#fff;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--mute);font-size:calc(11px*var(--u));font-weight:500}
+.rd-s button{min-width:0;width:100%;min-height:54px;border:1px solid var(--line);background:var(--card);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--mute);font-size:calc(11px*var(--u));font-weight:500}
 .rd-s button b{font-size:calc(15px*var(--u));color:var(--ink);font-weight:700}
 .rd-s button.on{background:var(--pri);border-color:var(--pri);color:#fff}.rd-s button.on b{color:#fff}
-.rd-s button.we:not(.on),.rd-s button.we:not(.on) b{color:#c00000}
+.rd-s button.we:not(.on),.rd-s button.we:not(.on) b{color:var(--we)}
 /* Tab Ringkasan: kartu divisi per hari */
-.dc{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 3px #0b16460a}
+.dc{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 3px #0b16460a}
 .dc-h{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--t);border-bottom:1px solid var(--b)}
 .dc-h i{width:28px;height:28px;border-radius:50%;background:var(--c);color:var(--k);display:grid;place-items:center;flex:none}
 .dc-h b{font-size:calc(14px*var(--u));font-weight:700;letter-spacing:.2px}.dc-h span{margin-left:auto;color:var(--mute);font-size:calc(11px*var(--u));font-weight:500;text-transform:uppercase;letter-spacing:.4px}
-.dc-r{display:grid;grid-template-columns:108px 1fr 40px;align-items:stretch}.dc-r+.dc-r{border-top:1px solid var(--line)}
-.dc-s{display:flex;align-items:center;gap:7px;padding:9px 8px 9px 12px;background:#fafbfe;border-right:1px solid var(--line)}.dc-s b{display:block;font-size:calc(12.5px*var(--u));font-weight:600;line-height:1.2}.dc-s small{display:block;color:var(--mute);font-size:calc(10.5px*var(--u))}
+.dc-r{display:grid;grid-template-columns:108px 1fr 18px 40px;align-items:stretch}.dc-r+.dc-r{border-top:1px solid var(--line)}
+.dc-s{display:flex;align-items:center;gap:7px;padding:9px 8px 9px 12px;background:var(--alt);border-right:1px solid var(--line)}.dc-s b{display:block;font-size:calc(12.5px*var(--u));font-weight:600;line-height:1.2}.dc-s small{display:block;color:var(--mute);font-size:calc(10.5px*var(--u))}
 .dc-n{display:flex;align-items:center;padding:9px 8px 9px 10px;font-size:calc(12.5px*var(--u));line-height:1.4}
 .dc-c{align-self:center;justify-self:center;font-style:normal;min-width:24px;height:24px;border-radius:7px;display:grid;place-items:center;background:var(--soft);color:var(--pri);font-size:calc(12px*var(--u));font-weight:700}.dc-c.no{background:#fde1e4;color:#b4232f}
 
@@ -180,7 +180,7 @@ button.pr,a.pr{transform:scale(var(--ps));transition-duration:.09s;transition-ti
 @media(prefers-reduced-motion:reduce){button.pr,a.pr,.spx.pr svg,.dv.pr .go{transform:none}#rp{display:none}}
 
 /* Kartu Import Excel di Settings */
-.imp{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;display:flex;flex-direction:column;gap:10px}
+.imp{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px;display:flex;flex-direction:column;gap:10px}
 .imp-h{display:flex;gap:10px;align-items:center}.imp-h>i{flex:none;width:38px;height:38px;border-radius:10px;background:var(--soft);color:var(--pri);display:grid;place-items:center}
 .imp-h .nmf{min-width:0}.imp-h b{display:block;font-size:calc(13.5px*var(--u))}.imp-h small{display:block;color:var(--mute);font-size:calc(11px*var(--u));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .imp-n{font-size:calc(10.5px*var(--u));color:var(--mute);line-height:1.5}
@@ -198,15 +198,41 @@ button.pr,a.pr{transform:scale(var(--ps));transition-duration:.09s;transition-ti
 .it{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:calc(10.5px*var(--u))}
 .it th,.it td{height:30px;min-width:33px;text-align:center;padding:0 2px;border-bottom:1px solid var(--line);font-weight:600}
 .it th{background:var(--bg);color:var(--mute);font-size:calc(9px*var(--u));line-height:1.15;height:34px}.it th b{display:block;font-size:calc(11px*var(--u));color:var(--ink)}
-.it th.we,.it th.we b{color:#c00000}.it tr:last-child td{border-bottom:0}.it td.e{color:#b9c1d6;font-weight:400}
-.it .n{position:sticky;left:0;z-index:1;background:#fff;text-align:left;padding:0 8px;min-width:86px;max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-right:1px solid var(--line)}.it th.n{background:var(--bg);z-index:2;color:var(--mute)}
+.it th.we,.it th.we b{color:var(--we)}.it tr:last-child td{border-bottom:0}.it td.e{color:#b9c1d6;font-weight:400}
+.it .n{position:sticky;left:0;z-index:1;background:var(--card);text-align:left;padding:0 8px;min-width:86px;max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-right:1px solid var(--line)}.it th.n{background:var(--bg);z-index:2;color:var(--mute)}
 /* Legenda dan tombol Import Excel */
 .imp-lg{display:flex;gap:6px;flex-wrap:wrap}.imp-lg span{border-radius:99px;padding:3px 9px;font-size:calc(10px*var(--u));font-weight:700}
 .imp-b{display:flex;gap:8px}.imp-b .btn{flex:1}.imp-b .btn:last-child{flex:1.6}
+/* Tema terang, aksen, sakelar tema, dot shift */
+:root[data-theme=light]{--bg:#faf3f6;--ink:#000000;--mute:#654453;--line:#ede7ea;--soft:#ede7ea;--card:#fff;--alt:#faf3f6;--pt:#7e5668;--we:#c00000;--live:#1fbf4a;--pk:#4e343f;color-scheme:light}
+.btn,.seg button.on,.rd-s button.on,.rd-s button.on b{color:#000}.btn.gn{color:#fff}.btn.dg{color:#b4232f}.btn.gy{color:#374151}
+nav button.on,.tb button.on,.crumb,.crumb a,.badge{color:var(--pt)}nav button.on::after,.tb button.on::after{background:var(--pt)}
+.pv,.g .xw{background:#fff}
+.dc-c:not(.no){color:var(--k);background:var(--c)}
+:root .BAR{--t:#87d1ff1f;--b:#87d1ff40;--c:#87d1ff29;--k:#87d1ff}:root .FLOOR{--t:#7dff951f;--b:#7dff9540;--c:#7dff9529;--k:#7dff95}:root .CASHIER{--t:#dcafc31f;--b:#dcafc340;--c:#dcafc329;--k:#dcafc3}:root .KITCHEN{--t:#ffbc5e1f;--b:#ffbc5e40;--c:#ffbc5e29;--k:#ffbc5e}
+[data-theme=light] .BAR{--t:#eef8ff;--b:#addfff;--c:#addfff;--k:#000}[data-theme=light] .FLOOR{--t:#eefff1;--b:#abffb7;--c:#abffb7;--k:#000}[data-theme=light] .CASHIER{--t:#faf3f6;--b:#cc8eaa66;--c:#cc8eaa66;--k:#000}[data-theme=light] .KITCHEN{--t:#fff6ea;--b:#ffd194;--c:#ffd194;--k:#000}
+:root:not([data-theme=light]) .logo{border-radius:50%;box-shadow:0 0 0 1px #666}
+.tg{margin-left:auto;flex:none;width:46px;height:44px;padding:0;border:0;background:none;display:grid;place-items:center}
+.tg .pl{position:relative;display:block;width:46px;height:23px;border-radius:99px;background:#2b2b2b;color:#fff;box-shadow:inset 0 1px 3px #000,0 0 0 1px #ffffff26;transition:background .25s}
+.tg svg{position:absolute;top:4.5px;width:14px;height:14px;transition:opacity .25s}.tg .sn{left:5px;opacity:0}.tg .mo{right:5px}
+.tg .kn{position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fafafa;box-shadow:0 1px 3px #0006;transition:transform .25s,background .25s}
+[data-theme=light] .tg .pl{background:#efefef;color:#222;box-shadow:inset 0 1px 3px #0003,0 1px 2px #0002}[data-theme=light] .tg .kn{background:#333;transform:translateX(23px)}[data-theme=light] .tg .sn{opacity:1}[data-theme=light] .tg .mo{opacity:0}
+.slot{align-self:center;justify-self:center}.live{display:block;width:8px;height:8px;border-radius:50%;background:var(--live);animation:blink ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 0 0 #22c55e99}50%{opacity:.2;box-shadow:0 0 0 4px #22c55e00}}
+/* Rapikan sisa warna terang di mode gelap */
+:root:not([data-theme=light]) .hda{border-color:var(--line)}
+:root:not([data-theme=light]) .hda span{background:var(--soft);color:var(--pt)}
+:root:not([data-theme=light]) .dv{border-color:var(--line);box-shadow:none}
+:root:not([data-theme=light]) .dv .go{box-shadow:inset 0 0 0 1px var(--line)}
+:root:not([data-theme=light]) .btn.gy{background:#393939;color:#fff}
+:root:not([data-theme=light]) .btn.dg{background:#ff808026;color:#ff9b99}
+:root:not([data-theme=light]) .ok{background:#7dff951f;color:#9dffac}
+:root:not([data-theme=light]) .ok.no{background:#ff808026;color:#ff9b99}
+:root:not([data-theme=light]) #shade{background:#000a}
 </style>
 </head>
 <body>
-<div id="app"><header><div class="logo" id="lg"></div><b>California Pool &amp; Cafe</b><span class="badge">ADMIN</span><button class="mn" id="mn" aria-label="Menu"></button></header><main id="main"></main></div>
+<div id="app"><header><div class="logo" id="lg"></div><b>California Pool &amp; Cafe</b><span class="badge">ADMIN</span><button type="button" class="tg" id="tg" aria-label="Ganti tema"><span class="pl"><svg class="sn" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="5" stroke-width="2"/><circle cx="12" cy="12" r="9.5" stroke-width="3.5" pathLength="16" stroke-dasharray=".3 .7"/></svg><svg class="mo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11 4.5A8 8 0 1 0 19.5 16A7.2 7.2 0 0 1 11 4.5Z"/><path d="M17 2.5Q17 6 20.5 6Q17 6 17 9.5Q17 6 13.5 6Q17 6 17 2.5ZM21 9Q21 11.5 23.5 11.5Q21 11.5 21 14Q21 11.5 18.5 11.5Q21 11.5 21 9Z"/></svg><span class="kn"></span></span></button></header><main id="main"></main></div>
 <nav><div id="nav"></div></nav>
 <div id="shade"></div><div id="sheet" role="dialog" aria-modal="true"></div><div id="toast" role="status"></div>
 <script>
@@ -252,7 +278,7 @@ const KS=[...'PSRL'];
 function closeSheet(){$('#sheet').classList.remove('open');$('#shade').style.display='none'}
 function close(){closeSheet()}
 function open(h){$('#sheet').innerHTML=h;$('#sheet').classList.add('open');$('#shade').style.display='block'}
-$('#shade').onclick=close;$('#lg').innerHTML=BALL;$('#mn').innerHTML=ico('menu',26);
+$('#shade').onclick=close;$('#lg').innerHTML=BALL;
 
 /* Navigasi antar tab */
 const pageKey=()=>S.view=='config'?'config:'+S.tab:S.view,HOME='config:admin';
@@ -276,8 +302,9 @@ window.__back=onBack;
 
 if(!/; wv\)/.test(navigator.userAgent)){history.replaceState({jd:0},'');history.pushState({jd:1},'');
 addEventListener('popstate',e=>{if(e.state&&e.state.jd===0){onBack();history.pushState({jd:1},'')}})}
-/* Tombol Menu di header */
-$('#mn').onclick=()=>open(`<h3>Menu</h3><div style="display:grid;gap:8px"><button class="btn w" onclick="go('home')">Ringkasan</button><button class="btn w" onclick="go('config')">Home</button><button class="btn w" onclick="go('global')">Jadwal Global</button></div>`);
+/* Sakelar tema, disimpan di server aplikasi */
+$('#tg').onclick=async()=>{const r=document.documentElement,t=r.dataset.theme=='light'?'dark':'light';r.dataset.theme=t;
+try{const x=await fetch('/api/theme',{method:'PUT',body:JSON.stringify({theme:t}),keepalive:true});if(!x.ok)throw 0}catch(e){toast('Tema gagal disimpan')}};
 /* Simpan dan gambar ulang tab */
 function rx(){persist();close();const o=$('.xs'),l=o?o.scrollLeft:0,t=o?o.scrollTop:0,y=scrollY;draw();const n=$('.xs');if(n){n.scrollLeft=l;n.scrollTop=t}scrollTo(0,y)}
 function setS(i,j,c){D[S.div].st[i].s[j]=c;rx()}
@@ -423,7 +450,7 @@ if(v){S.start=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;$
 const V={
 /* Tab Ringkasan */
 home(){const a=days(),x=a[S.sel];return`<div class="rd"><div class="rd-h">${DAYL[x.d.getDay()]}, ${x.x} ${MONL[x.d.getMonth()]} ${x.d.getFullYear()}</div><div class="rd-s">${[0,1].map(g=>`<div class="rd-g">${a.slice(g*7,g*7+7).map((y,i)=>{const n=g*7+i;return`<button class="${n==S.sel?'on':''}${y.we?' we':''}" onclick="go('home',{sel:${n}})">${y.n}<b>${y.x}</b></button>`}).join('')}</div>`).join('')}</div></div>
-${Object.keys(D).map(k=>`<section class="dc ${k}"><div class="dc-h"><i>${ico(k,19)}</i><b>${D[k].t}</b><span>${D[k].st.length} staff</span></div>${KS.map(c=>{const n=D[k].st.filter(p=>p.s[S.sel]==c).map(p=>esc(p.n));return`<div class="dc-r"><div class="dc-s"><i class="dot s${c}"></i><div><b>${SH[c][0]}</b>${c=='L'||!D[k].h[c]?'':`<small>${hh(D[k].h[c])}</small>`}</div></div><div class="dc-n">${n.join(', ')||'–'}</div><em class="dc-c">${n.length}</em></div>`}).join('')}</section>`).join('')}`},
+${Object.keys(D).map(k=>`<section class="dc ${k}"><div class="dc-h"><i>${ico(k,19)}</i><b>${D[k].t}</b><span>${D[k].st.length} staff</span></div>${KS.map(c=>{const n=D[k].st.filter(p=>p.s[S.sel]==c).map(p=>esc(p.n));return`<div class="dc-r"><div class="dc-s"><i class="dot s${c}"></i><div><b>${SH[c][0]}</b>${c=='L'||!D[k].h[c]?'':`<small>${hh(D[k].h[c])}</small>`}</div></div><div class="dc-n">${n.join(', ')||'–'}</div><span class="slot">${n.length&&isLive(k,c,S.sel)?liveDot():''}</span><em class="dc-c">${n.length}</em></div>`}).join('')}</section>`).join('')}`},
 /* Tab Home: Settings, Administrator, Print Jadwal */
 config(){let b;if(S.tab=='config')b=cfgBody();
 else if(S.tab=='print')b=prBody();
@@ -437,7 +464,8 @@ ${xv('adm','pv',k)}
 /* Tab Jadwal Global */
 global(){return xv('gl','g')}};
 /* Gambar halaman dan nav bawah */
-function draw(){$('#main').innerHTML=V[S.view]();const q=$('.rd-s');if(q)q.scrollLeft=Math.floor(S.sel/7)*q.clientWidth;const cur=S.view=='home'?'home':S.view=='global'?'global':'config';
+let _lv='',_sig='';
+function draw(){if(S.view=='home'&&_lv!='home')S.sel=todayIdx();_lv=S.view;_sig=liveSig();$('#main').innerHTML=V[S.view]();const q=$('.rd-s');if(q)q.scrollLeft=Math.floor(S.sel/7)*q.clientWidth;const cur=S.view=='home'?'home':S.view=='global'?'global':'config';
 $('#nav').innerHTML=[['home','sum','Ringkasan'],['config','home','Home'],['global','cal','Jadwal Global']].map(([k,i,l])=>`<button class="${k==cur?'on':''}" onclick="go('${k}')">${ico(i,26)}${l}</button>`).join('');lock()}
 /* Garis tabel tipis sesuai layar */
 function bw(){const d=devicePixelRatio||1,p=n=>((n+.01)/d).toFixed(3)+'px',r=document.documentElement.style;r.setProperty('--tn',p(1));r.setProperty('--md',p(2))}
@@ -458,12 +486,23 @@ addEventListener('resize',lock);
 
 /* Penanda tanggal hari ini */
 const ymd=d=>d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
-const todayIdx=()=>{const n=ymd(new Date()),i=days().findIndex(x=>ymd(x.d)==n);return i<0?0:i};
-let _today=ymd(new Date());
-function tickDay(){const t=ymd(new Date());if(t==_today)return;_today=t;S.sel=todayIdx();if(S.view=='home')draw()}
-setInterval(tickDay,20000);addEventListener('focus',tickDay);document.addEventListener('visibilitychange',()=>{if(!document.hidden)tickDay()});
+const idxOf=d=>days().findIndex(x=>ymd(x.d)==ymd(d));
+/* Jam "16.30 – 00.30" ke menit; lewat tengah malam ditambah 24 jam */
+const mins=t=>{const m=/(\d{1,2})[.:](\d\d)\D+(\d{1,2})[.:](\d\d)/.exec(t||'');if(!m)return null;const a=+m[1]*60+ +m[2],b=+m[3]*60+ +m[4];return[a,b<=a?b+1440:b]};
+const staffed=(k,c,i)=>D[k].st.some(p=>p.s[i]==c);
+/* Hari kerja: tetap kemarin selama shift berstaff kemarin belum selesai */
+function workDay(){const n=new Date(),y=new Date(n.getFullYear(),n.getMonth(),n.getDate()-1),i=idxOf(y),m=n.getHours()*60+n.getMinutes()+1440;
+return i>=0&&Object.keys(D).some(k=>[...'PSR'].some(c=>{const t=mins(D[k].h[c]);return t&&m<t[1]&&staffed(k,c,i)}))?y:n}
+const todayIdx=()=>Math.max(idxOf(workDay()),0);
+function isLive(k,c,i){const t=c!='L'&&mins(D[k].h[c]),x=days()[i];if(!t||!x)return false;const d=x.d,m=(Date.now()-new Date(d.getFullYear(),d.getMonth(),d.getDate()))/60000;return m>=t[0]&&m<t[1]}
+const liveSig=()=>Object.keys(D).map(k=>[...'PSR'].map(c=>+(staffed(k,c,S.sel)&&isLive(k,c,S.sel))).join('')).join('');
+const liveDot=()=>`<i class="live" role="img" aria-label="Sedang bekerja" style="animation-duration:${(.9+Math.random()).toFixed(2)}s;animation-delay:-${(Math.random()*2).toFixed(2)}s"></i>`;
+let _today=0;
+function tickDay(){const t=ymd(workDay());if(t!=_today){_today=t;S.sel=todayIdx();if(S.view=='home')draw()}else if(S.view=='home'&&liveSig()!=_sig)draw()}
+setInterval(tickDay,10000);addEventListener('focus',tickDay);
+document.addEventListener('visibilitychange',()=>{if(document.hidden){_lv=''}else{tickDay();if(S.view=='home')draw()}});
 /* Mulai aplikasi */
-loadState().finally(()=>{S.sel=todayIdx();draw()});
+loadState().finally(()=>{_today=ymd(workDay());S.sel=todayIdx();draw()});
 
 /* Kartu Import Excel di Settings */
 let IM={st:'idle'};const IMX=350*1024,imL={P:'P',S:'S',R:'M',L:'L'};

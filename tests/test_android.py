@@ -179,11 +179,11 @@ class HookTema(unittest.TestCase):
                   "    PythonActivity.mActivity.mWebView = new WebView(PythonActivity.mActivity);\n"
                   "    mWebView.getSettings().setJavaScriptEnabled(true);\n  }\n}\n")
         out = hook.patch_java(sumber)
-        self.assertIn("PythonActivity.mActivity.mWebView.setBackgroundColor(0xFFF6F8FC);", out)
+        self.assertIn("PythonActivity.mActivity.mWebView.setBackgroundColor(0xFF121212);", out)
         self.assertLess(out.index("setBackgroundColor"), out.index("getSettings"))
         self.assertEqual(hook.patch_java(out), out)
         lokal = hook.patch_java("void f(){ WebView w = new WebView(this); w.loadUrl(u); }")
-        self.assertIn("w.setBackgroundColor(0xFFF6F8FC);", lokal)
+        self.assertIn("w.setBackgroundColor(0xFF121212);", lokal)
         for tidak_pasti in ("class A { void f(){} }",
                             "class A { void f(){ a = new WebView(x); b = new WebView(y); } }"):
             self.assertEqual(hook.patch_java(tidak_pasti), tidak_pasti)
@@ -262,7 +262,7 @@ class HookTema(unittest.TestCase):
             java.parent.mkdir(parents=True)
             java.write_text("class P { void f(){ mWebView = new WebView(this); } }", encoding="utf-8")
             hook.before_apk_build(SimpleNamespace(_dist=SimpleNamespace(dist_dir=str(dist))))
-            self.assertIn("mWebView.setBackgroundColor(0xFFF6F8FC);", java.read_text(encoding="utf-8"))
+            self.assertIn("mWebView.setBackgroundColor(0xFF121212);", java.read_text(encoding="utf-8"))
             java.write_text("class P { boolean onKeyDown(int keyCode, KeyEvent event) { return false; } }", encoding="utf-8")
             hook.before_apk_build(SimpleNamespace(_dist=SimpleNamespace(dist_dir=str(dist))))
             self.assertIn("window.__back", java.read_text(encoding="utf-8"))
@@ -299,7 +299,7 @@ class HookTema(unittest.TestCase):
         a = hook.patch_file_chooser(hook.patch_java(self.JAVA_P))
         b = hook.patch_java(hook.patch_file_chooser(self.JAVA_P))
         for out in (a, b):
-            self.assertIn("setBackgroundColor(0xFFF6F8FC);", out)
+            self.assertIn("setBackgroundColor(0xFF121212);", out)
             self.assertIn("onShowFileChooser", out)
             self.assertEqual(out.count("{"), out.count("}"))
             self.assertEqual(hook.patch_file_chooser(hook.patch_java(out)), out)

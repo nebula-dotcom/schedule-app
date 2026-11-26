@@ -23,6 +23,15 @@ PAGES = {"/": "loading.html", "/app": "index.html"}
 EXPORT_PATH = re.compile(r"^/api/export/([^/]+)$")
 
 
+# Tema tersimpan; bawaan gelap
+def read_theme() -> str:
+    try:
+        saved = (cfg.DATA_DIR / "theme.txt").read_text(encoding="utf-8").strip()
+    except OSError:
+        saved = ""
+    return "light" if saved == "light" else "dark"
+
+
 # Galat HTTP dengan kode status
 class HttpError(Exception):
     def __init__(self, status: int, message: str):
@@ -97,7 +106,16 @@ class Handler(BaseHTTPRequestHandler):
     # Daftar rute
     def _route(self, method: str, path: str):
         if path in PAGES and method == "GET":
-            return self._send(200, (cfg.WEB_DIR / PAGES[path]).read_bytes(), "text/html; charset=utf-8")
+            page = (cfg.WEB_DIR / PAGES[path]).read_bytes()
+            page = page.replace(b'<html lang="id"', f'<html lang="id" data-theme="{read_theme()}"'.encode(), 1)
+            return self._send(200, page, "text/html; charset=utf-8")
+        if path == "/api/theme" and method == "PUT":
+            body = self._read_json()
+            if not isinstance(body, dict) or body.get("theme") not in ("dark", "light"):
+                raise HttpError(400, "Tema tidak dikenal.")
+            cfg.DATA_DIR.mkdir(parents=True, exist_ok=True)
+            (cfg.DATA_DIR / "theme.txt").write_text(body["theme"], encoding="utf-8")
+            return self._json({"ok": True})
         if path == "/favicon.ico" and method == "GET":
             return self._send(204, b"", "image/x-icon")
         if path == "/api/state":

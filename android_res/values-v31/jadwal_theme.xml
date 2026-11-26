@@ -2,9 +2,9 @@
 <!-- Tema Android 12+: splash tanpa ikon -->
 <resources>
     <style name="JadwalTheme" parent="@android:style/Theme.Light.NoTitleBar">
-        <item name="android:windowBackground">#F6F8FC</item>
+        <item name="android:windowBackground">#121212</item>
         <item name="android:forceDarkAllowed">false</item>
-        <item name="android:windowSplashScreenBackground">#F6F8FC</item>
+        <item name="android:windowSplashScreenBackground">#121212</item>
         <item name="android:windowSplashScreenAnimatedIcon">@android:color/transparent</item>
     </style>
 </resources>

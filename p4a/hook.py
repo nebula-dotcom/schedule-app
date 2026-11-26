@@ -13,7 +13,7 @@ LOADING_HTML = """<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Jadwal Kerja</title>
 <style>
-html,body{height:100%;margin:0;background:#f6f8fc}
+html,body{height:100%;margin:0;background:#121212}
 body{display:flex;align-items:center;justify-content:center;overflow:hidden}
 
 /* From Uiverse.io by AqFox */
@@ -53,7 +53,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 # Patch latar WebView
-LATAR_JAVA = "0xFFF6F8FC"
+LATAR_JAVA = "0xFF121212"
 JAVA_TANDA = "/* jadwal: latar WebView */"
 WEBVIEW_BARU = re.compile(r"(?P<lhs>[A-Za-z_][\w.]*)\s*=\s*new\s+WebView\s*\([^;]*\)\s*;")
 
@@ -168,7 +168,7 @@ def apply_back_button(dist_dir: Path) -> None:
 # Pasang latar WebView
 def apply_webview_background(dist_dir: Path) -> None:
     files = activity_files(dist_dir)
-    if patch_activity_files(files, patch_java, JAVA_TANDA, "[hook] latar WebView #F6F8FC dipasang di {java}"):
+    if patch_activity_files(files, patch_java, JAVA_TANDA, "[hook] latar WebView #121212 dipasang di {java}"):
         return
     print("[hook] PERINGATAN: pembuatan WebView di PythonActivity.java (file bawaan p4a di folder dist, bukan file "
           "proyek ini) tidak ditemukan/ganda -- latar WebView hanya diatur lewat droid.py setelah Python jalan, "

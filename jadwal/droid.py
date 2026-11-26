@@ -10,7 +10,7 @@ ON_ANDROID = "ANDROID_ARGUMENT" in os.environ
 
 # Konstanta tombol kembali dan latar WebView
 KEYCODE_BACK = 4
-LATAR_WEBVIEW = "#F6F8FC"
+LATAR_WEBVIEW = "#121212"
 ACTION_UP = 1
 # State hook WebView dan antrean tugas
 _hooked = None
