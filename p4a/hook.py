@@ -120,6 +120,32 @@ def patch_java(text: str) -> str:
     return text[:m.end()] + " " + kode + JAVA_TANDA + text[m.end():]
 
 
+# Latar jendela paling awal: dibaca dari tema tersimpan di awal onCreate, sebelum layar pembuka dan WebView ada
+AWAL_TANDA = "/* jadwal: latar jendela awal */"
+ONCREATE = re.compile(r"\bvoid\s+onCreate\s*\(\s*(?:final\s+)?(?:android\.os\.)?Bundle\s+\w+\s*\)\s*(?:throws[^{]*)?\{")
+AWAL_KODE = (
+    "{ try { boolean __jat = false; java.io.File __jaf = new java.io.File(getFilesDir(), \"data/theme.txt\"); "
+    "if (__jaf.isFile()) { "
+    "java.io.BufferedReader __jar = new java.io.BufferedReader(new java.io.FileReader(__jaf)); "
+    "try { String __jal = __jar.readLine(); if (__jal != null && \"light\".equals(__jal.trim())) { __jat = true; } } "
+    "finally { __jar.close(); } } "
+    "getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(__jat ? @TERANG@ : @GELAP@)); "
+    "} catch (Exception __jae) { } } "
+)
+
+
+# Sisipkan latar jendela awal di onCreate
+def patch_awal(text: str) -> str:
+    if AWAL_TANDA in text:
+        return text
+    cocok = list(ONCREATE.finditer(text))
+    if len(cocok) != 1:
+        return text
+    m = cocok[0]
+    kode = AWAL_KODE.replace("@TERANG@", LATAR_JAVA_TERANG).replace("@GELAP@", LATAR_JAVA)
+    return text[:m.end()] + " " + AWAL_TANDA + " " + kode + text[m.end():]
+
+
 # Patch tombol kembali
 BACK_TANDA = "/* jadwal: tombol kembali */"
 BACK_KEYDOWN = re.compile(r"\bboolean\s+onKeyDown\s*\(\s*(?:final\s+)?int\s+(?P<k>\w+)\s*,\s*"
@@ -214,6 +240,18 @@ def apply_back_button(dist_dir: Path) -> None:
         print("[hook] PythonActivity.java tidak ada di dist ini.")
     keys = re.compile(r"Tap again|onBackPressed|KEYCODE_BACK|onKeyDown|onKeyUp|dispatchKeyEvent|OnBackInvoked|Toast|goBack|canGoBack")
     print_related_lines(files, keys.search, "[hook] baris terkait tombol kembali di {java}:", 40)
+
+
+# Pasang latar jendela awal
+def apply_early_background(dist_dir: Path) -> None:
+    files = activity_files(dist_dir)
+    if patch_activity_files(files, patch_awal, AWAL_TANDA, "[hook] latar jendela awal (ikut tema tersimpan) dipasang di {java}"):
+        return
+    print("[hook] PERINGATAN: onCreate(Bundle) di PythonActivity.java (file bawaan p4a, bukan file proyek ini) tidak "
+          "ditemukan/ganda -- latar jendela sebelum WebView ada tetap mengikuti tema bawaan (gelap).")
+    if not files:
+        print("[hook] PythonActivity.java tidak ada di dist ini.")
+    print_related_lines(files, lambda b: "onCreate" in b, "[hook] baris onCreate di {java}:", 20)
 
 
 # Pasang latar WebView
@@ -431,6 +469,7 @@ def apply_theme(dist_dir: Path) -> None:
 def before_apk_build(toolchain):
     dist_dir = Path(toolchain._dist.dist_dir)
     apply_theme(dist_dir)
+    apply_early_background(dist_dir)
     apply_webview_background(dist_dir)
     apply_back_button(dist_dir)
     apply_file_chooser(dist_dir)

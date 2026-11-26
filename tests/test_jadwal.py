@@ -307,6 +307,21 @@ class ApiServer(unittest.TestCase):
     def post(self, jalur, json=None, data=None):
         return self.minta("POST", jalur, json, None if data is None else data.encode())
 
+    def test_simpan_tema_memberi_tahu_splash_android(self):
+        panggilan = []
+        asli = (self.aplikasi.droid.ON_ANDROID, self.aplikasi.droid.apply_splash_theme)
+        self.aplikasi.droid.apply_splash_theme = lambda tema=None: panggilan.append(tema)
+        try:
+            self.assertEqual(self.put("/api/theme", {"theme": "light"}).status_code, 200)     # bukan Android: tidak dipanggil
+            self.assertEqual(panggilan, [])
+            self.aplikasi.droid.ON_ANDROID = True
+            self.assertEqual(self.put("/api/theme", {"theme": "dark"}).status_code, 200)
+            self.assertEqual(self.put("/api/theme", {"theme": "ungu"}).status_code, 400)       # tema asing: tidak dipanggil
+        finally:
+            self.aplikasi.droid.ON_ANDROID, self.aplikasi.droid.apply_splash_theme = asli
+        self.assertEqual(panggilan, ["dark"])
+        self.assertEqual((Path(self.tmp.name) / "theme.txt").read_text(encoding="utf-8"), "dark")
+
     def test_halaman_loading_lalu_aplikasi(self):
         r = self.get("/")
         self.assertEqual(r.status_code, 200)

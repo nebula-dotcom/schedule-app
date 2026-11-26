@@ -15,6 +15,9 @@ KEYCODE_BACK = 4
 LATAR_WEBVIEW = "#121212"
 LATAR_WEBVIEW_TERANG = "#f6f8fc"
 ACTION_UP = 1
+# Nama gaya splash sistem (android_res/values-v31/jadwal_splash.xml)
+SPLASH_GELAP = "JadwalSplashDark"
+SPLASH_TERANG = "JadwalSplashLight"
 # State hook WebView dan antrean tugas
 _hooked = None
 _keep = []
@@ -61,6 +64,8 @@ def main_loop(stop: threading.Event | None = None) -> None:
             _activity()
         except Exception as err:
             print("main_loop: activity belum siap:", err)
+        else:
+            _terapkan_splash_aman(nama_splash(cfg.read_theme()))
         next_hook = 0.0
         while stop is None or not stop.is_set():
             try:
@@ -82,6 +87,41 @@ def main_loop(stop: threading.Event | None = None) -> None:
                 next_hook = time.monotonic() + (3 if ok else 0.5)
     finally:
         _main_id[0] = None
+
+
+# Nama gaya splash sesuai tema
+def nama_splash(theme: str) -> str:
+    return SPLASH_TERANG if theme == "light" else SPLASH_GELAP
+
+
+# Pilih tema splash sistem untuk peluncuran berikutnya (Android 13+); tidak menunggu dan tidak pernah gagal
+def apply_splash_theme(theme: str | None = None) -> None:
+    if not ON_ANDROID:
+        return
+    nama = nama_splash(theme if theme is not None else cfg.read_theme())
+    try:
+        run_on_main(_terapkan_splash_aman, nama, wait=False)
+    except Exception as err:
+        print("splash_theme:", err)
+
+
+# Terapkan splash, galat hanya dicatat
+def _terapkan_splash_aman(nama: str) -> None:
+    try:
+        _terapkan_splash(nama)
+    except Exception as err:
+        print("splash_theme:", err)
+
+
+# SplashScreen.setSplashScreenTheme (API 33): sistem mengingatnya untuk peluncuran berikutnya
+def _terapkan_splash(nama: str) -> None:
+    from jnius import autoclass
+    if autoclass("android.os.Build$VERSION").SDK_INT < 33:
+        return
+    activity = _activity()
+    res_id = activity.getResources().getIdentifier(nama, "style", activity.getPackageName())
+    if res_id:
+        activity.getSplashScreen().setSplashScreenTheme(res_id)
 
 
 # Simpan file ke folder Download

@@ -111,6 +111,8 @@ class Handler(BaseHTTPRequestHandler):
                 raise HttpError(400, "Tema tidak dikenal.")
             cfg.DATA_DIR.mkdir(parents=True, exist_ok=True)
             (cfg.DATA_DIR / "theme.txt").write_text(body["theme"], encoding="utf-8")
+            if droid.ON_ANDROID:
+                droid.apply_splash_theme(body["theme"])      # splash sistem untuk peluncuran berikutnya ikut tema
             return self._json({"ok": True})
         if path == "/favicon.ico" and method == "GET":
             return self._send(204, b"", "image/x-icon")

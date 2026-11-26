@@ -19,14 +19,14 @@ orientation = portrait
 fullscreen = 0
 # Tema aplikasi
 android.apptheme = @style/JadwalTheme
-android.add_resources = android_res/values/jadwal_theme.xml:values/jadwal_theme.xml, android_res/values-v31/jadwal_theme.xml:values-v31/jadwal_theme.xml
+android.add_resources = android_res/values/jadwal_theme.xml:values/jadwal_theme.xml, android_res/values-v31/jadwal_theme.xml:values-v31/jadwal_theme.xml, android_res/values-v31/jadwal_splash.xml:values-v31/jadwal_splash.xml
 
 icon.filename = %(source.dir)s/assets/icon.png
 icon.adaptive_foreground.filename = %(source.dir)s/assets/icon_fg.png
 icon.adaptive_background.filename = %(source.dir)s/assets/icon_bg.png
 presplash.filename = %(source.dir)s/assets/presplash.png
-# Warna layar pembuka
-android.presplash_color = #121212
+# Layar pembuka transparan: warna latar jendela dipasang hook sesuai tema tersimpan (gelap/terang)
+android.presplash_color = #00000000
 
 # Bootstrap WebView dan port server
 p4a.bootstrap = webview

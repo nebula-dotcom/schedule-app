@@ -88,6 +88,11 @@ class TemaLatar(unittest.TestCase):
             self.assertIn(f"android_res/{sub}/jadwal_theme.xml:{sub}/jadwal_theme.xml", spec)
             self.assertTrue((ROOT / "android_res" / sub / "jadwal_theme.xml").is_file())
 
+    def test_resource_splash_terdaftar(self):
+        spec = (ROOT / "buildozer.spec").read_text(encoding="utf-8")
+        self.assertIn("android_res/values-v31/jadwal_splash.xml:values-v31/jadwal_splash.xml", spec)
+        self.assertTrue((ROOT / "android_res" / "values-v31" / "jadwal_splash.xml").is_file())
+
     def test_splash_sistem_tanpa_ikon_dan_force_dark(self):
         xml = (ROOT / "android_res" / "values-v31" / "jadwal_theme.xml").read_text(encoding="utf-8")
         self.assertIn("forceDarkAllowed", xml)
@@ -148,17 +153,33 @@ class WarnaSeragam(unittest.TestCase):
         self.assertTrue(hook.LATAR_JAVA_TERANG.upper().startswith("0XFF"), "latar WebView terang harus tidak transparan")
         self.assertEqual(droid.LATAR_WEBVIEW_TERANG.lower(), self.terang, "jadwal/droid.py (LATAR_WEBVIEW_TERANG)")
 
-    def test_presplash(self):
-        warna = self._cari(r"(?m)^android\.presplash_color\s*=\s*" + self.HEX, self._baca("buildozer.spec"),
+    def test_presplash_transparan(self):
+        """Layar pembuka p4a tidak boleh berwarna sendiri: warna latar datang dari jendela (hook, sesuai tema tersimpan)."""
+        warna = self._cari(r"(?m)^android\.presplash_color\s*=\s*(#[0-9a-fA-F]{8})", self._baca("buildozer.spec"),
                            "buildozer.spec (android.presplash_color)")
-        self.assertEqual(warna, self.dasar, "buildozer.spec (android.presplash_color)")
+        self.assertEqual(warna, "#00000000", "buildozer.spec (android.presplash_color)")
         from PIL import Image
-        gambar = Image.open(ROOT / "assets" / "presplash.png").convert("RGB")
-        for titik in ((0, 0), (gambar.width // 2, gambar.height // 2), (gambar.width - 1, gambar.height - 1)):
-            self.assertEqual("#%02x%02x%02x" % gambar.getpixel(titik), self.dasar, f"assets/presplash.png {titik}")
+        gambar = Image.open(ROOT / "assets" / "presplash.png").convert("RGBA")
+        self.assertLessEqual(gambar.width * gambar.height, 64, "presplash.png dibuat sekecil mungkin")
+        for x in range(gambar.width):
+            for y in range(gambar.height):
+                self.assertEqual(gambar.getpixel((x, y))[3], 0, f"assets/presplash.png ({x},{y}) harus transparan")
+
+    def test_splash_sistem_per_tema(self):
+        import xml.etree.ElementTree as ET
+        akar = ET.parse(ROOT / "android_res" / "values-v31" / "jadwal_splash.xml").getroot()
+        warna = {}
+        for gaya in akar.iter("style"):
+            for butir in gaya.iter("item"):
+                if butir.get("name") == "android:windowSplashScreenBackground":
+                    warna[gaya.get("name")] = butir.text.strip().lower()
+        self.assertEqual(warna.get(droid.SPLASH_GELAP), self.dasar, "gaya splash gelap")
+        self.assertEqual(warna.get(droid.SPLASH_TERANG), self.terang, "gaya splash terang")
+        self.assertEqual(droid.nama_splash("light"), droid.SPLASH_TERANG)
+        for lain in ("dark", "", "ngawur"):
+            self.assertEqual(droid.nama_splash(lain), droid.SPLASH_GELAP, lain)
 
 
-# Tes hook build: tema, tombol kembali, pemilih file
 class HookTema(unittest.TestCase):
     @staticmethod
     def _hook():
@@ -205,6 +226,41 @@ class HookTema(unittest.TestCase):
         for tidak_pasti in ("class A { void f(){} }",
                             "class A { void f(){ a = new WebView(x); b = new WebView(y); } }"):
             self.assertEqual(hook.patch_java(tidak_pasti), tidak_pasti)
+
+    def test_latar_jendela_awal_dipasang_di_oncreate(self):
+        hook = self._hook()
+        sumber = ("public class PythonActivity extends Activity {\n"
+                  "  @Override\n  protected void onCreate(Bundle savedInstanceState) {\n"
+                  "    super.onCreate(savedInstanceState);\n    showLoadingScreen();\n  }\n}\n")
+        out = hook.patch_awal(sumber)
+        self.assertIn("data/theme.txt", out)
+        self.assertIn("__jat ? 0xFFF6F8FC : 0xFF121212", out)
+        self.assertLess(out.index("setBackgroundDrawable"), out.index("super.onCreate"))      # paling awal
+        self.assertLess(out.index("@Override"), out.index("onCreate"))
+        self.assertEqual(out.count("{") - out.count("}"), sumber.count("{") - sumber.count("}"))
+        self.assertEqual(hook.patch_awal(out), out)                                          # aman diulang
+        for tidak_pasti in ("class A { void f(){} }",
+                            "class A { void onCreate(Bundle a){} void onCreate(Bundle b){} }"):
+            self.assertEqual(hook.patch_awal(tidak_pasti), tidak_pasti)
+
+    def test_latar_jendela_awal_ikut_before_apk_build_dan_ada_peringatan(self):
+        import contextlib, io, tempfile
+        from types import SimpleNamespace
+        hook = self._hook()
+        with tempfile.TemporaryDirectory() as tmp:
+            dist = Path(tmp)
+            (dist / "templates").mkdir()
+            java = dist / "src" / "main" / "java" / "org" / "kivy" / "android" / "PythonActivity.java"
+            java.parent.mkdir(parents=True)
+            java.write_text("class P { void onCreate(Bundle b) { super.onCreate(b); } }", encoding="utf-8")
+            with contextlib.redirect_stdout(io.StringIO()):
+                hook.before_apk_build(SimpleNamespace(_dist=SimpleNamespace(dist_dir=str(dist))))
+            self.assertIn("setBackgroundDrawable", java.read_text(encoding="utf-8"))
+            java.write_text("class P { void mulai() { } }", encoding="utf-8")
+            keluar = io.StringIO()
+            with contextlib.redirect_stdout(keluar):
+                hook.apply_early_background(dist)
+            self.assertIn("PERINGATAN", keluar.getvalue())
 
     def test_lapisan_penutup_dipasang_di_java(self):
         hook = self._hook()
@@ -561,7 +617,9 @@ class PatchJavaTerkompilasi(unittest.TestCase):
     STUB = {
         "android/content/Context.java": "package android.content; public class Context { public java.io.File getFilesDir(){return null;} }",
         "android/app/Activity.java": "package android.app; public class Activity extends android.content.Context "
-                                     "{ public android.view.Window getWindow(){return null;} }",
+                                     "{ public android.view.Window getWindow(){return null;} "
+                                     "protected void onCreate(android.os.Bundle b){} }",
+        "android/os/Bundle.java": "package android.os; public class Bundle {}",
         "android/view/Window.java": "package android.view; public class Window "
                                     "{ public View getDecorView(){return null;} "
                                     "public void setBackgroundDrawable(android.graphics.drawable.Drawable d){} }",
@@ -612,6 +670,26 @@ class PatchJavaTerkompilasi(unittest.TestCase):
             sumber = tmp / "org" / "kivy" / "android" / "PythonActivity.java"
             sumber.parent.mkdir(parents=True)
             sumber.write_text(hook.patch_java(self.ASLI), encoding="utf-8")
+            hasil = subprocess.run(["javac", "-Xlint:all", "-d", str(tmp / "out"), *map(str, tmp.rglob("*.java"))],
+                                   capture_output=True, text=True)
+            self.assertEqual(hasil.returncode, 0, hasil.stderr)
+            self.assertNotIn("warning", hasil.stderr.lower(), hasil.stderr)
+
+    def test_latar_jendela_awal_bisa_dikompilasi(self):
+        spec = importlib.util.spec_from_file_location("p4a_hook6", ROOT / "p4a" / "hook.py")
+        hook = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(hook)
+        asli = ("package org.kivy.android;\nimport android.app.Activity;\nimport android.os.Bundle;\n"
+                "public class PythonActivity extends Activity {\n  @Override\n"
+                "  protected void onCreate(Bundle savedInstanceState) {\n    super.onCreate(savedInstanceState);\n  }\n}\n")
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            for nama, isi in self.STUB.items():
+                (tmp / nama).parent.mkdir(parents=True, exist_ok=True)
+                (tmp / nama).write_text(isi, encoding="utf-8")
+            sumber = tmp / "org" / "kivy" / "android" / "PythonActivity.java"
+            sumber.parent.mkdir(parents=True)
+            sumber.write_text(hook.patch_awal(asli), encoding="utf-8")
             hasil = subprocess.run(["javac", "-Xlint:all", "-d", str(tmp / "out"), *map(str, tmp.rglob("*.java"))],
                                    capture_output=True, text=True)
             self.assertEqual(hasil.returncode, 0, hasil.stderr)
@@ -737,3 +815,71 @@ class PopupSimpan(unittest.TestCase):
         self.assertEqual(bentrok, [], "pakai closeSheet() / nama lain di atribut onclick")
         self.assertIn("function closeSheet(){", self.html)
         self.assertIn("function close(){closeSheet()}", self.html)
+
+
+# Splash sistem ikut tema tersimpan (Android 13+)
+class SplashSesuaiTema(unittest.TestCase):
+    class Aktivitas:
+        def __init__(self):
+            self.dipilih, self.dicari = [], []
+
+        def getResources(self):
+            return self
+
+        def getIdentifier(self, nama, jenis, paket):
+            self.dicari.append((nama, jenis, paket))
+            return 77 if nama in (droid.SPLASH_GELAP, droid.SPLASH_TERANG) else 0
+
+        def getPackageName(self):
+            return "org.contoh"
+
+        def getSplashScreen(self):
+            return self
+
+        def setSplashScreenTheme(self, res_id):
+            self.dipilih.append(res_id)
+
+    def _jalankan(self, sdk, tema):
+        akt = self.Aktivitas()
+        palsu = types.SimpleNamespace(autoclass=lambda nama: types.SimpleNamespace(SDK_INT=sdk))
+        with mock.patch.dict(sys.modules, {"jnius": palsu}), mock.patch.object(droid, "_activity", lambda: akt):
+            droid._terapkan_splash(droid.nama_splash(tema))
+        return akt
+
+    def test_terang_dan_gelap_memilih_gaya_masing_masing(self):
+        for tema, nama in (("light", droid.SPLASH_TERANG), ("dark", droid.SPLASH_GELAP)):
+            akt = self._jalankan(33, tema)
+            self.assertEqual(akt.dicari, [(nama, "style", "org.contoh")], tema)
+            self.assertEqual(akt.dipilih, [77], tema)
+
+    def test_android_di_bawah_13_dilewati(self):
+        self.assertEqual(self._jalankan(32, "light").dipilih, [])
+
+    def test_gaya_tidak_ada_tidak_dipakai(self):
+        akt = self.Aktivitas()
+        akt.getIdentifier = lambda nama, jenis, paket: 0
+        palsu = types.SimpleNamespace(autoclass=lambda nama: types.SimpleNamespace(SDK_INT=34))
+        with mock.patch.dict(sys.modules, {"jnius": palsu}), mock.patch.object(droid, "_activity", lambda: akt):
+            droid._terapkan_splash(droid.SPLASH_GELAP)
+        self.assertEqual(akt.dipilih, [])
+
+    def test_bukan_android_tidak_melakukan_apa_apa(self):
+        with mock.patch.object(droid, "ON_ANDROID", False), mock.patch.object(droid, "run_on_main") as jalan:
+            droid.apply_splash_theme("light")
+        jalan.assert_not_called()
+
+    def test_di_android_dijalankan_di_thread_utama_tanpa_menunggu(self):
+        with mock.patch.object(droid, "ON_ANDROID", True), mock.patch.object(droid, "run_on_main") as jalan:
+            droid.apply_splash_theme("light")
+            droid.apply_splash_theme("dark")
+        self.assertEqual([c.args for c in jalan.call_args_list],
+                         [(droid._terapkan_splash_aman, droid.SPLASH_TERANG), (droid._terapkan_splash_aman, droid.SPLASH_GELAP)])
+        self.assertTrue(all(c.kwargs == {"wait": False} for c in jalan.call_args_list))
+
+    def test_galat_tidak_pernah_naik(self):
+        with mock.patch.object(droid, "_activity", side_effect=RuntimeError("tak ada")), \
+                mock.patch.dict(sys.modules, {"jnius": types.SimpleNamespace(
+                    autoclass=lambda nama: types.SimpleNamespace(SDK_INT=34))}):
+            droid._terapkan_splash_aman(droid.SPLASH_GELAP)                       # tidak boleh melempar
+        with mock.patch.object(droid, "ON_ANDROID", True), mock.patch.object(droid, "run_on_main", side_effect=TimeoutError()):
+            droid.apply_splash_theme("light")                                       # tidak boleh melempar
