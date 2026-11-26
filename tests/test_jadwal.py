@@ -168,6 +168,78 @@ class HasilExcel(unittest.TestCase):
         self.assertTrue(image.render(s, "adm").startswith(b"\x89PNG"))
 
 
+# Data uji: satu staff Izin/Sakit, satu staff masuk Pagi pada hari yang sama
+def payload_izin_sakit():
+    p = payload_kosong()
+    bar = p["divisions"][0]["staff"]
+    bar[0]["shifts"] = "IIIIIIKKKKKKPP"   # 6 Izin, 6 Sakit, 2 Pagi
+    bar[1]["shifts"] = "P" * 14
+    return p
+
+
+# Tes shift Izin dan Sakit (dihitung seperti Kosong)
+class IzinDanSakit(unittest.TestCase):
+    def test_nama_dan_warna(self):
+        self.assertEqual(cfg.SHIFTS["I"], ("Izin", "#d9d2e9", "#3b2f58"))
+        self.assertEqual(cfg.SHIFTS["K"], ("Sakit", "#c6e0b4", "#375623"))
+
+    def test_kode_valid_dan_bolak_balik(self):
+        s = Schedule.from_payload(payload_izin_sakit())
+        self.assertEqual(s.divisions[0].staff[0].shifts, "IIIIIIKKKKKKPP")
+        self.assertEqual(Schedule.from_payload(s.to_payload()).to_payload(), s.to_payload())
+
+    def test_tidak_masuk_rekap_dan_jumlah_staff(self):
+        d = Schedule.from_payload(payload_izin_sakit()).divisions[0]
+        # staff 1: hanya 2 hari Pagi yang dihitung; Izin/Sakit seperti Kosong
+        self.assertEqual(d.totals(d.staff[0]), {"P": 2, "S": 0, "R": 0, "L": 0})
+        for hari in range(12):
+            self.assertEqual([d.count(c, hari) for c in cfg.SHIFT_ORDER], [1, 0, 0, 0])
+        self.assertEqual(d.count("P", 12), 2)
+
+    def test_tidak_ada_jam_kerja_untuk_izin_sakit(self):
+        d = Schedule.from_payload(payload_izin_sakit()).divisions[0]
+        self.assertEqual(set(d.hours), set(cfg.SHIFT_ORDER))
+
+    def test_tampil_berwarna_di_tabel(self):
+        from jadwal import layout
+        model = layout.build_model(Schedule.from_payload(payload_izin_sakit()), "adm")
+        sel = {(c["r"], c["c"]): c for c in model["cells"]}
+        baris = 3 + 3   # judul + header divisi pertama = baris staff pertama
+        izin, sakit = sel[(baris, 2)], sel[(baris, 8)]
+        self.assertEqual((izin["t"], izin["bg"], izin["fg"]), ("Izin", "#d9d2e9", "#3b2f58"))
+        self.assertEqual((sakit["t"], sakit["bg"], sakit["fg"]), ("Sakit", "#c6e0b4", "#375623"))
+        # rekap staff pertama: P=2, S=0, R=0, total=2, Libur=0
+        self.assertEqual([sel[(baris, c)]["t"] for c in range(16, 21)], ["2", "0", "0", "2", "0"])
+
+    @unittest.skipIf(openpyxl is None, "openpyxl tidak terpasang")
+    def test_excel_pilihan_dropdown_dan_warna(self):
+        # dropdown pilihan shift hanya ada di file "Semua Sheet" (rumus hidup)
+        wb = muat("all", payload_izin_sakit())
+        ws = wb["Administrator"]
+        dv = ws.data_validations.dataValidation
+        self.assertTrue(dv)
+        self.assertIn("Izin", dv[0].formula1)
+        self.assertIn("Sakit", dv[0].formula1)
+        teks = [c.value for row in ws.iter_rows() for c in row]
+        self.assertIn("Izin", teks)
+        self.assertIn("Sakit", teks)
+        aturan = " ".join(str(r.formula) for rng in ws.conditional_formatting for r in rng.rules)
+        self.assertIn('"Izin"', aturan)
+        self.assertIn('"Sakit"', aturan)
+
+    def test_kode_lain_tetap_ditolak(self):
+        p = payload_izin_sakit()
+        p["divisions"][0]["staff"][0]["shifts"] = "I" * 13 + "Z"
+        with self.assertRaises(ScheduleError):
+            Schedule.from_payload(p)
+
+    def test_png_dan_semua_sheet_tetap_jadi(self):
+        s = Schedule.from_payload(payload_izin_sakit())
+        for sheet in ("adm", "gl", "all"):
+            self.assertTrue(zipfile.is_zipfile(io.BytesIO(excel.build_workbook(s, sheet))), sheet)
+        self.assertTrue(image.render(s, "gl").startswith(b"\x89PNG"))
+
+
 # Tes shift malam dan sel kosong
 class ShiftMalamDanKosong(unittest.TestCase):
     def test_nama_shift_malam(self):

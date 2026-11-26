@@ -26,13 +26,18 @@ ANDROID_PORT = 8765
 
 # Kode dan warna shift
 SHIFT_ORDER = "PSRL"
+# Izin (I) dan Sakit (K): tampil berwarna, tapi dihitung seperti Kosong
+# (tidak masuk rekap, jumlah staff per shift, maupun tabel jam kerja)
+ABSENT = "IK"
 EMPTY = "-"
-SHIFT_VALID = SHIFT_ORDER + EMPTY
+SHIFT_VALID = SHIFT_ORDER + ABSENT + EMPTY
 SHIFTS = {
     "P": ("Pagi", "#bdd7ee", "#1f4e79"),
     "S": ("Siang", "#ffe699", "#7f6000"),
     "R": ("Malam", "#f6b26b", "#7f3f00"),
     "L": ("Libur", "#ededed", "#7f7f7f"),
+    "I": ("Izin", "#d9d2e9", "#3b2f58"),
+    "K": ("Sakit", "#c6e0b4", "#375623"),
 }
 
 # Jam kerja bawaan

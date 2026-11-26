@@ -212,7 +212,7 @@ def plan(sched: Schedule):
 
 # Aturan warna shift
 def add_shift_cf(book: Book, ws, r0, c0, r1, c1):
-    for code in cfg.SHIFT_ORDER:
+    for code in cfg.SHIFT_ORDER + cfg.ABSENT:
         name, bg, fg = cfg.SHIFTS[code]
         ws.conditional_format(r0, c0, r1, c1, {
             "type": "cell", "criteria": "==", "value": f'"{name}"',
@@ -423,9 +423,9 @@ def build_admin(book: Book, sched: Schedule, blocks, last_row, live=True):
                 ws.conditional_format(y, 2, y, 15, {"type": "cell", "criteria": "!=", "value": 0,
                                                     "format": book.dxf(bg, fg, True)})
             ws.data_validation(r + 3, 2, r + 2 + n, 15, {
-                "validate": "list", "source": [cfg.SHIFTS[c][0] for c in cfg.SHIFT_ORDER],
+                "validate": "list", "source": [cfg.SHIFTS[c][0] for c in cfg.SHIFT_ORDER + cfg.ABSENT],
                 "ignore_blank": True, "error_title": "Shift tidak dikenal",
-                "error_message": "Pilih salah satu: " + ", ".join(cfg.SHIFTS[c][0] for c in cfg.SHIFT_ORDER)})
+                "error_message": "Pilih salah satu: " + ", ".join(cfg.SHIFTS[c][0] for c in cfg.SHIFT_ORDER + cfg.ABSENT)})
 
         for y in range(r, r + 3):
             ws.set_row(y, 21.75)

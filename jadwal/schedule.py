@@ -36,7 +36,7 @@ class Division:
     def count(self, code: str, day: int) -> int:
         return sum(1 for s in self.staff if s.shifts[day] == code)
 
-    # Rekap shift satu staff
+    # Rekap shift satu staff (Izin/Sakit tidak dihitung, sama seperti Kosong)
     def totals(self, staff: Staff) -> dict:
         return {c: staff.shifts.count(c) for c in cfg.SHIFT_ORDER}
 
@@ -147,7 +147,7 @@ def _parse_one_staff(s, index: int, title: str) -> Staff:
         shifts = "".join(str(x) for x in shifts)
     if (not isinstance(shifts, str) or len(shifts) != cfg.N_DAYS
             or any(ch not in cfg.SHIFT_VALID for ch in shifts)):
-        raise ScheduleError(f"Shift {name} ({title}) harus {cfg.N_DAYS} hari berisi P/S/R/L atau - (kosong).")
+        raise ScheduleError(f"Shift {name} ({title}) harus {cfg.N_DAYS} hari berisi P/S/R/L/I/K atau - (kosong).")
     return Staff(name, shifts)
 
 

@@ -393,7 +393,7 @@ def _parse_shifts(cells: dict, r: int, name: str, warn: list) -> str:
         if code is None and _n(v) == cfg.EMPTY:
             code = cfg.EMPTY
         if code is None:
-            warn.append(f"Sel {_letters(c)}{r} ({name}) berisi “{v}”, bukan Pagi/Siang/Malam/Libur; dikosongkan.")
+            warn.append(f"Sel {_letters(c)}{r} ({name}) berisi “{v}”, bukan Pagi/Siang/Malam/Libur/Izin/Sakit; dikosongkan.")
             code = cfg.EMPTY
         shifts += code
     return shifts

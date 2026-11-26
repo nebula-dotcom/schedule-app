@@ -8,16 +8,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <style>
 /* Variabel warna dan ukuran */
-:root{--bg:#121212;--ink:#ffffff;--mute:#ffffffa8;--line:#343032;--pri:#cc8eaa;--soft:#cc8eaa29;--card:#211d1f;--alt:#252525;--pt:#dcafc3;--we:#ff8080;--live:#7dff95;--pk:#211d1f;color-scheme:dark;
---P:#bdd7ee;--Pt:#1f4e79;--S:#ffe699;--St:#7f6000;--R:#f6b26b;--Rt:#7f3f00;--L:#ededed;--Lt:#7f7f7f;
---dP:#5b9bd5;--dS:#e6b800;--dR:#ed7d31;--dL:#a6a6a6;--tn:1px;--md:2px;--u:.8;--ub:.8}
+:root{--bg:#121212;--ink:#ffffff;--mute:#ffffffa8;--line:#343032;--pri:#cc8eaa;--soft:#cc8eaa29;--card:#211d1f;--alt:#252525;--pt:#dcafc3;--we:#ff8080;--live:#7dff95;--pk:#211d1f;--hd:#2f282c;color-scheme:dark;
+--P:#bdd7ee;--Pt:#1f4e79;--S:#ffe699;--St:#7f6000;--R:#f6b26b;--Rt:#7f3f00;--L:#ededed;--Lt:#7f7f7f;--I:#d9d2e9;--It:#3b2f58;--K:#c6e0b4;--Kt:#375623;
+--dP:#5b9bd5;--dS:#e6b800;--dR:#ed7d31;--dL:#a6a6a6;--dI:#8e7cc3;--dK:#70ad47;--tn:1px;--md:2px;--u:.8;--ub:.8}
 /* Dasar halaman */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 *{box-sizing:border-box;margin:0}
 body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:calc(13px*var(--u));line-height:1.45;font-feature-settings:"tnum";-webkit-font-smoothing:antialiased;background:var(--bg);color:var(--ink);padding-bottom:calc(64px + env(safe-area-inset-bottom))}
 #app{max-width:480px;margin:auto;padding:0 14px}
 /* Header aplikasi dan tombol Menu */
-header{margin:0 -14px 10px;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;background:var(--card);box-shadow:0 1px 6px #0b16460f;display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:5}
+header{margin:0 -14px 10px;padding:calc(8px + env(safe-area-inset-top)) 14px 8px;background:var(--hd);box-shadow:0 1px 6px #0b16460f;display:flex;align-items:center;gap:8px;position:sticky;top:0;z-index:5}
 .logo{width:32px;height:32px;display:grid;place-items:center;flex:none}
 header b{font-size:calc(16.5px*var(--u));font-weight:700;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .badge{font-size:calc(10px*var(--u));font-weight:700;color:var(--pri);background:var(--soft);padding:2px 8px;border-radius:99px;letter-spacing:.3px}
@@ -54,7 +54,7 @@ button,input,select{font:inherit;color:inherit}svg{flex:none}
 .BAR{--t:#eef4ff;--b:#cfe0fb;--c:#d5e5fc;--k:#1f5fd0}.FLOOR{--t:#edf9f3;--b:#c9ebdc;--c:#d1f0e1;--k:#119468}
 .CASHIER{--t:#f6f0fe;--b:#e0d5f7;--c:#e6dcf9;--k:#6b3fc8}.KITCHEN{--t:#fff6ec;--b:#f8e1c6;--c:#fde6cc;--k:#dd7710}
 /* Titik warna shift */
-.dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--dP)}.dot.sS{background:var(--dS)}.dot.sR{background:var(--dR)}.dot.sL{background:var(--dL)}
+.dot{width:9px;height:9px;border-radius:50%;flex:none;background:var(--dP)}.dot.sS{background:var(--dS)}.dot.sR{background:var(--dR)}.dot.sL{background:var(--dL)}.dot.sI{background:var(--dI)}.dot.sK{background:var(--dK)}
 /* Halaman divisi: breadcrumb dan pilih divisi */
 .crumb{display:flex;align-items:center;gap:8px;color:var(--pri);font-weight:600;font-size:calc(12px*var(--u));line-height:1;margin:2px 0 12px}
 .crumb a{color:var(--pri);text-decoration:none;display:flex;align-items:center;min-height:24px}.crumb svg{display:block}.crumb i{font-style:normal;color:var(--mute)}.crumb span{color:var(--ink)}.crumb em{width:1px;height:13px;background:var(--line)}
@@ -66,7 +66,7 @@ button,input,select{font:inherit;color:inherit}svg{flex:none}
 .ab{display:flex;gap:8px;margin-top:10px}.ab .btn{flex:1}
 .ab.cp{justify-content:center;margin-top:16px}.ab.cp .btn{flex:1 1 0;min-width:0;min-height:32px;padding:0 4px;font-size:calc(10px*var(--u));letter-spacing:.3px;border-radius:8px;gap:4px;white-space:nowrap}.ab.cp .btn svg{width:12px;height:12px;flex:none}
 /* Warna shift */
-.sP{background:var(--P);color:var(--Pt)}.sS{background:var(--S);color:var(--St)}.sR{background:var(--R);color:var(--Rt)}.sL{background:var(--L);color:var(--Lt)}
+.sP{background:var(--P);color:var(--Pt)}.sS{background:var(--S);color:var(--St)}.sR{background:var(--R);color:var(--Rt)}.sL{background:var(--L);color:var(--Lt)}.sI{background:var(--I);color:var(--It)}.sK{background:var(--K);color:var(--Kt)}
 .we,.we b{color:var(--we)}
 /* Legenda jam kerja */
 .lh{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--alt);border:1px solid var(--line);border-radius:10px;padding:8px 6px;margin-top:4px}
@@ -204,7 +204,7 @@ button.pr,a.pr{transform:scale(var(--ps));transition-duration:.09s;transition-ti
 .imp-lg{display:flex;gap:6px;flex-wrap:wrap}.imp-lg span{border-radius:99px;padding:3px 9px;font-size:calc(10px*var(--u));font-weight:700}
 .imp-b{display:flex;gap:8px}.imp-b .btn{flex:1}.imp-b .btn:last-child{flex:1.6}
 /* Tema terang, aksen, sakelar tema, dot shift */
-:root[data-theme=light]{--bg:#f6f8fc;--ink:#0f1b4c;--mute:#5b6785;--line:#dfe6f5;--pri:#2f66f2;--soft:#eaf0fe;--card:#fff;--alt:#f0f4fc;--pt:#2f66f2;--we:#c00000;--live:#1fbf4a;--pk:#1f2a44;color-scheme:light}
+:root[data-theme=light]{--bg:#f6f8fc;--ink:#0f1b4c;--mute:#5b6785;--line:#dfe6f5;--pri:#2f66f2;--soft:#eaf0fe;--card:#fff;--alt:#f0f4fc;--pt:#2f66f2;--we:#c00000;--live:#1fbf4a;--pk:#1f2a44;--hd:#fff;color-scheme:light}
 /* Lightmode: sisa warna disamakan dengan versi BACKUP */
 [data-theme=light] .dc-s{background:#fafbfe}[data-theme=light] .dv .a.p{background:#eef1f8;color:#4a5673}
 [data-theme=light] .dc-c:not(.no){color:var(--pri);background:var(--soft)}
@@ -264,7 +264,7 @@ pdf:'<path d="M6 3h8l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM14 3v
 const ico=(n,s=20)=>`<svg width="${Math.round(s*.7)}" height="${Math.round(s*.7)}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${I[n]}</svg>`;
 const BALL='<svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14.5" fill="#111827"/><ellipse cx="10.5" cy="9.5" rx="5.2" ry="3" transform="rotate(-35 10.5 9.5)" fill="#fff" opacity=".2"/><circle cx="16" cy="16" r="6.6" fill="#fff"/><text x="16" y="19.6" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="9.5" fill="#111827">8</text></svg>';
 /* Data shift, bulan, dan nama hari */
-const SH={P:['Pagi','09.00–17.00'],S:['Siang','11.30–19.30'],R:['Malam','16.30–00.30'],L:['Libur','Tidak bertugas'],'-':['','Kosong']};
+const SH={P:['Pagi','09.00–17.00'],S:['Siang','11.30–19.30'],R:['Malam','16.30–00.30'],L:['Libur','Tidak bertugas'],I:['Izin','Tidak bertugas'],K:['Sakit','Tidak bertugas'],'-':['','Kosong']};
 const MON=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sept','Okt','Nov','Des'],MONL=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'],DAY=['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
 /* Data awal divisi dan staff */
 const rows=s=>s.split(',').map(n=>({n,s:Array(14).fill('-')}));
@@ -281,7 +281,7 @@ const $=s=>document.querySelector(s),esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;'
 const days=()=>{const b=new Date(S.start+'T00:00');return[...Array(14)].map((_,i)=>{const d=new Date(b);d.setDate(b.getDate()+i);return{d,n:DAY[d.getDay()],x:d.getDate(),we:d.getDay()%6==0}})};
 const f=d=>d.getDate()+' '+MON[d.getMonth()],rng=(a,b)=>a.getMonth()==b.getMonth()?a.getDate()+'–'+f(b):f(a)+'–'+f(b);
 const cnt=(k,i)=>{const c={P:0,S:0,R:0,L:0};D[k].st.forEach(p=>{const x=p.s[i];if(x in c)c[x]++});return c};
-const KS=[...'PSRL'];
+const KS=[...'PSRL'],KA=[...'IK'];/* KA = Izin & Sakit: berwarna, tapi tidak dihitung (sama seperti Kosong) */
 
 /* Popup bawah: buka dan tutup */
 function closeSheet(){$('#sheet').classList.remove('open');$('#shade').style.display='none'}
@@ -343,7 +343,7 @@ function periodFull(){const a=days(),s=a[0].d,e=a[13].d,y=s.getFullYear()==e.get
 return`<section class="pk"><div class="pk-t"><i>${ico('cal',24)}</i><span>Periode jadwal</span><i>${ico('term',24)}</i></div><div class="pk-d"><small${a[0].we?' class="w"':''}>${DAYL[s.getDay()]}</small><i></i><small${a[13].we?' class="w"':''}>${DAYL[e.getDay()]}</small><strong>${s.getDate()}</strong><span class="pk-l"><em>14 hari</em></span><strong>${e.getDate()}</strong><span class="pk-mo">${MON[s.getMonth()]}</span><b class="pk-y">${y}</b><span class="pk-mo">${MON[e.getMonth()]}</span></div></section>`}
 
 /* Warna shift untuk tabel */
-const SC={P:['#bdd7ee','#1f4e79'],S:['#ffe699','#7f6000'],R:['#f6b26b','#7f3f00'],L:['#ededed','#7f7f7f'],'-':['#ffffff','#000000']},
+const SC={P:['#bdd7ee','#1f4e79'],S:['#ffe699','#7f6000'],R:['#f6b26b','#7f3f00'],L:['#ededed','#7f7f7f'],I:['#d9d2e9','#3b2f58'],K:['#c6e0b4','#375623'],'-':['#ffffff','#000000']},
 NAVY='#1f2a44',TEAL='#1b7f79',SL1='#44546a',SL2='#5f7392',RED='#c00000',LN='#7f7f7f',
 hh=s=>s.replace(/\s*–\s*/,' – ');
 const mspans=a=>{const o=[];a.forEach((x,i)=>{const m=x.d.getMonth(),l=o[o.length-1];if(l&&l.m==m)l.n++;else o.push({m,i,n:1})});return o};
@@ -394,7 +394,7 @@ const bd=(x,T,M)=>x.nb?'':(x.nr?'':`border-right:${x.fr?M:T} solid ${LN};`)+`bor
 
 function bar(x,T,M){const s=`background:${x.bg};color:${x.fg};font-weight:${x.b?700:400};`;
 return`<td colspan="2" class="fz sp bx" style="${s}font-size:calc(${x.fs}px*var(--ub));left:var(--ox);${bd({...x,nr:1},T,M)}"><span class="bl">${esc(x.t)}</span></td><td colspan="${x.cs-2}" style="${s}${bd({...x,fl:0},T,M)}"></td>`}
-const edx=(M,x)=>{if(!M.ed||!x.ed)return['','',''];const o=x.ed;return[' ed',o.t=='n'?` onclick="staff(${o.i})"`:o.t=='h'?` onclick="hrs('${o.q}')"`:'',o.t=='s'?`<select class="ds" aria-label="Pilih shift" onchange="setS(${o.i},${o.j},this.value)">${[...KS,'-'].map(c=>`<option value="${c}"${c==o.v?' selected':''}>${c=='-'?'Kosong':SH[c][0]}</option>`).join('')}</select>`:'']};
+const edx=(M,x)=>{if(!M.ed||!x.ed)return['','',''];const o=x.ed;return[' ed',o.t=='n'?` onclick="staff(${o.i})"`:o.t=='h'?` onclick="hrs('${o.q}')"`:'',o.t=='s'?`<select class="ds" aria-label="Pilih shift" onchange="setS(${o.i},${o.j},this.value)">${[...KS,'-',...KA].map(c=>`<option value="${c}"${c==o.v?' selected':''}>${c=='-'?'Kosong':SH[c][0]}</option>`).join('')}</select>`:'']};
 
 function xt(M,stk){const T1=stk?'var(--tn)':'1px',T2=stk?'var(--md)':'2px',FS=stk?(v=>`calc(${v}px*var(--u))`):(v=>v+'px'),by={},occ=new Set(),NC=M.W.length,TW=M.W.reduce((p,q)=>p+q,0);
 M.cells.forEach(x=>{(by[x.r]=by[x.r]||{})[x.c]=x;for(let i=0;i<x.rs;i++)for(let j=0;j<x.cs;j++)if(i||j)occ.add((x.r+i)+','+(x.c+j))});
@@ -514,7 +514,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){_lv=''}els
 loadState().finally(()=>{_today=ymd(workDay());S.sel=todayIdx();draw()});
 
 /* Kartu Import Excel di Settings */
-let IM={st:'idle'};const IMX=350*1024,imL={P:'P',S:'S',R:'M',L:'L'};
+let IM={st:'idle'};const IMX=350*1024,imL={P:'P',S:'S',R:'M',L:'L',I:'I',K:'Sk'};
 const impBox=()=>`<section class="imp" id="imp">${impIn()}</section>`,impDraw=()=>{const e=$('#imp');if(e)e.innerHTML=impIn()};
 const impDays=s=>{const b=new Date(s+'T00:00');return[...Array(14)].map((_,i)=>{const d=new Date(b);d.setDate(b.getDate()+i);return{n:DAY[d.getDay()],x:d.getDate(),we:d.getDay()%6==0}})};
 const impHd=(t,s)=>`<div class="imp-h"><i>${ico('xls',30)}</i><div class="nmf"><b>${t}</b><small>${s}</small></div></div>`;
@@ -524,7 +524,7 @@ if(IM.st=='load')return impHd('Membaca file…',esc(IM.name))+`<div class="imp-l
 if(IM.st=='err')return impHd('Import Excel','Tidak bisa dibaca')+`<div class="imp-e">${ico('x',16)}<span>${esc(IM.msg)}</span></div>`+impPk('Pilih file lain');
 if(IM.st=='done')return impHd('Berhasil diimpor','Jadwal sudah diperbarui')+`<div class="imp-ok">${ico('ok',16)}<span>${esc(IM.sum)}</span></div><div class="imp-b"><button class="btn gy" onclick="impUndo()">${ico('rst',16)}Urungkan</button><button class="btn" onclick="impReset(1)">Import file lain</button></div><p class="imp-n">Urungkan mengembalikan jadwal ke kondisi sebelum impor, termasuk perubahan yang kamu buat sesudahnya.</p>`;
 if(IM.st=='prev')return impPrev();
-return impHd('Import Excel','Ambil jadwal dari file .xlsx')+impPk('Pilih file Excel')+`<p class="imp-n">Bisa membaca file hasil Download Excel: Semua Sheet, Administrator, atau Jadwal Global. Tanggal mulai dibaca otomatis dari file.</p>`}
+return impHd('Import Excel','Ambil jadwal dari file .xlsx')+impPk('Select File')+`<p class="imp-n">Bisa membaca file hasil Download Excel: Semua Sheet, Administrator, atau Jadwal Global. Tanggal mulai dibaca otomatis dari file.</p>`}
 function impTot(){return IM.info.divisions.reduce((o,d)=>({s:o.s+d.staff,f:o.f+d.filled,c:o.c+d.cells}),{s:0,f:0,c:0})}
 function impPrev(){const p=IM.payload,i=IM.info,v=p.divisions.find(x=>x.key==IM.tab)||p.divisions[0],a=impDays(p.start),t=impTot();
 const hrs=['P','S','R'].filter(c=>v.hours&&v.hours[c]).map(c=>`<span class="s${c}">${SH[c][0]} ${esc(v.hours[c])}</span>`).join('');
@@ -534,7 +534,7 @@ return`<div class="imp-h"><i>${ico('xls',30)}</i><div class="nmf"><b>Pratinjau i
 ${i.warnings.length?`<div class="imp-w"><b>${ico('warn',16)}Perlu dicek (${i.warnings.length})</b><ul>${i.warnings.map(w=>`<li>${esc(w)}</li>`).join('')}</ul></div>`:''}
 <div class="seg">${p.divisions.map(d=>`<button class="${d.key==v.key?'on':''}" onclick="impTab('${d.key}')">${esc(d.title)}</button>`).join('')}</div>
 <div class="xs"><table class="it"><thead><tr><th class="n">Nama</th>${a.map(y=>`<th class="${y.we?'we':''}">${y.n}<b>${y.x}</b></th>`).join('')}</tr></thead><tbody>${v.staff.map(q=>`<tr><td class="n">${esc(q.name)}</td>${[...q.shifts].map(c=>c=='-'?'<td class="e">·</td>':`<td class="s${c}">${imL[c]}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
-<div class="imp-lg">${KS.map(c=>`<span class="s${c}">${imL[c]} = ${SH[c][0]}</span>`).join('')}</div>${hrs?`<div class="imp-lg">${hrs}</div>`:''}
+<div class="imp-lg">${[...KS,...KA].map(c=>`<span class="s${c}">${imL[c]} = ${SH[c][0]}</span>`).join('')}</div>${hrs?`<div class="imp-lg">${hrs}</div>`:''}
 <div class="imp-b"><button class="btn gy" onclick="impReset()">Batal</button><button class="btn" onclick="impApply()">${ico('ok',16)}Terapkan ke jadwal</button></div>
 <p class="imp-n">Mengganti staff, shift, dan jam kerja divisi yang ada di file ini. Divisi yang tidak ada di file tidak diubah.</p>`}
 async function impPick(inp){const f=inp.files&&inp.files[0];if(!f)return;

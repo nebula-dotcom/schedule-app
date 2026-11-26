@@ -93,6 +93,13 @@ class BolakBalik(unittest.TestCase):
                 self.assertEqual(hasil["start"], p["start"])
                 self.assertTrue(all(set(s["shifts"]) == {"-"} for d in hasil["divisions"] for s in d["staff"]))
 
+    def test_izin_dan_sakit_terbaca_kembali(self):
+        p = payload_kosong()
+        p["divisions"][0]["staff"][0]["shifts"] = "IIKKPPSSRRLL-I"
+        for jenis in ("all", "adm", "gl"):
+            with self.subTest(jenis):
+                self.cek(p, jenis)
+
     def test_jumlah_staff_berbeda_dan_nama_unik(self):
         p = payload()
         p["divisions"][0]["staff"] = p["divisions"][0]["staff"][:2]
@@ -337,6 +344,18 @@ class HalamanWeb(unittest.TestCase):
     def test_input_file_menerima_xlsx_dan_memakai_endpoint_import(self):
         self.assertIn('accept=".xlsx,', self.html)
         self.assertIn("fetch('/api/import'", self.html)
+
+    def test_halaman_punya_pilihan_izin_dan_sakit_setelah_kosong(self):
+        self.assertIn("[...KS,'-',...KA]", self.html)
+        self.assertIn("I:['Izin'", self.html)
+        self.assertIn("K:['Sakit'", self.html)
+        self.assertIn("I:['#d9d2e9','#3b2f58']", self.html)
+        self.assertIn("K:['#c6e0b4','#375623']", self.html)
+
+    def test_izin_sakit_tidak_masuk_hitungan_halaman(self):
+        # penghitung hanya mengenal P/S/R/L, jadi kode I/K otomatis tidak dihitung
+        self.assertIn("const cnt=(k,i)=>{const c={P:0,S:0,R:0,L:0}", self.html)
+        self.assertIn("if(x in c)c[x]++", self.html)
 
     def test_pembaca_file_punya_cadangan_untuk_webview_lama(self):
         self.assertIn("new FileReader()", self.html)
