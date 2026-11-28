@@ -49,6 +49,8 @@ class Division:
 class Schedule:
     start: date
     divisions: list
+    prev: list = field(default_factory=list)
+    undo: dict = field(default_factory=dict)
 
     # Daftar tanggal periode
     @property
@@ -72,11 +74,13 @@ class Schedule:
         if len(raw) > cfg.MAX_DIVISIONS:
             raise ScheduleError(f"Maksimal {cfg.MAX_DIVISIONS} divisi.")
         seen = set()
-        return cls(start, [_parse_division(d, seen) for d in raw])
+        divisions = [_parse_division(d, seen) for d in raw]
+        return cls(start, divisions, _parse_prev(data.get("prev")),
+                   _parse_undo(data.get("undo"), divisions))
 
     # Ubah ke data JSON
     def to_payload(self) -> dict:
-        return {
+        out = {
             "start": self.start.isoformat(),
             "divisions": [
                 {"key": d.key, "title": d.title, "hours": dict(d.hours),
@@ -84,6 +88,14 @@ class Schedule:
                 for d in self.divisions
             ],
         }
+        if self.prev:
+            out["prev"] = [p.to_payload() for p in self.prev]
+        if self.undo:
+            out["undo"] = {
+                key: [[{"name": s.name, "shifts": s.shifts} for s in snap] for snap in stack]
+                for key, stack in self.undo.items()
+            }
+        return out
 
     # Teks Periode di judul
     def period_text(self) -> str:
@@ -106,6 +118,41 @@ class Schedule:
 
 
 # Validasi data: divisi
+# Validasi data: periode lalu untuk menyambung jadwal (data rusak dilewati)
+def _parse_prev(raw) -> list:
+    out = []
+    if isinstance(raw, list):
+        for item in raw[-cfg.MAX_PREV:]:
+            if not isinstance(item, dict):
+                continue
+            try:
+                out.append(Schedule.from_payload(
+                    {"start": item.get("start"), "divisions": item.get("divisions")}))
+            except ScheduleError:
+                continue
+    return out
+
+
+# Validasi data: tumpukan Undo Generate per divisi (data rusak dilewati)
+def _parse_undo(raw, divisions) -> dict:
+    out = {}
+    if not isinstance(raw, dict):
+        return out
+    titles = {d.key: d.title for d in divisions}
+    for key, stack in raw.items():
+        if key not in titles or not isinstance(stack, list):
+            continue
+        snaps = []
+        for snap in stack[-cfg.MAX_UNDO:]:
+            try:
+                snaps.append(_parse_staff(snap, titles[key]))
+            except ScheduleError:
+                continue
+        if snaps:
+            out[key] = snaps
+    return out
+
+
 def _parse_division(d, seen: set) -> Division:
     if not isinstance(d, dict):
         raise ScheduleError("Data divisi tidak valid.")

@@ -63,7 +63,7 @@ button,input,select{font:inherit;color:inherit}svg{flex:none}
 .seg button.on{background:var(--pri);color:#fff}
 /* Tab Print Jadwal: judul dan tombol aksi */
 .kh{display:flex;align-items:center;gap:8px;font-size:calc(15px*var(--u));font-weight:700}.kh em{margin-left:auto;font-style:normal;color:var(--mute);font-size:calc(12.5px*var(--u));font-weight:500}
-.ab{display:flex;gap:8px;margin-top:10px}.ab .btn{flex:1}
+.ab{display:flex;gap:8px;margin-top:10px}.ab .btn{flex:1}.btn:disabled{opacity:.4}
 .ab.cp{justify-content:center;margin-top:16px}.ab.cp .btn{flex:1 1 0;min-width:0;min-height:32px;padding:0 4px;font-size:calc(10px*var(--u));letter-spacing:.3px;border-radius:8px;gap:4px;white-space:nowrap}.ab.cp .btn svg{width:12px;height:12px;flex:none}
 /* Warna shift */
 .sP{background:var(--P);color:var(--Pt)}.sS{background:var(--S);color:var(--St)}.sR{background:var(--R);color:var(--Rt)}.sL{background:var(--L);color:var(--Lt)}.sI{background:var(--I);color:var(--It)}.sK{background:var(--K);color:var(--Kt)}
@@ -246,7 +246,7 @@ nav button.on,.tb button.on,.crumb,.crumb a,.badge{color:var(--pt)}nav button.on
 <div id="shade"></div><div id="sheet" role="dialog" aria-modal="true"></div><div id="toast" role="status"></div>
 <script>
 /* Ikon SVG */
-const I={cal:'<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/>',term:'<rect x="3" y="4.5" width="18" height="15" rx="3"/><path d="m7.5 10 3 2.5-3 2.5M13 15h3.5"/>',
+const I={dice:'<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1"/><circle cx="15" cy="9" r="1"/><circle cx="9" cy="15" r="1"/><circle cx="15" cy="15" r="1"/>',undo:'<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',cal:'<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/>',term:'<rect x="3" y="4.5" width="18" height="15" rx="3"/><path d="m7.5 10 3 2.5-3 2.5M13 15h3.5"/>',
 chk:'<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17M9 15l2 2 4-4"/>',
 gear:'<path d="M19.08 10.23 L21.68 10.47 L21.68 13.53 L19.08 13.77 L18.26 15.76 L19.93 17.76 L17.76 19.93 L15.76 18.26 L13.77 19.08 L13.53 21.68 L10.47 21.68 L10.23 19.08 L8.24 18.26 L6.24 19.93 L4.07 17.76 L5.74 15.76 L4.92 13.77 L2.32 13.53 L2.32 10.47 L4.92 10.23 L5.74 8.24 L4.07 6.24 L6.24 4.07 L8.24 5.74 L10.23 4.92 L10.47 2.32 L13.53 2.32 L13.77 4.92 L15.76 5.74 L17.76 4.07 L19.93 6.24 L18.26 8.24Z"/><circle cx="12" cy="12" r="3"/>',
 usr:'<circle cx="9" cy="8" r="3.2"/><path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.4"/><path d="M17 13.8c2.4 0 4 1.7 4 4.2"/>',
@@ -327,6 +327,161 @@ function staff(i){const p=i<0?{n:''}:D[S.div].st[i];open(`<h3>${i<0?'Tambah staf
 function saveS(i){const n=$('#nm').value.trim();if(!n)return;if(i<0)D[S.div].st.push({n,s:Array(14).fill('-')});else D[S.div].st[i].n=n;rx()}
 function delS(i){D[S.div].st.splice(i,1);rx()}
 
+/* Generate Random Shift: mulai (fungsi murni, tidak menyentuh tampilan) */
+/* m = minimal orang per shift, nw = libur tidak boleh Sabtu/Minggu */
+const GN={BAR:{m:1,nw:1},FLOOR:{m:2,nw:0},KITCHEN:{m:2,nw:0},CASHIER:{m:1,nw:1}};
+const gRange=(a,b)=>{const o=[];for(let i=a;i<=b;i++)o.push(i);return o};
+const gShuf=(a,r)=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const gComb=(a,k)=>k==0?[[]]:a.flatMap((x,i)=>gComb(a.slice(i+1),k-1).map(t=>[x,...t]));
+/* Ekor periode lalu satu staff (kode shift sampai kemarin): sisa hari kerja berturut-turut, shift terakhir, hitungan shift */
+function gTail(t){if(!t||!t.length||t[t.length-1]=='-')return null;
+let s=0;for(let i=t.length-1;i>=0&&'PSR'.includes(t[i]);i--)s++;
+let pb=null;for(let i=t.length-1;i>=0;i--)if('PSR'.includes(t[i])){pb=t[i];break}
+const cnt={P:0,S:0,R:0};for(const c of t)if(c in cnt)cnt[c]++;
+return{s,last:s?t[t.length-1]:null,pb,cnt}}
+/* Pilihan hari libur satu staff: 1 libur per minggu, kerja berturut-turut maksimal 6 hari (termasuk sisa periode lalu) */
+function gOpts(fx,gMin,gMax,nw,we,h,lim=6){
+const s0=h?Math.min(h.s,lim):0;
+const ok=d=>!fx.has(d)&&!(nw&&we[d]);
+const runsOk=O=>{let r=s0;for(let d=0;d<14;d++){if(O.has(d))r=0;else if(++r>lim)return false}return true};
+const adj=L=>L.some(d=>fx.has(d-1)||fx.has(d+1)||L.includes(d+1));
+const w0=gRange(0,6),w1=gRange(7,13),out=[];
+const A=w0.some(d=>fx.has(d))?[null]:w0.filter(d=>ok(d)&&(!h||(s0+d<=lim&&s0+d+1>=gMin))),B=w1.some(d=>fx.has(d))?[null]:w1.filter(ok);
+for(const p of A)for(const q of B){const L=[p,q].filter(x=>x!==null);
+if(p!==null&&q!==null&&(q-p<gMin||q-p>gMax))continue;
+if(adj(L)||!runsOk(new Set([...fx,...L])))continue;
+out.push(L)}
+if(!out.length){const c=gRange(0,13).filter(ok);
+for(let k=1;k<=3&&!out.length;k++)for(const L of gComb(c,k)){if(!adj(L)&&runsOk(new Set([...fx,...L]))){out.push(L);if(out.length>=60)break}}}
+return out}
+/* Pilih libur semua staff acak, maksimal cap orang libur per hari */
+function gPick(opts,cap,r,pf,bo){const used=Array(14).fill(0),res=[];
+for(const i of gShuf(opts.map((_,i)=>i),r)){
+const c=opts[i].filter(L=>L.every(d=>used[d]<cap));if(!c.length)return null;
+const w=c.map(L=>(L.length==2&&L[1]-L[0]==7?(bo>100?1e3:3):1)*(pf&&pf[i]!=null&&L[0]===pf[i]?bo:1));let t=r()*w.reduce((a,b)=>a+b,0),k=0;
+while(k<c.length-1&&(t-=w[k])>=0)k++;
+res[i]=c[k];c[k].forEach(d=>used[d]++)}
+return res}
+/* Blok kerja: deretan hari kerja tanpa libur; satu blok = satu shift. Blok pertama yang menyambung dari periode lalu dikunci */
+function gSegs(offs,hist){const o=[];offs.forEach((O,i)=>{let a=-1;for(let d=0;d<=14;d++){if(d<14&&!O.has(d)){if(a<0)a=d}else if(a>=0){const g={i,a,b:d-1};if(a==0&&hist&&hist[i]&&hist[i].s>0)g.fixed=hist[i].last;o.push(g);a=-1}}});return o}
+/* Minimal orang per shift pada satu hari; lv = tingkat pelonggaran */
+const gReq=(key,m,w,lv)=>{if(key=='CASHIER')return w>=2?{P:lv>0?0:1,S:0,R:1}:{P:0,S:0,R:w?1:0};
+const q=Math.max(0,Math.min(m,Math.floor(w/3))-lv);return{P:q,S:q,R:q}};
+/* Cari pembagian shift per blok; kekurangan orang per shift maksimal bud (jumlah seluruh hari), dipangkas lebih awal */
+function gDfs(segs,w,req,r,cap,want,bud){
+const cnt=gRange(0,13).map(()=>({P:0,S:0,R:0})),rem=w.slice(),lb=Array(14).fill(0),as=[],out=[];let nodes=0,tot=0;
+const upd=(a,b)=>{for(let d=a;d<=b;d++){const q=req[d],c=cnt[d],df=Math.max(0,q.P-c.P)+Math.max(0,q.S-c.S)+Math.max(0,q.R-c.R),m=Math.max(0,df-rem[d]);tot+=m-lb[d];lb[d]=m}return tot<=bud};
+(function rec(k){if(out.length>=want||nodes>cap)return;
+if(k==segs.length){out.push({as:as.slice(),df:tot});return}
+const g=segs[k];
+for(const c of(g.fixed?[g.fixed]:gShuf(['P','S','R'],r))){nodes++;as[k]=c;
+const sv=lb.slice(g.a,g.b+1),st0=tot;
+for(let d=g.a;d<=g.b;d++){cnt[d][c]++;rem[d]--}
+if(upd(g.a,g.b))rec(k+1);
+for(let d=g.a;d<=g.b;d++){cnt[d][c]--;rem[d]++}
+sv.forEach((v,j)=>{lb[g.a+j]=v});tot=st0;
+if(out.length>=want||nodes>cap)return}})(0);
+return out}
+/* Nilai hasil: makin kecil makin baik (jumlah Pagi/Siang/Malam seimbang termasuk periode lalu, hindari shift sama dua blok berturut-turut) */
+function gScore(rows,segs,as,hist){let sc=0;
+for(const c of 'PSR'){const t=rows.map((x,i)=>x.filter(v=>v==c).length+(hist&&hist[i]?hist[i].cnt[c]:0)),m=t.reduce((a,b)=>a+b,0)/t.length;sc+=t.reduce((a,b)=>a+(b-m)**2,0)/t.length}
+const last={};if(hist)hist.forEach((h,i)=>{if(h&&!h.s)last[i]=h.pb});
+segs.forEach((g,k)=>{if(last[g.i]==as[k])sc+=3;last[g.i]=as[k]});
+return sc}
+function gRows(st,offs,L,segs,as){
+const rows=st.map((p,i)=>gRange(0,13).map(d=>L[i].includes(d)?'L':offs[i].has(d)?p.s[d]:null));
+segs.forEach((g,k)=>{for(let d=g.a;d<=g.b;d++)rows[g.i][d]=as[k]});
+return rows}
+/* Cashier 2 orang: yang jaga sendirian wajib Malam; bila berdua, satu Pagi satu Malam. Shift berganti setelah libur (urutan libur bergantian tiap minggu, jarak libur 6-8 hari). Pindah shift tanpa libur hanya jalan terakhir dan hanya boleh maju ke Malam */
+function gCash2(st,fx,we,r,hist){
+const h0=hist&&hist[0],h1=hist&&hist[1];
+const o=[gOpts(fx[0],6,8,1,we,h0,7),gOpts(fx[1],6,8,1,we,h1,7)];let best=null,bc=1e9;
+const okT=(p,x)=>!p||p==x||x=='R',chg=(p,x)=>p&&p!=x?1:0;
+for(const La of o[0])for(const Lb of o[1]){
+const off=[new Set([...fx[0],...La]),new Set([...fx[1],...Lb])],ass=[];
+(function rec(d,pa,pb,cost,sw,ra,rb){
+if(cost>bc)return;
+if(d==14){const t=cost+Math.abs(ra-rb)*1.5+r()*.5;if(t<bc){bc=t;best={La,Lb,sw,ass:ass.map(x=>x.slice())}}return}
+const a=!off[0].has(d),b=!off[1].has(d);
+if(!a&&!b){ass[d]=[null,null];rec(d+1,null,null,cost+100,sw,ra,rb);return}
+if(a!=b){const pv=a?pa:pb,c=chg(pv,'R');ass[d]=a?['R',null]:[null,'R'];
+rec(d+1,a?'R':null,b?'R':null,cost+c*20,sw+c,ra+(a?1:0),rb+(b?1:0));return}
+for(const[x,y]of[['P','R'],['R','P']]){
+if(!okT(pa,x)||!okT(pb,y))continue;
+const c=chg(pa,x)+chg(pb,y);ass[d]=[x,y];rec(d+1,x,y,cost+c*20,sw+c,ra+(x=='R'?1:0),rb+(y=='R'?1:0))}
+})(0,h0&&h0.s>0?h0.last:null,h1&&h1.s>0?h1.last:null,0,0,h0?h0.cnt.R:0,h1?h1.cnt.R:0)}
+return best?{best,bc}:null}
+/* Hasil: {rows, notes} atau {err}; st = staff divisi, we = penanda Sabtu/Minggu 14 hari, hist = ekor periode lalu per staff (gTail) atau null */
+function genRandom(key,st,we,r=Math.random,hist=null){
+const n=st.length;if(!n)return{err:'Belum ada staff.'};
+const cfg=GN[key]||{m:1,nw:0};
+const fx=st.map(p=>new Set(p.s.map((x,d)=>x=='I'||x=='K'?d:-1).filter(d=>d>=0)));
+const solve=hs=>{const notes=[];let rows=null;
+if(key=='CASHIER'&&n==2){const c=gCash2(st,fx,we,r,hs);
+if(c){const{best,bc}=c;
+rows=st.map((p,i)=>{const l=i?best.Lb:best.La;return gRange(0,13).map(d=>l.includes(d)?'L':fx[i].has(d)?p.s[d]:best.ass[d][i])});
+if(bc>=100)notes.push('Ada hari tanpa Cashier yang bertugas.');
+else if(best.sw>0)notes.push('Aturan Cashier (yang jaga sendirian harus Malam) hanya bisa dipenuhi dengan '+best.sw+'× pindah shift ke Malam tanpa libur.')}}
+if(!rows){const cap0=Math.max(1,Math.ceil(n/(cfg.nw?5:7))),opts=st.map((_,i)=>gOpts(fx[i],6,7,cfg.nw,we,hs&&hs[i])),pf=st.map((_,i)=>hs&&hs[i]?6-Math.min(hs[i].s,6):null);
+/* Apakah periode berikutnya masih bisa menyambung dari jadwal ini tanpa melanggar aturan */
+const look=rw=>{const h2=rw.map(x=>gTail(x.join('')));
+const o2=st.map((_,i)=>gOpts(new Set(),6,7,cfg.nw,we,h2[i])),p2=h2.map(h=>h?6-Math.min(h.s,6):null),L2=gPick(o2,cap0,r,p2,1e6);if(!L2)return false;
+const offs=L2.map(l=>new Set(l)),segs=gSegs(offs,h2).sort((a,b)=>a.a-b.a),w=gRange(0,13).map(d=>offs.filter(O=>!O.has(d)).length);
+return gDfs(segs,w,w.map(x=>gReq(key,cfg.m,x,0)),r,3000,1,0).length>0};
+let best=null;
+for(const[cp,bud]of[[cap0,0],[cap0,1],[cap0,2],[cap0,4],[cap0+1,4],[cap0+1,12]]){if(best)break;const t0=Date.now(),cands=[];
+for(let at=0;at<80&&cands.length<40&&Date.now()-t0<300;at++){
+const Lc=gPick(opts,cp,r,pf,at==0?1e6:at<10?50:6);if(!Lc)continue;
+const offs=st.map((_,i)=>new Set([...fx[i],...Lc[i]]));
+const segs=gShuf(gSegs(offs,hs),r).sort((a,b)=>a.a-b.a);
+const w=gRange(0,13).map(d=>offs.filter(O=>!O.has(d)).length),req=w.map(x=>gReq(key,cfg.m,x,0));
+for(const o of gDfs(segs,w,req,r,5000,4,bud)){const rw=gRows(st,offs,Lc,segs,o.as);
+const ov=gRange(0,13).reduce((a,d)=>a+Math.max(0,Lc.filter(l=>l.includes(d)).length-cap0),0),sh=key=='CASHIER'?0:gRange(0,13).reduce((a,d)=>{const c={P:0,S:0,R:0};rw.forEach(x=>{if(x[d] in c)c[x[d]]++});return a+Math.max(0,cfg.m-c.P)+Math.max(0,cfg.m-c.S)+Math.max(0,cfg.m-c.R)},0);
+cands.push({rw,df:o.df,sc:gScore(rw,segs,o.as,hs)+100*ov+5*sh+200*o.df})}}
+if(cands.length){cands.forEach(c=>{if(!look(c.rw))c.sc+=40});const m=Math.min(...cands.map(c=>c.sc)),pool=cands.filter(c=>c.sc<=m+2);best=pool[Math.floor(r()*pool.length)]}}
+if(!best)return null;
+rows=best.rw;if(key=='CASHIER'&&best.df)notes.push('Aturan Cashier (Pagi dan Malam masing-masing minimal 1 bila bekerja berdua) tidak terpenuhi pada '+best.df+' shift.')}
+if(key!='CASHIER'){const bad=gRange(0,13).filter(d=>{const c={P:0,S:0,R:0};rows.forEach(x=>{if(x[d] in c)c[x[d]]++});return c.P<cfg.m||c.S<cfg.m||c.R<cfg.m});
+if(bad.length)notes.push('Target '+cfg.m+' orang per shift tidak tercapai pada '+bad.length+' hari karena staff yang tersedia terbatas (libur, Izin, atau Sakit).')}
+return{rows,notes}};
+const has=hist&&hist.some(Boolean);
+let res=solve(has?hist:null);
+if(!res&&has){res=solve(null);if(res)res.notes.unshift('Sambungan dari periode lalu diabaikan karena tidak bisa dipenuhi bersama aturan lain.')}
+return res||{err:'Belum menemukan pola yang cocok. Coba lagi.'}}
+/* Generate Random Shift: selesai */
+
+/* Riwayat periode lalu (maksimal 4 periode) dan tumpukan Undo per divisi (maksimal 5), ikut tersimpan di state aplikasi */
+let PV=[],UN={};
+const dayN=s=>Math.round(new Date(s+'T00:00:00Z')/864e5);
+const cur=()=>({start:S.start,divisions:Object.keys(D).map(k=>({key:k,title:D[k].t,hours:D[k].h,staff:D[k].st.map(p=>({name:p.n,shifts:p.s.join('')}))}))});
+const sigOf=c=>JSON.stringify(c.divisions.map(v=>v.staff));
+/* Simpan jadwal yang sedang tampil sebagai periode lalu sebelum tanggal mulai diganti */
+function snapPrev(){const c=cur();if(!c.divisions.some(v=>v.staff.some(x=>/[PSR]/.test(x.shifts))))return;
+const sg=sigOf(c);if(PV.some(x=>sigOf(x)==sg))return;
+PV=PV.filter(x=>x.start!=c.start);PV.push(c);if(PV.length>4)PV.shift()}
+function setStart(n){if(!n||n==S.start)return;snapPrev();S.start=n;persist()}
+/* Periode lalu yang tepat sebelum tanggal mulai sekarang: {snap, k} dengan k = jumlah hari yang diketahui */
+function gPrevFor(){const n=dayN(S.start);let b=null,bk=99;PV.forEach(x=>{const kk=n-dayN(x.start);if(kk>=1&&kk<=14&&kk<bk){b=x;bk=kk}});return b?{snap:b,k:bk}:null}
+function gHist(key){const p=gPrevFor();if(!p)return null;const v=p.snap.divisions.find(x=>x.key==key);if(!v)return null;
+const h=D[key].st.map(s=>{const m=v.staff.find(x=>x.name==s.n);return m?gTail(m.shifts.slice(0,p.k)):null});
+return h.some(Boolean)?h:null}
+
+/* Tombol Generate Random Shift dan Undo Generate */
+function genAsk(){const k=S.div,d=D[k];if(!d.st.length){toast('Belum ada staff');return}
+const hs=gHist(k),m=hs?hs.filter(Boolean).length:0;
+open(`<h3>Generate random shift ${esc(d.t)}?</h3><p class="sub">Shift semua staff divisi ini diacak ulang mengikuti aturan. Izin dan Sakit tetap dipertahankan, jam kerja tidak berubah. Bisa dibatalkan dengan Undo Generate.</p><p class="sub">${m?'Menyambung dari periode sebelumnya ('+m+' staff).':'Belum ada data periode sebelumnya, jadwal dibuat dari awal.'}</p><div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="genDiv()">Generate</button><button class="btn gy" style="flex:1" onclick="closeSheet()">Batal</button></div>`)}
+/* Jadwal yang masih tampil sama persis dengan salinan periode lalu berarti belum diubah setelah ganti tanggal (Izin/Sakit-nya milik periode lalu) */
+function gStale(k){const sg=D[k].st.map(p=>p.n+p.s.join('')).join();return PV.some(x=>x.start!=S.start&&((x.divisions.find(v=>v.key==k)||{staff:[]}).staff.map(m=>m.name+m.shifts).join())==sg)}
+function genDiv(){const k=S.div,d=D[k],stale=gStale(k),base=d.st.map(p=>({n:p.n,s:stale?Array(14).fill('-'):p.s})),r=genRandom(k,base,days().map(x=>x.we),Math.random,gHist(k));
+if(r.err){close();toast(r.err);return}
+(UN[k]=UN[k]||[]).push(d.st.map(p=>({name:p.n,shifts:p.s.join('')})));if(UN[k].length>5)UN[k].shift();
+d.st.forEach((p,i)=>{p.s=r.rows[i]});rx();
+if(r.notes.length)open(`<h3>Catatan jadwal ${esc(d.t)}</h3><p class="sub">${r.notes.map(esc).join('<br><br>')}</p><button class="btn w" onclick="closeSheet()">OK</button>`);
+else toast('Shift '+d.t+' diacak')}
+/* Kembalikan shift divisi ke kondisi sebelum Generate terakhir; staff yang namanya tidak ada di salinan tidak diubah */
+function genUndo(){const k=S.div,d=D[k],u=UN[k]||[];if(!u.length){toast('Belum ada Generate yang bisa di-undo');return}
+const snap=u.pop();d.st.forEach(p=>{const m=snap.find(x=>x.name==p.n);if(m)p.s=[...m.shifts]});rx();
+toast('Shift '+d.t+' dikembalikan'+(u.length?' ('+u.length+' undo tersisa)':''))}
 /* Tombol Reset Jadwal */
 function rstAsk(){open(`<h3>Reset jadwal ${esc(D[S.div].t)}?</h3><p class="sub">Semua shift dan jam kerja divisi ini dikosongkan.</p><div style="display:flex;gap:8px"><button class="btn dg" style="flex:1" onclick="rstDiv()">Reset</button><button class="btn" style="flex:1" onclick="closeSheet()">Batal</button></div>`)}
 function rstDiv(){const d=D[S.div];d.st.forEach(p=>{p.s=Array(14).fill('-')});d.h={P:'',S:'',R:'',L:'Tidak bertugas'};rx()}
@@ -334,7 +489,7 @@ function rstDiv(){const d=D[S.div];d.st.forEach(p=>{p.s=Array(14).fill('-')});d.
 function delList(){const l=D[S.div].st;open(`<h3>Hapus staff</h3>${l.length?`<div class="dl">${l.map((p,i)=>`<button class="btn dg w" onclick="delAsk(${i})">${esc(p.n)}</button>`).join('')}</div>`:'<p class="sub">Belum ada staff.</p>'}`)}
 function delAsk(i){open(`<h3>Hapus ${esc(D[S.div].st[i].n)}?</h3><p class="sub">Jadwal staff ini ikut terhapus.</p><div style="display:flex;gap:8px"><button class="btn dg" style="flex:1" onclick="delS(${i})">Ya, hapus</button><button class="btn" style="flex:1" onclick="closeSheet()">Batal</button></div>`)}
 /* Popup Ubah periode */
-function per(){open(`<h3>Ubah periode</h3><label for="sd" class="mut" style="font-size:calc(13px*var(--u));color:var(--mute)">Tanggal mulai (14 hari)</label><input type="date" id="sd" value="${S.start}" style="margin-top:6px"><button class="btn w" onclick="S.start=$('#sd').value||S.start;S.sel=todayIdx();closeSheet();draw()">Simpan periode</button>`)}
+function per(){open(`<h3>Ubah periode</h3><label for="sd" class="mut" style="font-size:calc(13px*var(--u));color:var(--mute)">Tanggal mulai (14 hari)</label><input type="date" id="sd" value="${S.start}" style="margin-top:6px"><button class="btn w" onclick="setStart($('#sd').value);S.sel=todayIdx();closeSheet();draw()">Simpan periode</button>`)}
 /* Legenda jam kerja */
 const hours=k=>`<div class="lh">${KS.map(c=>`<div><i class="dot s${c}"></i><b style="font-weight:600">${SH[c][0]}<span>${D[k].h[c]?'('+D[k].h[c]+')':''}</span></b></div>`).join('')}</div>`;
 
@@ -415,8 +570,8 @@ function save(b,n){const a=document.createElement('a');a.href=URL.createObjectUR
 
 /* Kirim dan muat data ke server */
 const payload=()=>({start:S.start,divisions:Object.keys(D).map(k=>({key:k,title:D[k].t,hours:D[k].h,staff:D[k].st.map(p=>({name:p.n,shifts:p.s.join('')}))}))});
-let _sv;function persist(){clearTimeout(_sv);_sv=setTimeout(()=>{fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload())}).catch(()=>{})},400)}
-async function loadState(){try{const r=await fetch('/api/state');if(!r.ok)return;const p=await r.json();if(p&&/^\d{4}-\d{2}-\d{2}$/.test(p.start))S.start=p.start;(p.divisions||[]).forEach(v=>{const d=D[v.key];if(!d)return;d.st=v.staff.map(x=>({n:x.name,s:[...x.shifts]}));d.h=Object.assign(d.h,v.hours)})}catch(e){}}
+let _sv;function persist(){clearTimeout(_sv);_sv=setTimeout(()=>{fetch('/api/state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload(),prev:PV,undo:UN})}).catch(()=>{})},400)}
+async function loadState(){try{const r=await fetch('/api/state');if(!r.ok)return;const p=await r.json();if(p&&/^\d{4}-\d{2}-\d{2}$/.test(p.start))S.start=p.start;(p.divisions||[]).forEach(v=>{const d=D[v.key];if(!d)return;d.st=v.staff.map(x=>({n:x.name,s:[...x.shifts]}));d.h=Object.assign(d.h,v.hours)});PV=Array.isArray(p.prev)?p.prev:[];UN=p.undo&&typeof p.undo=='object'?p.undo:{}}catch(e){}}
 
 /* Popup file tersimpan */
 function savedPop(title,name){open(`<div class="sph"><h3>${esc(title)}</h3><button class="spx" type="button" aria-label="Tutup" onclick="closeSheet()">${ico('x',24)}</button></div><p class="sub" style="margin:0 0 2px;line-height:1.5;overflow-wrap:anywhere">Tersimpan di folder Download: <b>${esc(name)}</b></p>`)}
@@ -454,7 +609,7 @@ const DAYL=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 function cfgBody(){const[y,m,d]=S.start.split('-').map(Number);return`<div class="cfg"><label>Tanggal<select id="cd" onchange="cfgSet()">${[...Array(31)].map((_,i)=>`<option value="${i+1}"${i+1==d?' selected':''}>${i+1}</option>`).join('')}</select></label><label>Bulan<select id="cm" onchange="cfgSet()">${MONL.map((n,i)=>`<option value="${i+1}"${i+1==m?' selected':''}>${n}</option>`).join('')}</select></label><label>Tahun<select id="cy" onchange="cfgSet()">${Array.from({length:Math.max(2040,y)-Math.min(2025,y)+1},(_,i)=>Math.min(2025,y)+i).map(v=>`<option value="${v}"${v==y?' selected':''}>${v}</option>`).join('')}</select></label></div><div class="cfg2"><div class="tl"><small>Hari</small><b id="ch">${DAYL[new Date(y,m-1,d).getDay()]}</b></div><div class="tl"><small>Check</small><span class="ok" id="ck">${ico('ok',16)}Sesuai kalender</span></div></div>${impBox()}`}
 function cfgSet(){const d=+$('#cd').value,m=+$('#cm').value,y=+$('#cy').value,t=new Date(y,m-1,d),v=t.getFullYear()==y&&t.getMonth()==m-1&&t.getDate()==d;
 $('#ck').className='ok'+(v?'':' no');$('#ck').innerHTML=v?ico('ok',16)+'Sesuai kalender':'Tanggal tidak valid';
-if(v){S.start=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;$('#ch').textContent=DAYL[t.getDay()];$('.pk').outerHTML=periodFull();S.sel=todayIdx();persist()}}
+if(v){setStart(`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`);$('#ch').textContent=DAYL[t.getDay()];$('.pk').outerHTML=periodFull();S.sel=todayIdx();persist()}}
 /* Isi tiap tab */
 const V={
 /* Tab Ringkasan */
@@ -469,7 +624,8 @@ return`${periodFull()}${tabs()}${b}`},
 div(){const k=S.div,t=D[k].t;return`${periodFull()}<div class="crumb"><a href="#" onclick="go('config',{tab:'admin'});return false" aria-label="Home">${ico('home',22)}</a><em></em><a href="#" onclick="go('config',{tab:'admin'});return false">Administrator</a><i>/</i><span>${t}</span></div>
 <div class="seg">${Object.keys(D).map(x=>`<button class="${x==k?'on':''}" onclick="go('div',{div:'${x}'})">${D[x].t}</button>`).join('')}</div>
 ${xv('adm','pv',k)}
-<div class="ab cp"><button class="btn gn" onclick="staff(-1)">${ico('plus',20)}TAMBAH STAFF</button><button class="btn gy" onclick="rstAsk()">${ico('rst',20)}RESET JADWAL</button><button class="btn dg" onclick="delList()">${ico('minus',20)}HAPUS STAFF</button></div>`},
+<div class="ab cp"><button class="btn gn" onclick="staff(-1)">${ico('plus',20)}TAMBAH STAFF</button><button class="btn gy" onclick="rstAsk()">${ico('rst',20)}RESET JADWAL</button><button class="btn dg" onclick="delList()">${ico('minus',20)}HAPUS STAFF</button></div>
+<div class="ab cp" style="margin-top:8px"><button class="btn" style="flex:2" onclick="genAsk()">${ico('dice',20)}GENERATE RANDOM SHIFT</button><button class="btn gy" onclick="genUndo()"${(UN[k]||[]).length?'':' disabled'}>${ico('undo',20)}UNDO GENERATE</button></div>`},
 /* Tab Jadwal Global */
 global(){return xv('gl','g')}};
 /* Gambar halaman dan nav bawah */
@@ -551,7 +707,7 @@ impDraw()}
 function impTab(k){IM.tab=k;impDraw()}
 function impReset(go){IM={st:'idle'};impDraw();if(go){const e=$('#imf');if(e)e.click()}}
 
-function impSet(p){S.start=p.start;p.divisions.forEach(v=>{const d=D[v.key];if(!d)return;d.st=v.staff.map(x=>({n:x.name,s:[...x.shifts]}));if(v.hours)Object.assign(d.h,v.hours)});S.sel=todayIdx()}
+function impSet(p){snapPrev();S.start=p.start;p.divisions.forEach(v=>{const d=D[v.key];if(!d)return;d.st=v.staff.map(x=>({n:x.name,s:[...x.shifts]}));if(v.hours)Object.assign(d.h,v.hours)});S.sel=todayIdx()}
 function impApply(){if(IM.st!='prev')return;const t=impTot(),n=IM.payload.divisions.length;
 const bk=JSON.stringify(payload());impSet(IM.payload);IM={st:'done',bk,sum:n+' divisi · '+t.s+' staff · '+t.f+' shift terisi'};persist();draw()}
 function impUndo(){if(IM.st!='done'||!IM.bk)return;impSet(JSON.parse(IM.bk));IM={st:'idle'};persist();draw()}
