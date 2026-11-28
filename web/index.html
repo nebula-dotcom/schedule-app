@@ -63,7 +63,7 @@ button,input,select{font:inherit;color:inherit}svg{flex:none}
 .seg button.on{background:var(--pri);color:#fff}
 /* Tab Print Jadwal: judul dan tombol aksi */
 .kh{display:flex;align-items:center;gap:8px;font-size:calc(15px*var(--u));font-weight:700}.kh em{margin-left:auto;font-style:normal;color:var(--mute);font-size:calc(12.5px*var(--u));font-weight:500}
-.ab{display:flex;gap:8px;margin-top:10px}.ab .btn{flex:1}.btn:disabled{opacity:.4}
+.ab{display:flex;gap:8px;margin-top:10px}.ab .btn{flex:1}.btn:disabled{opacity:.4}.btn svg{display:block}.lb{display:block;text-box:trim-both cap alphabetic}.ab.cp .btn svg{width:1.25em;height:1.25em}.ab.cp.g2 .btn{flex:1 1 0;white-space:normal;line-height:1.15;padding:5px 6px;text-align:center}
 .ab.cp{justify-content:center;margin-top:16px}.ab.cp .btn{flex:1 1 0;min-width:0;min-height:32px;padding:0 4px;font-size:calc(10px*var(--u));letter-spacing:.3px;border-radius:8px;gap:4px;white-space:nowrap}.ab.cp .btn svg{width:12px;height:12px;flex:none}
 /* Warna shift */
 .sP{background:var(--P);color:var(--Pt)}.sS{background:var(--S);color:var(--St)}.sR{background:var(--R);color:var(--Rt)}.sL{background:var(--L);color:var(--Lt)}.sI{background:var(--I);color:var(--It)}.sK{background:var(--K);color:var(--Kt)}
@@ -87,6 +87,8 @@ nav button.on{color:var(--pri);font-weight:600}nav button.on::after{content:"";p
 #shade{position:fixed;inset:0;background:#0b164688;display:none;z-index:20}
 #sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;background:var(--card);border-radius:16px 16px 0 0;padding:16px 14px calc(16px + env(safe-area-inset-bottom));max-width:480px;margin:auto;transform:translateY(110%);transition:transform .2s;max-height:80vh;overflow:auto}
 #sheet.open{transform:none}#sheet h3{font-size:calc(15px*var(--u));font-weight:700;margin-bottom:10px}
+/* Judul popup Administrator dan divisi: huruf kapital + pembatas, tanpa kontainer */
+#sheet h3.pt{color:var(--pri);font-size:calc(13px*var(--u));letter-spacing:.5px;text-transform:uppercase;margin:0 0 12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
 #sheet input{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:0 10px;min-height:40px;margin-bottom:10px}
 /* Daftar tombol Hapus Staff */
 .dl{display:grid;gap:6px}
@@ -319,11 +321,11 @@ function rx(){persist();close();const o=$('.xs'),l=o?o.scrollLeft:0,t=o?o.scroll
 function setS(i,j,c){D[S.div].st[i].s[j]=c;rx()}
 /* Popup Jam kerja */
 function hrs(q){const v=D[S.div].h[q],m=v.match(/(\d{1,2})[.:](\d{2})\s*[–-]\s*(\d{1,2})[.:](\d{2})/),p=n=>String(n).padStart(2,'0');
-open(`<h3>Jam kerja ${SH[q][0]}</h3>`+(q=='L'?`<input type="text" id="h1" value="${esc(v)}">`:`<div style="display:flex;gap:8px"><input type="time" id="h1" value="${m?p(m[1])+':'+m[2]:'09:00'}"><input type="time" id="h2" value="${m?p(m[3])+':'+m[4]:'17:00'}"></div>`)+`<div style="display:flex;gap:8px;margin-top:10px"><button class="btn" style="flex:1" onclick="saveH('${q}')">Simpan</button><button class="btn dg" onclick="clrH('${q}')">Kosongkan</button></div>`)}
+open(`<h3 class="pt">Jam kerja ${SH[q][0]}</h3>`+(q=='L'?`<input type="text" id="h1" value="${esc(v)}">`:`<div style="display:flex;gap:8px"><input type="time" id="h1" value="${m?p(m[1])+':'+m[2]:'09:00'}"><input type="time" id="h2" value="${m?p(m[3])+':'+m[4]:'17:00'}"></div>`)+`<div style="display:flex;gap:8px;margin-top:10px"><button class="btn" style="flex:1" onclick="saveH('${q}')">Simpan</button><button class="btn dg" onclick="clrH('${q}')">Kosongkan</button></div>`)}
 function clrH(q){D[S.div].h[q]='';rx()}
 function saveH(q){const a=$('#h1').value,b=$('#h2')?$('#h2').value:'';if(!a||(q!='L'&&!b))return;D[S.div].h[q]=q=='L'?a.trim():a.replace(':','.')+'–'+b.replace(':','.');rx()}
 /* Popup Tambah dan Ubah staff */
-function staff(i){const p=i<0?{n:''}:D[S.div].st[i];open(`<h3>${i<0?'Tambah staff':'Ubah staff'}</h3><input type="text" id="nm" value="${esc(p.n)}" placeholder="Nama staff" autocomplete="off"><div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="saveS(${i})">Simpan</button>${i<0?'':`<button class="btn dg" onclick="delS(${i})">Hapus</button>`}</div>`);$('#nm').focus()}
+function staff(i){const p=i<0?{n:''}:D[S.div].st[i];open(`<h3 class="pt">${i<0?'Tambah staff':'Ubah staff'}</h3><input type="text" id="nm" value="${esc(p.n)}" placeholder="Nama staff" autocomplete="off"><div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="saveS(${i})">Simpan</button>${i<0?'':`<button class="btn dg" onclick="delS(${i})">Hapus</button>`}</div>`);$('#nm').focus()}
 function saveS(i){const n=$('#nm').value.trim();if(!n)return;if(i<0)D[S.div].st.push({n,s:Array(14).fill('-')});else D[S.div].st[i].n=n;rx()}
 function delS(i){D[S.div].st.splice(i,1);rx()}
 
@@ -466,28 +468,45 @@ function gHist(key){const p=gPrevFor();if(!p)return null;const v=p.snap.division
 const h=D[key].st.map(s=>{const m=v.staff.find(x=>x.name==s.n);return m?gTail(m.shifts.slice(0,p.k)):null});
 return h.some(Boolean)?h:null}
 
+/* Ikon tombol disejajarkan dengan tengah huruf kapital teksnya. WebView baru: CSS text-box (tepi atas = tinggi huruf kapital, tepi bawah = garis dasar). WebView lama: diukur dari tampilan */
+const TB=!!(window.CSS&&CSS.supports&&CSS.supports('text-box','trim-both cap alphabetic'))&&!window.__noTB;
+function alignBtns(root){try{const cv=alignBtns.c||(alignBtns.c=document.createElement('canvas').getContext('2d'));
+(root||document).querySelectorAll('.btn').forEach(b=>{const s=b.querySelector(':scope>svg');if(!s)return;
+let lb=b.querySelector(':scope>.lb');
+if(!lb){const t=[...b.childNodes].find(n=>n.nodeType==3&&n.textContent.trim());if(!t)return;lb=document.createElement('span');lb.className='lb';lb.textContent=t.textContent;t.replaceWith(lb)}
+if(TB)return;
+const cs=getComputedStyle(lb),q=lb.getBoundingClientRect(),lh=parseFloat(cs.lineHeight)||q.height;if(q.height>lh*1.5)return;
+cv.font=cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily;const m=cv.measureText('H'),fa=m.fontBoundingBoxAscent,fd=m.fontBoundingBoxDescent;if(fa==null)return;
+const textC=q.top+(q.height-(fa+fd))/2+fa-m.actualBoundingBoxAscent/2,sr=s.getBoundingClientRect(),cur=+s.dataset.dy||0,dy=textC-(sr.top+sr.height/2-cur);
+if(Math.abs(dy)>.1){s.style.transform='translateY('+dy.toFixed(2)+'px)';s.dataset.dy=dy}else{s.style.transform='';s.dataset.dy=0}})}catch(e){}}
+{const d0=draw,o0=open;draw=function(){d0();alignBtns()};open=function(h){o0(h);alignBtns(document.getElementById('sheet'))}}
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>alignBtns());
+
 /* Tombol Generate Random Shift dan Undo Generate */
+const gPer=()=>{const a=days(),s=a[0].d,e=a[13].d;return s.getDate()+' '+MON[s.getMonth()]+' – '+e.getDate()+' '+MON[e.getMonth()]+' '+e.getFullYear()};
+/* Jadwal yang sudah ada dianggap periode sebelumnya bila belum ada salinan periode lalu yang tepat sebelum tanggal mulai */
+function gEnsurePrev(){if(gPrevFor())return;const c=cur();if(!c.divisions.some(v=>v.staff.some(x=>/[PSR]/.test(x.shifts))))return;
+const t=new Date(S.start+'T00:00:00Z');t.setUTCDate(t.getUTCDate()-14);c.start=t.toISOString().slice(0,10);
+const sg=sigOf(c);PV=PV.filter(x=>x.start!=c.start&&sigOf(x)!=sg);PV.push(c);if(PV.length>4)PV.shift()}
 function genAsk(){const k=S.div,d=D[k];if(!d.st.length){toast('Belum ada staff');return}
-const hs=gHist(k),m=hs?hs.filter(Boolean).length:0;
-open(`<h3>Generate random shift ${esc(d.t)}?</h3><p class="sub">Shift semua staff divisi ini diacak ulang mengikuti aturan. Izin dan Sakit tetap dipertahankan, jam kerja tidak berubah. Bisa dibatalkan dengan Undo Generate.</p><p class="sub">${m?'Menyambung dari periode sebelumnya ('+m+' staff).':'Belum ada data periode sebelumnya, jadwal dibuat dari awal.'}</p><div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="genDiv()">Generate</button><button class="btn gy" style="flex:1" onclick="closeSheet()">Batal</button></div>`)}
-/* Jadwal yang masih tampil sama persis dengan salinan periode lalu berarti belum diubah setelah ganti tanggal (Izin/Sakit-nya milik periode lalu) */
-function gStale(k){const sg=D[k].st.map(p=>p.n+p.s.join('')).join();return PV.some(x=>x.start!=S.start&&((x.divisions.find(v=>v.key==k)||{staff:[]}).staff.map(m=>m.name+m.shifts).join())==sg)}
-function genDiv(){const k=S.div,d=D[k],stale=gStale(k),base=d.st.map(p=>({n:p.n,s:stale?Array(14).fill('-'):p.s})),r=genRandom(k,base,days().map(x=>x.we),Math.random,gHist(k));
+open(`<h3 class="pt">Generate shift ${esc(d.t)}</h3><p class="sub">Jadwal ${esc(d.t)} periode ${gPer()} dibuat ulang secara acak!</p><div style="display:flex;gap:8px"><button class="btn" style="flex:1" onclick="genDiv()">Generate</button><button class="btn gy" style="flex:1" onclick="closeSheet()">Batal</button></div>`)}
+function genDiv(){const k=S.div,d=D[k];gEnsurePrev();
+const base=d.st.map(p=>({n:p.n,s:Array(14).fill('-')})),r=genRandom(k,base,days().map(x=>x.we),Math.random,gHist(k));
 if(r.err){close();toast(r.err);return}
 (UN[k]=UN[k]||[]).push(d.st.map(p=>({name:p.n,shifts:p.s.join('')})));if(UN[k].length>5)UN[k].shift();
 d.st.forEach((p,i)=>{p.s=r.rows[i]});rx();
-if(r.notes.length)open(`<h3>Catatan jadwal ${esc(d.t)}</h3><p class="sub">${r.notes.map(esc).join('<br><br>')}</p><button class="btn w" onclick="closeSheet()">OK</button>`);
+if(r.notes.length)open(`<h3 class="pt">Catatan jadwal ${esc(d.t)}</h3><p class="sub">${r.notes.map(esc).join('<br><br>')}</p><button class="btn w" onclick="closeSheet()">OK</button>`);
 else toast('Shift '+d.t+' diacak')}
 /* Kembalikan shift divisi ke kondisi sebelum Generate terakhir; staff yang namanya tidak ada di salinan tidak diubah */
 function genUndo(){const k=S.div,d=D[k],u=UN[k]||[];if(!u.length){toast('Belum ada Generate yang bisa di-undo');return}
 const snap=u.pop();d.st.forEach(p=>{const m=snap.find(x=>x.name==p.n);if(m)p.s=[...m.shifts]});rx();
 toast('Shift '+d.t+' dikembalikan'+(u.length?' ('+u.length+' undo tersisa)':''))}
 /* Tombol Reset Jadwal */
-function rstAsk(){open(`<h3>Reset jadwal ${esc(D[S.div].t)}?</h3><p class="sub">Semua shift dan jam kerja divisi ini dikosongkan.</p><div style="display:flex;gap:8px"><button class="btn dg" style="flex:1" onclick="rstDiv()">Reset</button><button class="btn" style="flex:1" onclick="closeSheet()">Batal</button></div>`)}
+function rstAsk(){open(`<h3 class="pt">Reset jadwal ${esc(D[S.div].t)}?</h3><p class="sub">Semua shift dan jam kerja divisi ini dikosongkan.</p><div style="display:flex;gap:8px"><button class="btn dg" style="flex:1" onclick="rstDiv()">Reset</button><button class="btn" style="flex:1" onclick="closeSheet()">Batal</button></div>`)}
 function rstDiv(){const d=D[S.div];d.st.forEach(p=>{p.s=Array(14).fill('-')});d.h={P:'',S:'',R:'',L:'Tidak bertugas'};rx()}
 /* Tombol Hapus Staff */
-function delList(){const l=D[S.div].st;open(`<h3>Hapus staff</h3>${l.length?`<div class="dl">${l.map((p,i)=>`<button class="btn dg w" onclick="delAsk(${i})">${esc(p.n)}</button>`).join('')}</div>`:'<p class="sub">Belum ada staff.</p>'}`)}
-function delAsk(i){open(`<h3>Hapus ${esc(D[S.div].st[i].n)}?</h3><p class="sub">Jadwal staff ini ikut terhapus.</p><div style="display:flex;gap:8px"><button class="btn dg" style="flex:1" onclick="delS(${i})">Ya, hapus</button><button class="btn" style="flex:1" onclick="closeSheet()">Batal</button></div>`)}
+function delList(){const l=D[S.div].st;open(`<h3 class="pt">Hapus staff</h3>${l.length?`<div class="dl">${l.map((p,i)=>`<button class="btn dg w" onclick="delAsk(${i})">${esc(p.n)}</button>`).join('')}</div>`:'<p class="sub">Belum ada staff.</p>'}`)}
+function delAsk(i){open(`<h3 class="pt">Hapus ${esc(D[S.div].st[i].n)}?</h3><p class="sub">Jadwal staff ini ikut terhapus.</p><div style="display:flex;gap:8px"><button class="btn dg" style="flex:1" onclick="delS(${i})">Ya, hapus</button><button class="btn" style="flex:1" onclick="closeSheet()">Batal</button></div>`)}
 /* Popup Ubah periode */
 function per(){open(`<h3>Ubah periode</h3><label for="sd" class="mut" style="font-size:calc(13px*var(--u));color:var(--mute)">Tanggal mulai (14 hari)</label><input type="date" id="sd" value="${S.start}" style="margin-top:6px"><button class="btn w" onclick="setStart($('#sd').value);S.sel=todayIdx();closeSheet();draw()">Simpan periode</button>`)}
 /* Legenda jam kerja */
@@ -625,7 +644,7 @@ div(){const k=S.div,t=D[k].t;return`${periodFull()}<div class="crumb"><a href="#
 <div class="seg">${Object.keys(D).map(x=>`<button class="${x==k?'on':''}" onclick="go('div',{div:'${x}'})">${D[x].t}</button>`).join('')}</div>
 ${xv('adm','pv',k)}
 <div class="ab cp"><button class="btn gn" onclick="staff(-1)">${ico('plus',20)}TAMBAH STAFF</button><button class="btn gy" onclick="rstAsk()">${ico('rst',20)}RESET JADWAL</button><button class="btn dg" onclick="delList()">${ico('minus',20)}HAPUS STAFF</button></div>
-<div class="ab cp" style="margin-top:8px"><button class="btn" style="flex:2" onclick="genAsk()">${ico('dice',20)}GENERATE RANDOM SHIFT</button><button class="btn gy" onclick="genUndo()"${(UN[k]||[]).length?'':' disabled'}>${ico('undo',20)}UNDO GENERATE</button></div>`},
+<div class="ab cp g2" style="margin-top:8px"><button class="btn" onclick="genAsk()">${ico('dice',20)}GENERATE RANDOM SHIFT</button><button class="btn gy" onclick="genUndo()"${(UN[k]||[]).length?'':' disabled'}>${ico('undo',20)}UNDO GENERATE</button></div>`},
 /* Tab Jadwal Global */
 global(){return xv('gl','g')}};
 /* Gambar halaman dan nav bawah */
